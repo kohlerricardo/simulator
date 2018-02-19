@@ -20,6 +20,8 @@
 #include <cstring>
 
 
+
+
 // ============================================================================
 /// Classes
 // ============================================================================
@@ -27,19 +29,39 @@
 class orcs_engine_t;
 class trace_reader_t;
 class opcode_package_t;
-class processor_t;
 
-// MyClasses
-// ============
+
+///////////////////////////////////////////
+// Branch Predictor Classes
+///////////////////////////////////////////
 class btb_line_t;
 class btb_t;
-class plbp_t;
+class twoBit_t;
+// class piecewise_t;
+///////////////////////////////////////////
+// Out of order Execution classes
+///////////////////////////////////////////
+class uop_package_t;
+class processor_t;
+///////////////////////////////////////////
+// Cache Classes
+///////////////////////////////////////////
+
 // ============
 // CACHE CLASSES
-class linha_t;
-class cacheSet_t;
-class cache_t;
-class utils_t;
+// class linha_t;
+// class cacheSet_t;
+// class cache_t;
+// class utils_t;
+
+///////////////////////////////////////////
+// Usefull Classes
+///////////////////////////////////////////
+template<class CB_TYPE> class circular_buffer_t;
+// class utils_t;
+
+
+
 
 // ============================================================================
 /// Global SINUCA_ENGINE instantiation
@@ -50,10 +72,17 @@ extern orcs_engine_t orcs_engine;
 // ============================================================================
 /// Definitions for Log, Debug, Warning, Error and Statistics
 // ============================================================================
+#define POSITION_FAIL -1        /// FAIL when return is int32_t
 #define FAIL 0                  /// FAIL when return is int32_t or uint32_t
 #define OK 1                    /// OK when return is int32_t or uint32_t
 
 #define TRACE_LINE_SIZE 512
+
+#define MAX_REGISTERS 6         /// opcode_package_t uop_package_t  (Max number of register (read or write) for one opcode/uop)
+#define MAX_ASSEMBLY_SIZE 32    /// In general 20 is enough
+
+
+
 
 /// DETAIL DESCRIPTION: Almost all errors and messages use this definition.
 /// It will DEACTIVATE all the other messages below
@@ -137,78 +166,43 @@ enum branch_t {
 };
 
 
-
-
-/// Our Includes
+// ============================================================================
+/// Base Includes
+// ============================================================================
+#include "./model.hpp"
 #include "./simulator.hpp"
 #include "./orcs_engine.hpp"
 #include "./trace_reader.hpp"
-#include "./opcode_package.hpp"
-#include "./processor.hpp"
-// BTB
-#include "./btb_line.hpp"
-#include "./btb.hpp"
-#include "./plbp.hpp"
+#include "./package/opcode_package.hpp"
 
-// CACHE INCLUDES
-#include "./cache.hpp"
-#include "./cacheSet.hpp"
-#include "./linha.hpp"
-#include "./utils.hpp"
+///////////////////////////////////////////
+// Usefull Classes
+///////////////////////////////////////////
+#include "./utils/circular_buffer.hpp"
+// #include "./utils/utils.hpp"
 
-// #defines BTB
-#define ENTRY 512
-#define WAYS 4
-// =====================
-// include e defines do branch predictor
-// #define N 128
-// #define M 128
-// #define H 43
-#define N 256
-#define M 64
-#define H 63
-#define  THETA ((2.14*(H)) + 20.58)
+///////////////////////////////////////////
+// Core Includes
+///////////////////////////////////////////
+#include "./package/uop_package.hpp"
+#include "./processor/processor.hpp"
+///////////////////////////////////////////
+// Branch Predictor includes
+///////////////////////////////////////////
+#include "./branch_predictor/btb_line.hpp"
+#include "./branch_predictor/btb.hpp"
+#include "./branch_predictor/twoBit.hpp"
+// #include "./branch_predictor/piecewise.hpp"
+///////////////////////////////////////////
+// Cache Classes
+///////////////////////////////////////////
+// // CACHE INCLUDES
+// #include "./cache.hpp"
+// #include "./cacheSet.hpp"
+// #include "./linha.hpp"
+// #include "./utils.hpp"
 
-// =====================
-//COUNTERS
-#define ONE_BIT 0
-#define TWO_BIT 0
-#define PIECEWISE 1 
-enum taken_t{
-    NOT_TAKEN = -1,
-    TAKEN = 1
-};
-enum status_t{
-    HIT,
-    MISS
-};
-#define BTB_MISS_PENALITY 8
-// End BTB
-#define KILO 1024
-#define MEGA KILO*KILO
-// *************** DEFINES CACHE *****************
-enum cacheLevel_t{
-    L1,
-    LLC
-};
-#define CACHE_LEVELS 2
-#define BLOCK_SIZE 64
-#define BYTES_ON_LINE 24
-//Define L1
-#define L1_SIZE 64*KILO
-#define L1_ASSOCIATIVITY 4
-#define L1_LATENCY 1
-#define L1_SETS (L1_SIZE/BLOCK_SIZE)/L1_ASSOCIATIVITY
-//Define LLC
-#define LLC_SIZE 1*MEGA
-#define LLC_ASSOCIATIVITY 8
-#define LLC_LATENCY 4
-#define LLC_SETS (LLC_SIZE/BLOCK_SIZE)/LLC_ASSOCIATIVITY
-//Define RAM
-#define RAM_LATENCY 170
-#define RAM_SIZE 4 * MEGA * KILO
 
-// **************** END DEFINES ******************
 
 
 #endif  // _ORCS_ORCS_HPP_

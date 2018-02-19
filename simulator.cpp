@@ -6,7 +6,6 @@ orcs_engine_t orcs_engine;
 static void display_use() {
     ORCS_PRINTF("**** OrCS - Ordinary Computer Simulator ****\n\n");
     ORCS_PRINTF("Please provide -t <trace_file_basename>\n");
-    ORCS_PRINTF("Please provide -c <cache_file_config>\n");
 };
 
 // =============================================================================
@@ -72,12 +71,12 @@ int main(int argc, char **argv) {
     orcs_engine.trace_reader->allocate(orcs_engine.arg_trace_file_name);
     orcs_engine.processor->allocate();
     //plbp
-    orcs_engine.plbp->allocate();
-    // aloca config cache
-    orcs_engine.cache = new cache_t[CACHE_LEVELS];
-    for(size_t i = 0; i<CACHE_LEVELS;i++){
-		orcs_engine.cache[i].allocate((uint32_t)i);
-		}
+    // orcs_engine.plbp->allocate();
+    // // aloca config cache
+    // orcs_engine.cache = new cache_t[CACHE_LEVELS];
+    // for(size_t i = 0; i<CACHE_LEVELS;i++){
+	// 	orcs_engine.cache[i].allocate((uint32_t)i);
+	// 	}
 		
 
     orcs_engine.simulator_alive = true;
@@ -92,9 +91,9 @@ int main(int argc, char **argv) {
 	ORCS_PRINTF("End of Simulation\n")
 	orcs_engine.trace_reader->statistics();
     orcs_engine.processor->statistics();
-    for(size_t i = 0; i<CACHE_LEVELS;i++){
-		orcs_engine.cache[i].statistics();
-		}
+    // for(size_t i = 0; i<CACHE_LEVELS;i++){
+	// 	orcs_engine.cache[i].statistics();
+	// 	}
     
     return(EXIT_SUCCESS);
 };

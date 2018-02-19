@@ -1,4 +1,4 @@
-class plbp_t{
+class piecewise_t{
 
 public:
     int8_t ***W;
@@ -8,7 +8,7 @@ public:
     void allocate();
     uint32_t predict(uint64_t address);
     void train(uint64_t address,uint32_t taken);
-     plbp_t();
-    ~plbp_t();
+    piecewise_t();
+    ~piecewise_t();
     
 };

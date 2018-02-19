@@ -10,24 +10,35 @@ FLAGS =   -O3 -ggdb -Wall -Wextra -Werror -std=c++11
 LDFLAGS = -ggdb
 
 ########################################################################
+##FOLDERS
+FD_PACKAGE = package
+FD_PROCESSOR = processor
+FD_BRANCH_PREDICTOR = branch_predictor
+FD_OTHER = utils
 
+
+
+###
 LIBRARY = -lz
 
-SRC_PACKAGE = 		opcode_package.cpp 
+SRC_PACKAGE = 		$(FD_PACKAGE)/opcode_package.cpp $(FD_PACKAGE)/uop_package.cpp
 
 SRC_TRACE_READER = 	trace_reader.cpp
 
-SRC_PROCESSOR =	 	processor.cpp 
-SRC_BRANCH_PREDICTOR = plbp.cpp
+SRC_PROCESSOR =	 	$(FD_PROCESSOR)/processor.cpp 
+SRC_BRANCH_PREDICTOR = $(FD_BRANCH_PREDICTOR)/plbp.cpp
 SRC_CACHE = cache.cpp
-SRC_OTHER = utils.cpp
+SRC_OTHER = $(FD_OTHER)/circular_buffer.cpp
 SRC_CORE =  simulator.cpp orcs_engine.cpp\
 			$(SRC_TRACE_READER)	\
 			$(SRC_PACKAGE) \
-			$(SRC_PROCESSOR) \
-			$(SRC_BRANCH_PREDICTOR)\
-			$(SRC_CACHE)\
-			$(SRC_OTHER)
+			$(SRC_PROCESSOR)
+			#$(SRC_OTHER) \
+			
+			
+			#$(SRC_BRANCH_PREDICTOR)\
+			#$(SRC_CACHE)\
+			
 
 ########################################################
 OBJS_CORE = ${SRC_CORE:.cpp=.o}

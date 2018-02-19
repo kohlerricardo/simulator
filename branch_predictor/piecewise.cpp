@@ -1,12 +1,13 @@
-#include "simulator.hpp"
+#include "../simulator.hpp"
 #include <algorithm>
 #include <cmath>
-plbp_t::plbp_t(){
+
+piecewise_t::piecewise_t(){
     this->W = NULL;
     this->GA = NULL;
     this->GHR = NULL;
 };
-plbp_t::~plbp_t(){
+piecewise_t::~piecewise_t(){
     if((this->W)) {
         for (size_t i = 0; i < N; i++)
         {            
@@ -24,7 +25,7 @@ plbp_t::~plbp_t(){
     if(this->GHR) delete [] GHR;
 };
 
-void plbp_t::allocate(){
+void piecewise_t::allocate(){
     this->W = new int8_t**[N];
     
     for (size_t i = 0; i < N; i++)
@@ -36,12 +37,12 @@ void plbp_t::allocate(){
             
         }
     }
-    
+    memset(this->W,0,(M*N*H*sizeof(uint8_t)));    
     this->GA = new uint32_t[M];
     this->GHR = new uint8_t[H];
     this->saida = 0;
 }
-uint32_t plbp_t::predict(uint64_t address){
+uint32_t piecewise_t::predict(uint64_t address){
     uint32_t indexA = address%N;
     uint32_t indexB = address%M;
     this->saida = this->W[indexA][indexB][0];
@@ -54,7 +55,7 @@ uint32_t plbp_t::predict(uint64_t address){
     return (this->saida >=0)? TAKEN: NOT_TAKEN;
     
 }
-void plbp_t::train(uint64_t address,uint32_t taken){
+void piecewise_t::train(uint64_t address,uint32_t taken){
     uint32_t indexA = address%N;
     uint32_t indexB = address%M;
     // fprintf(stderr,"%f\n",this->saida);
