@@ -122,7 +122,7 @@ class utils_t {
 
         static uint64_t get_power_of_two(uint64_t n);
         static uint32_t check_if_power_of_two(uint64_t n);
-        static uint64_t hash_function(hash_function_t type, uint64_t input1, uint64_t input2, uint64_t bit_size);
+        // static uint64_t hash_function(hash_function_t type, uint64_t input1, uint64_t input2, uint64_t bit_size);
         static uint64_t fill_bit(uint32_t start, uint32_t end);
         static uint32_t max(uint32_t val1, uint32_t val2);
         static uint64_t max(uint64_t val1, uint64_t val2);
@@ -139,7 +139,7 @@ class utils_t {
 
         static std::string print_mask_of_bits(uint32_t line_size, uint32_t line_number, uint32_t assoc);
         static std::string progress_pretty(uint64_t actual, uint64_t total);
-        static std::string connections_pretty(cache_memory_t *cache_memory, uint32_t level);
+        // static std::string connections_pretty(cache_memory_t *cache_memory, uint32_t level);
         static std::string address_to_binary(uint64_t address);
 
         static std::string bool_to_string(bool input_int);

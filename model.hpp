@@ -3,41 +3,65 @@
 Arquivo definindo os parametros do modelo de processador
 */
 
-#ifndef _SANDY_BRIDGE_HPP_
-#define _SANDY_BRIDGE_HPP_
+#ifndef _SKYLAKE_HPP_
+#define _SKYLAKE_HPP_
+// =========== PROCESSOR =============
 // PROCESSOR STAGES WIDHT
-#define FETCH_DECODE_WIDTH 4
-#define DECODE_BUFFER 32
-#define EXECUTE_WIDTH 6
+#define FETCH_WIDTH 4
+#define DECODE_WIDTH 5
+#define RENAME_WIDTH 6
+#define DISPATCH_WIDTH 8
+#define COMMIT_WIDTH 8
+// PROCESSOR LATENCIES STAGES
+#define FETCH_LATENCY 1
+#define DECODE_LATENCY 1
+#define RENAME_LATENCY 1
+#define DISPATCH_LATENCY 1
+//ULAS INTEGER LATENCY
+#define LATENCY_INTEGER_ALU 1
+#define LATENCY_INTEGER_MUL 3
+#define LATENCY_INTEGER_DIV 8
+//FP ULAS LATENCY
+#define LATENCY_FP_DIV 8
+#define LATENCY_FP_MUL 4
+#define LATENCY_FP_ALU 4
+
+// QTDE UFS
+#define INTEGER_ALU 4
+#define INTEGER_MUL 1
+#define INTEGER_DIV 1
+#define FP_ALU 1
+#define FP_MUL 1
+#define FP_DIV 1
+#define LOAD_UNIT 2
+#define STORE_UNIT 1
+
+// PROCESSOR BUFFERS SIZE
+#define FETCH_BUFFER 58
+#define DECODE_BUFFER 128
+#define ROB_SIZE 224
+#define UNIFIED_RS 97
+//MOB
+#define LOAD_BUFFER 72
+#define STORE_BUFFER 56
 
 
-#define UNIFIED_RS 54
-#define LOAD_BUFFER 64
-#define STORE_BUFFER 36
 // ===========BRANCH PREDICTOR=============
 #define BTB_ENTRIES 4096
 #define BTB_WAYS 2
 //COUNTERS
 #define TWO_BIT 0
 #define PIECEWISE 1 
-enum taken_t{
-    NOT_TAKEN = 0,
-    TAKEN = 1
-};
-enum status_t{
-    HIT,
-    MISS
-};
-#define BTB_MISS_PENALITY 8
 
-// =====================
-// include e defines do branch predictor
-// #define N 128
-// #define M 128
-// #define H 43
-#define N 256
-#define M 64
-#define H 63
+
+#define BTB_MISS_PENALITY 8
+#define MISSPREDICTION_PENALITY 15
+#define N 128
+#define M 128
+#define H 43
+// #define N 64
+// #define M 32
+// #define H 15
 #define  THETA ((2.14*(H)) + 20.58)
 // ===========END BRANCH PREDICTOR=============
 // *************** DEFINES CACHE *****************
@@ -45,30 +69,46 @@ enum status_t{
 #define KILO 1024
 #define MEGA KILO*KILO
 
-enum cacheLevel_t{
-    L1,
-    L2,
-    LLC
-};
-#define CACHE_LEVELS 2
-#define BLOCK_SIZE 64
-#define BYTES_ON_LINE 24
-//Define L1
-#define L1_SIZE 32*KILO
-#define L1_ASSOCIATIVITY 8
-#define L1_LATENCY 1
-#define L1_SETS (L1_SIZE/BLOCK_SIZE)/L1_ASSOCIATIVITY
-//Define L2
+
+// =====================CACHES=======================
+// ATTR COMMON
+#define LINE_SIZE 64
+#define CACHE_LEVELS 3
+// ==================== LEVEL 1 =====================
+// D$
+#define L1_DATA_SIZE 32*KILO
+#define L1_DATA_ASSOCIATIVITY 8
+#define L1_DATA_LATENCY 4
+#define L1_DATA_SETS (L1_SIZE/LINE_SIZE)/L1_ASSOCIATIVITY
+// I$
+#define L1_INST_SIZE 32*KILO
+#define L1_INST_ASSOCIATIVITY 8
+#define L1_INST_LATENCY 4
+#define L1_INST_SETS (L1_SIZE/LINE_SIZE)/L1_ASSOCIATIVITY
+// ==================== LEVEL 1 =====================
+// ==================== LEVEL 2 =====================
 #define L2_SIZE 256*KILO
-#define L2_ASSOCIATIVITY 8
-#define L2_LATENCY 4
-#define L2_SETS (LLC_SIZE/BLOCK_SIZE)/LLC_ASSOCIATIVITY
-//Define RAM
+#define L2_ASSOCIATIVITY 4
+#define L2_LATENCY 12
+#define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
+// ==================== LEVEL 2 =====================
+// ==================== LLC     =====================
+#define LLC_SIZE 2*MEGA
+#define LLC_ASSOCIATIVITY 16
+#define LLC_LATENCY 44
+#define LLC_SETS (LLC_SIZE/BLOCK_SIZE)/LLC_ASSOCIATIVITY
+// ==================== LLC     =====================
+// =====================CACHES=======================
+
+// =====================RAM=======================
 #define RAM_LATENCY 170
 #define RAM_SIZE 4 * MEGA * KILO
+// =====================RAM=======================
+
+// =====================CHECKS=======================
+#define SANITY_CHECK 1
+
+
 
 // **************** END DEFINES ******************
-
-
-
-#endif //_SANDY_BRIDGE_HPP_
+#endif //_SKYLAKE_HPP_

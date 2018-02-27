@@ -25,18 +25,21 @@ SRC_PACKAGE = 		$(FD_PACKAGE)/opcode_package.cpp $(FD_PACKAGE)/uop_package.cpp
 
 SRC_TRACE_READER = 	trace_reader.cpp
 
-SRC_PROCESSOR =	 	$(FD_PROCESSOR)/processor.cpp 
-SRC_BRANCH_PREDICTOR = $(FD_BRANCH_PREDICTOR)/plbp.cpp
+SRC_PROCESSOR =		$(FD_PROCESSOR)/processor.cpp 
+SRC_BRANCH_PREDICTOR =	$(FD_BRANCH_PREDICTOR)/branch_predictor.cpp\
+						$(FD_BRANCH_PREDICTOR)/piecewise.cpp
+						#$(FD_BRANCH_PREDICTOR)/twoBit.cpp
 SRC_CACHE = cache.cpp
-SRC_OTHER = $(FD_OTHER)/circular_buffer.cpp
+SRC_OTHER = $(FD_OTHER)/utils.cpp\
+			$(FD_OTHER)/enumerations.cpp\
+			$(FD_OTHER)/sanityTest.cpp
 SRC_CORE =  simulator.cpp orcs_engine.cpp\
-			$(SRC_TRACE_READER)	\
-			$(SRC_PACKAGE) \
-			$(SRC_PROCESSOR)
-			#$(SRC_OTHER) \
-			
-			
-			#$(SRC_BRANCH_PREDICTOR)\
+			$(SRC_TRACE_READER)\
+			$(SRC_PACKAGE)\
+			$(SRC_PROCESSOR)\
+			$(SRC_OTHER)\
+			$(SRC_BRANCH_PREDICTOR)
+
 			#$(SRC_CACHE)\
 			
 

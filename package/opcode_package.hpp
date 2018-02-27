@@ -8,8 +8,8 @@ class opcode_package_t {
         uint64_t opcode_address;
         uint32_t opcode_size;
 
-        uint32_t read_regs[16];
-        uint32_t write_regs[16];
+        int32_t read_regs[16];
+        int32_t write_regs[16];
 
         uint32_t base_reg;
         uint32_t index_reg;
@@ -33,7 +33,18 @@ class opcode_package_t {
         bool is_prefetch;
 
         // ====================================================================
+        /// Status Control
+        // ====================================================================
+        package_state_t status;
+        uint64_t readyAt;
+        uint64_t opcode_number;
+        // ====================================================================
         /// Methods
         // ====================================================================
         opcode_package_t();
+        void package_clean();
+        void updatePackageUntrated(uint32_t stallTime);
+        void updatePackageReady(uint32_t stallTime);
+        std::string content_to_string();
+       
 };

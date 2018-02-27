@@ -13,10 +13,14 @@ class orcs_engine_t {
 
         /// Components modeled
         trace_reader_t *trace_reader;
-        // branch predictor
-        // plbp_t *plbp;
-        //processor
+        //==================
+        //Processor
+        //==================
         processor_t *processor;
+        //==================
+        //Branch Predictor
+        //==================
+        branch_predictor_t *branchPredictor;
         //cache
         // cache_t *cache;
         // ====================================================================

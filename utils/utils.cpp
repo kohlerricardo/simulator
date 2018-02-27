@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "./sinuca.hpp"
+#include "../simulator.hpp"
 #include <string>
 
 // ============================================================================= NEW
@@ -78,119 +78,119 @@ uint32_t utils_t::check_if_power_of_two(uint64_t n) {
     }
 };
 // =============================================================================
-uint64_t utils_t::hash_function(hash_function_t type, uint64_t input1, uint64_t input2, uint64_t bit_size) {
-    uint32_t i;
-    uint64_t bit_size_mask = 0;
-    uint64_t input1_bit_mask = 0;
-    uint64_t input2_bit_mask = 0;
-    uint64_t output = 0;
+// uint64_t utils_t::hash_function(hash_function_t type, uint64_t input1, uint64_t input2, uint64_t bit_size) {
+//     uint32_t i;
+//     uint64_t bit_size_mask = 0;
+//     uint64_t input1_bit_mask = 0;
+//     uint64_t input2_bit_mask = 0;
+//     uint64_t output = 0;
 
-    for (i = 0; i < bit_size; i++) {
-        bit_size_mask |= 1 << i;
-    }
+//     for (i = 0; i < bit_size; i++) {
+//         bit_size_mask |= 1 << i;
+//     }
 
-    switch (type) {
-        case HASH_FUNCTION_XOR_SIMPLE:
-            output = input1 ^ input2;
-            output &= bit_size_mask;
-        break;
+//     switch (type) {
+//         case HASH_FUNCTION_XOR_SIMPLE:
+//             output = input1 ^ input2;
+//             output &= bit_size_mask;
+//         break;
 
-        case HASH_FUNCTION_INPUT1_ONLY:
-            output = input1 & bit_size_mask;
-        break;
+//         case HASH_FUNCTION_INPUT1_ONLY:
+//             output = input1 & bit_size_mask;
+//         break;
 
-        case HASH_FUNCTION_INPUT2_ONLY:
-            output = input2 & bit_size_mask;
-        break;
+//         case HASH_FUNCTION_INPUT2_ONLY:
+//             output = input2 & bit_size_mask;
+//         break;
 
-        case HASH_FUNCTION_INPUT1_2BITS:
-            ERROR_ASSERT_PRINTF(bit_size >= 2, "Bit size is smaller than the number of bits from input1.\n")
-            for (i = 0; i < 2; i++) {
-                input1_bit_mask |= (1 << i);
-            }
-            input1 &= input1_bit_mask;
-            input1 = input1 << (bit_size - 2);
+//         case HASH_FUNCTION_INPUT1_2BITS:
+//             ERROR_ASSERT_PRINTF(bit_size >= 2, "Bit size is smaller than the number of bits from input1.\n")
+//             for (i = 0; i < 2; i++) {
+//                 input1_bit_mask |= (1 << i);
+//             }
+//             input1 &= input1_bit_mask;
+//             input1 = input1 << (bit_size - 2);
 
-            for (i = 0; i < bit_size - 2; i++) {
-                input2_bit_mask |= (1 << i);
-            }
-            input2 &= input2_bit_mask;
+//             for (i = 0; i < bit_size - 2; i++) {
+//                 input2_bit_mask |= (1 << i);
+//             }
+//             input2 &= input2_bit_mask;
 
-            /// Concatenate both inputs
-            output = input1 | input2;
-        break;
+//             /// Concatenate both inputs
+//             output = input1 | input2;
+//         break;
 
-        case HASH_FUNCTION_INPUT1_4BITS:
-            ERROR_ASSERT_PRINTF(bit_size >= 4, "Bit size is smaller than the number of bits from input1.\n")
-            for (i = 0; i < 4; i++) {
-                input1_bit_mask |= (1 << i);
-            }
-            input1 &= input1_bit_mask;
-            input1 = input1 << (bit_size - 4);
+//         case HASH_FUNCTION_INPUT1_4BITS:
+//             ERROR_ASSERT_PRINTF(bit_size >= 4, "Bit size is smaller than the number of bits from input1.\n")
+//             for (i = 0; i < 4; i++) {
+//                 input1_bit_mask |= (1 << i);
+//             }
+//             input1 &= input1_bit_mask;
+//             input1 = input1 << (bit_size - 4);
 
-            for (i = 0; i < bit_size - 4; i++) {
-                input2_bit_mask |= (1 << i);
-            }
-            input2 &= input2_bit_mask;
+//             for (i = 0; i < bit_size - 4; i++) {
+//                 input2_bit_mask |= (1 << i);
+//             }
+//             input2 &= input2_bit_mask;
 
-            /// Concatenate both inputs
-            output = input1 | input2;
+//             /// Concatenate both inputs
+//             output = input1 | input2;
 
-        break;
+//         break;
 
-        case HASH_FUNCTION_INPUT1_8BITS:
-            ERROR_ASSERT_PRINTF(bit_size >= 8, "Bit size is smaller than the number of bits from input1.\n")
-            for (i = 0; i < 8; i++) {
-                input1_bit_mask |= (1 << i);
-            }
-            input1 &= input1_bit_mask;
-            input1 = input1 << (bit_size - 8);
+//         case HASH_FUNCTION_INPUT1_8BITS:
+//             ERROR_ASSERT_PRINTF(bit_size >= 8, "Bit size is smaller than the number of bits from input1.\n")
+//             for (i = 0; i < 8; i++) {
+//                 input1_bit_mask |= (1 << i);
+//             }
+//             input1 &= input1_bit_mask;
+//             input1 = input1 << (bit_size - 8);
 
-            for (i = 0; i < bit_size - 8; i++) {
-                input2_bit_mask |= (1 << i);
-            }
-            input2 &= input2_bit_mask;
+//             for (i = 0; i < bit_size - 8; i++) {
+//                 input2_bit_mask |= (1 << i);
+//             }
+//             input2 &= input2_bit_mask;
 
-            /// Concatenate both inputs
-            output = input1 | input2;
-        break;
+//             /// Concatenate both inputs
+//             output = input1 | input2;
+//         break;
 
-        case HASH_FUNCTION_INPUT1_16BITS:
-            ERROR_ASSERT_PRINTF(bit_size >= 16, "Bit size is smaller than the number of bits from input1.\n")
-            for (i = 0; i < 16; i++) {
-                input1_bit_mask |= (1 << i);
-            }
-            input1 &= input1_bit_mask;
-            input1 = input1 << (bit_size - 16);
+//         case HASH_FUNCTION_INPUT1_16BITS:
+//             ERROR_ASSERT_PRINTF(bit_size >= 16, "Bit size is smaller than the number of bits from input1.\n")
+//             for (i = 0; i < 16; i++) {
+//                 input1_bit_mask |= (1 << i);
+//             }
+//             input1 &= input1_bit_mask;
+//             input1 = input1 << (bit_size - 16);
 
-            for (i = 0; i < bit_size - 16; i++) {
-                input2_bit_mask |= (1 << i);
-            }
-            input2 &= input2_bit_mask;
+//             for (i = 0; i < bit_size - 16; i++) {
+//                 input2_bit_mask |= (1 << i);
+//             }
+//             input2 &= input2_bit_mask;
 
-            /// Concatenate both inputs
-            output = input1 | input2;
-        break;
+//             /// Concatenate both inputs
+//             output = input1 | input2;
+//         break;
 
-        case HASH_FUNCTION_INPUT1_32BITS:
-            ERROR_ASSERT_PRINTF(bit_size >= 32, "Bit size is smaller than the number of bits from input1.\n")
-            for (i = 0; i < 32; i++) {
-                input1_bit_mask |= (1 << i);
-            }
-            input1 &= input1_bit_mask;
-            input1 = input1 << (bit_size - 32);
+//         case HASH_FUNCTION_INPUT1_32BITS:
+//             ERROR_ASSERT_PRINTF(bit_size >= 32, "Bit size is smaller than the number of bits from input1.\n")
+//             for (i = 0; i < 32; i++) {
+//                 input1_bit_mask |= (1 << i);
+//             }
+//             input1 &= input1_bit_mask;
+//             input1 = input1 << (bit_size - 32);
 
-            for (i = 0; i < bit_size - 32; i++) {
-                input2_bit_mask |= (1 << i);
-            }
-            input2 &= input2_bit_mask;
+//             for (i = 0; i < bit_size - 32; i++) {
+//                 input2_bit_mask |= (1 << i);
+//             }
+//             input2 &= input2_bit_mask;
 
-            /// Concatenate both inputs
-            output = input1 | input2;
-        break;
-    }
-    return output;
-}
+//             /// Concatenate both inputs
+//             output = input1 | input2;
+//         break;
+//     }
+//     return output;
+// }
 
 // =============================================================================
 uint64_t utils_t::fill_bit(uint32_t start, uint32_t end) {
@@ -291,46 +291,46 @@ std::string utils_t::progress_pretty(uint64_t actual, uint64_t total) {
 
 
 // =============================================================================
-std::string utils_t::connections_pretty(cache_memory_t *cache_memory, uint32_t level) {
-    /// Auxiliary strings
-    char tmp_string[CONVERSION_SIZE];
-    std::string answer;
-    answer.clear();
+// std::string utils_t::connections_pretty(cache_memory_t *cache_memory, uint32_t level) {
+//     /// Auxiliary strings
+//     char tmp_string[CONVERSION_SIZE];
+//     std::string answer;
+//     answer.clear();
 
-    for (uint32_t j = 0; j < level; j++) {
-        answer += "|  ";
-    }
-    answer += "|--- ";
-    answer += cache_memory->get_label();
-    answer += " (L";
-    uint32_to_char(tmp_string, cache_memory->get_hierarchy_level());
-    answer += tmp_string;
-    answer += ")\n";
+//     for (uint32_t j = 0; j < level; j++) {
+//         answer += "|  ";
+//     }
+//     answer += "|--- ";
+//     answer += cache_memory->get_label();
+//     answer += " (L";
+//     uint32_to_char(tmp_string, cache_memory->get_hierarchy_level());
+//     answer += tmp_string;
+//     answer += ")\n";
 
-    /// Find Next Cache Level
-    container_ptr_cache_memory_t *higher_level_cache = cache_memory->get_higher_level_cache();
-    for (uint32_t i = 0; i < higher_level_cache->size(); i++) {
-        cache_memory_t *higher_cache = higher_level_cache[0][i];
-        answer += connections_pretty(higher_cache, level + 1);
-    }
+//     /// Find Next Cache Level
+//     container_ptr_cache_memory_t *higher_level_cache = cache_memory->get_higher_level_cache();
+//     for (uint32_t i = 0; i < higher_level_cache->size(); i++) {
+//         cache_memory_t *higher_cache = higher_level_cache[0][i];
+//         answer += connections_pretty(higher_cache, level + 1);
+//     }
 
-    /// Find Processor
-    if (higher_level_cache->empty()) {
-        for (uint32_t i = 0; i < sinuca_engine.get_processor_array_size(); i++) {
-            processor_t *processor = sinuca_engine.processor_array[i];
-            if (processor->get_data_cache() == cache_memory || processor->get_inst_cache() == cache_memory) {
-                for (uint32_t j = 0; j < level + 1; j++) {
-                    answer += "|  ";
-                }
-                answer += "|--- ";
-                answer += processor->get_label();
-                answer += "\n";
-            }
-        }
-    }
+//     /// Find Processor
+//     if (higher_level_cache->empty()) {
+//         for (uint32_t i = 0; i < sinuca_engine.get_processor_array_size(); i++) {
+//             processor_t *processor = sinuca_engine.processor_array[i];
+//             if (processor->get_data_cache() == cache_memory || processor->get_inst_cache() == cache_memory) {
+//                 for (uint32_t j = 0; j < level + 1; j++) {
+//                     answer += "|  ";
+//                 }
+//                 answer += "|--- ";
+//                 answer += processor->get_label();
+//                 answer += "\n";
+//             }
+//         }
+//     }
 
-    return answer;
-};
+//     return answer;
+// };
 
 // =============================================================================
 void utils_t::bool_to_char(char *string, bool input_int) {
@@ -492,35 +492,35 @@ std::string utils_t::int64_to_string(int64_t input_int) {
  * On failure, returns 0.0, 0.0
  */
 // ~ void utils_t::process_mem_usage(double &vm_usage, double &resident_set) {
-void utils_t::process_mem_usage(double *vm_usage, double *resident_set) {
-    using std::ios_base;
-    using std::ifstream;
-    using std::string;
+// void utils_t::process_mem_usage(double *vm_usage, double *resident_set) {
+//     using std::ios_base;
+//     using std::ifstream;
+//     using std::string;
 
-    *vm_usage     = 0.0;
-    *resident_set = 0.0;
+//     *vm_usage     = 0.0;
+//     *resident_set = 0.0;
 
-    /// 'file' stat seems to give the most reliable results
-    ifstream stat_stream("/proc/self/stat", ios_base::in);
+//     /// 'file' stat seems to give the most reliable results
+//     ifstream stat_stream("/proc/self/stat", ios_base::in);
 
-    /// dummy vars for leading entries in stat that we don't care about
-    string pid, comm, state, ppid, pgrp, session, tty_nr;
-    string tpgid, flags, minflt, cminflt, majflt, cmajflt;
-    string utime, stime, cutime, cstime, priority, nice;
-    string O, itrealvalue, starttime;
+//     /// dummy vars for leading entries in stat that we don't care about
+//     string pid, comm, state, ppid, pgrp, session, tty_nr;
+//     string tpgid, flags, minflt, cminflt, majflt, cmajflt;
+//     string utime, stime, cutime, cstime, priority, nice;
+//     string O, itrealvalue, starttime;
 
-    /// the two fields we want
-    uint64_t vsize;
-    uint64_t rss;
+//     /// the two fields we want
+//     uint64_t vsize;
+//     uint64_t rss;
 
-    stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
-               >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
-               >> utime >> stime >> cutime >> cstime >> priority >> nice
-               >> O >> itrealvalue >> starttime >> vsize >> rss;       /// Don't care about the rest
+//     stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+//                >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+//                >> utime >> stime >> cutime >> cstime >> priority >> nice
+//                >> O >> itrealvalue >> starttime >> vsize >> rss;       /// Don't care about the rest
 
-    stat_stream.close();
+//     stat_stream.close();
 
-    double page_size_mb = sysconf(_SC_PAGE_SIZE) / 1024.0 / 1024.0;     /// Obtain the real memory page size
-    *vm_usage     = vsize / 1024.0 / 1024.0;
-    *resident_set = rss * page_size_mb;
-};
+//     double page_size_mb = sysconf(_SC_PAGE_SIZE) / 1024.0 / 1024.0;     /// Obtain the real memory page size
+//     *vm_usage     = vsize / 1024.0 / 1024.0;
+//     *resident_set = rss * page_size_mb;
+// };

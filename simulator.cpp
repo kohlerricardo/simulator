@@ -69,9 +69,15 @@ int main(int argc, char **argv) {
     /// Call all the allocate's
     orcs_engine.allocate();
     orcs_engine.trace_reader->allocate(orcs_engine.arg_trace_file_name);
+    //==================
+    //Processor
+    //==================
     orcs_engine.processor->allocate();
-    //plbp
-    // orcs_engine.plbp->allocate();
+    //==================
+    //Branch Predictor
+    //==================
+    orcs_engine.branchPredictor->allocate();
+
     // // aloca config cache
     // orcs_engine.cache = new cache_t[CACHE_LEVELS];
     // for(size_t i = 0; i<CACHE_LEVELS;i++){
@@ -91,9 +97,16 @@ int main(int argc, char **argv) {
 	ORCS_PRINTF("End of Simulation\n")
 	orcs_engine.trace_reader->statistics();
     orcs_engine.processor->statistics();
+    orcs_engine.branchPredictor->statistics();
     // for(size_t i = 0; i<CACHE_LEVELS;i++){
 	// 	orcs_engine.cache[i].statistics();
 	// 	}
-    
+#if SANITY_CHECK
+    fprintf(stdout,"\n#####################################\n");
+    fprintf(stdout,"\n*** Teste de Sanidade ****\n");
+    fprintf(stdout,"\n#####################################\n");
+    sanity_test_t *test = new sanity_test_t;
+    test->check();
+#endif
     return(EXIT_SUCCESS);
 };

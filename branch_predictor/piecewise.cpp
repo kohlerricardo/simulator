@@ -26,6 +26,7 @@ piecewise_t::~piecewise_t(){
 };
 
 void piecewise_t::allocate(){
+    // fprintf(stderr,"alocando piecewise");
     this->W = new int8_t**[N];
     
     for (size_t i = 0; i < N; i++)
@@ -37,12 +38,12 @@ void piecewise_t::allocate(){
             
         }
     }
-    memset(this->W,0,(M*N*H*sizeof(uint8_t)));    
+    // memset(this->W,0,((M*N*H)*sizeof(int8_t)));    
     this->GA = new uint32_t[M];
     this->GHR = new uint8_t[H];
     this->saida = 0;
 }
-uint32_t piecewise_t::predict(uint64_t address){
+taken_t piecewise_t::predict(uint64_t address){
     uint32_t indexA = address%N;
     uint32_t indexB = address%M;
     this->saida = this->W[indexA][indexB][0];
@@ -55,12 +56,12 @@ uint32_t piecewise_t::predict(uint64_t address){
     return (this->saida >=0)? TAKEN: NOT_TAKEN;
     
 }
-void piecewise_t::train(uint64_t address,uint32_t taken){
+void piecewise_t::train(uint64_t address,taken_t predict, taken_t correct){
     uint32_t indexA = address%N;
     uint32_t indexB = address%M;
     // fprintf(stderr,"%f\n",this->saida);
-    if((abs(this->saida)<THETA)||(this->predict(address) != taken)){
-        if(taken==TAKEN){
+    if((abs(this->saida)<THETA)||(predict != correct)){
+        if(correct==TAKEN){
             this->W[indexA][indexB][0] = this->W[indexA][indexB][0] + 1;
         }else{
             this->W[indexA][indexB][0] = this->W[indexA][indexB][0] - 1;
@@ -80,5 +81,5 @@ void piecewise_t::train(uint64_t address,uint32_t taken){
         this->GHR[i+1] = this->GHR[i];
     }
     this->GA[0]=indexB;
-    this->GHR[0]=taken;
+    this->GHR[0]=correct;
 };

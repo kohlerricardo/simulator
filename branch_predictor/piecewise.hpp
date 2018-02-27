@@ -6,8 +6,8 @@ public:
     uint8_t *GHR;
     float saida;
     void allocate();
-    uint32_t predict(uint64_t address);
-    void train(uint64_t address,uint32_t taken);
+    taken_t predict(uint64_t address);
+    void train(uint64_t address,taken_t predict, taken_t correct);
     piecewise_t();
     ~piecewise_t();
     

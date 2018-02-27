@@ -1,4 +1,4 @@
-#include "simulator.hpp"
+#include "../simulator.hpp"
 
 
 cache_t::cache_t()
@@ -15,7 +15,7 @@ void cache_t::allocate(uint32_t level){
 	
 	switch(level){
 		case L1:{
-			this->shiftData = utils_t::powerOf2(BLOCK_SIZE);
+			this->shiftData = utils_t::powerOf2(LINE_SIZE);
 			this->level = level;
 			this->cacheHit=0;
 			this->cacheMiss=0;
@@ -30,8 +30,24 @@ void cache_t::allocate(uint32_t level){
 			}
 			break;
 			}
+		case L2:{
+		this->shiftData = utils_t::powerOf2(LINE_SIZE);
+		this->level = level;
+		this->cacheHit=0;
+		this->cacheMiss=0;
+		this->cacheAccess=0;
+		this->nSets = L1_SETS;
+		this->nLines = L1_ASSOCIATIVITY;
+		this->sets = new cacheSet_t[L1_SETS];
+		for (size_t i = 0; i < L1_SETS; i++)
+		{
+			this->sets[i].linhas = new linha_t[L1_ASSOCIATIVITY];
+			std::memset(this->sets[i].linhas,0,BYTES_ON_LINE);
+		}
+		break;
+		}
 		case LLC:{
-			this->shiftData = utils_t::powerOf2(BLOCK_SIZE);
+			this->shiftData = utils_t::powerOf2(LINE_SIZE);
 			this->level = level;
 			this->cacheHit=0;
 			this->cacheMiss=0;
