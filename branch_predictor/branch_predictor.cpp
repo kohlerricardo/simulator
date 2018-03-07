@@ -1,11 +1,18 @@
 #include "../simulator.hpp"
-
+#include<string.h>
 branch_predictor_t::branch_predictor_t(){
     this->btb = NULL;
+	this->branchPredictor = NULL;
 };
 branch_predictor_t::~branch_predictor_t(){
-    if(this->btb) delete[] this->btb;
-    if(this->branchPredictor) delete[] this->branchPredictor;
+    if(this->branchPredictor != NULL){
+		delete this->branchPredictor;
+	}
+
+	delete[] this->btb;
+	//Setting pointers to null
+	this->btb = NULL;
+	this->branchPredictor = NULL;
 };
 
 void branch_predictor_t::allocate(){
@@ -14,7 +21,7 @@ void branch_predictor_t::allocate(){
     for (size_t i = 0; i < size; i++)
     {
         this->btb[i].btb_entry = new btb_line_t[BTB_WAYS];
-        // memset(&this->btb[i],0,(8*sizeof(int)));
+    	std::memset(&this->btb[i].btb_entry[0],0,(BTB_WAYS*sizeof(btb_line_t)));
     }
     //allocate branch predictor
 #if TWO_BIT
@@ -114,6 +121,8 @@ uint32_t branch_predictor_t::solveBranch(opcode_package_t branchInstrucion, opco
     // Predict Branch
     //==========
     taken_t branchStatus = this->branchPredictor->predict(branchInstrucion.opcode_address);
+	// printf("this->index %u, this->way %hhu\n",this->index,this->way);
+	// sleep(1);
     if((nextInstruction.opcode_address != this->btb[this->index].btb_entry[this->way].targetAddress)&&
         (this->btb[this->index].btb_entry[this->way].typeBranch == BRANCH_COND)){
             this->branchTaken++;

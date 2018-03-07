@@ -34,3 +34,41 @@ const char* get_enum_instruction_operation_char(instruction_operation_t type) {
     ERROR_PRINTF("Wrong INSTRUCTION_OPERATION\n");
     return "FAIL";
 };
+// ============================================================================
+/// Enumerates the processor stages, used to indicate when the branch will be solved
+const char *get_enum_processor_stage_char(processor_stage_t type) {
+    switch (type) {
+        case PROCESSOR_STAGE_FETCH:     return "FETCH    "; break;
+        case PROCESSOR_STAGE_DECODE:    return "DECODE   "; break;
+        case PROCESSOR_STAGE_RENAME:    return "RENAME   "; break;
+        case PROCESSOR_STAGE_DISPATCH:  return "DISPATCH "; break;
+        case PROCESSOR_STAGE_EXECUTION: return "EXECUTION"; break;
+        case PROCESSOR_STAGE_COMMIT:    return "COMMIT   "; break;
+    };
+    ERROR_PRINTF("Wrong PROCESSOR_STAGE\n");
+    return "FAIL";
+};
+// ============================================================================
+/// Enumerates the MEMORY OPERATION OF MOB,debug only
+const char *get_enum_memory_operation_char(memory_operation_t type) {
+    switch (type) {
+        case MEMORY_OPERATION_READ:     return "MEMORY_OPERATION_READ "; break;
+        case MEMORY_OPERATION_WRITE:    return "MEMORY_OPERATION_WRITE "; break;
+        case MEMORY_OPERATION_FREE:    return "MEMORY_OPERATION_FREE "; break;
+    };
+    ERROR_PRINTF("Wrong MEMORY_OPERATION\n");
+    return "FAIL";
+};
+// ============================================================================
+/// Enumerates the package state, 
+const char *get_enum_package_state_char(package_state_t type) {
+    switch (type) {
+        case PACKAGE_STATE_FREE:     return "FREE "; break;
+        case PACKAGE_STATE_READY:     return "READY "; break;
+        case PACKAGE_STATE_TRANSMIT:     return "TRANSMIT "; break;
+        case PACKAGE_STATE_UNTREATED:     return "UNTRATED "; break;
+        case PACKAGE_STATE_WAIT:     return "WAIT "; break;
+    };
+    ERROR_PRINTF("Wrong PACKAGE_STATE\n");
+    return "FAIL";
+};

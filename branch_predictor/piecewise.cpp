@@ -8,21 +8,24 @@ piecewise_t::piecewise_t(){
     this->GHR = NULL;
 };
 piecewise_t::~piecewise_t(){
-    if((this->W)) {
+    if(this->W) {
         for (size_t i = 0; i < N; i++)
         {            
             for (size_t j = 0; j < M; j++)
             {   
                 delete [] this->W[i][j];
+                this->W[i][j] = NULL;
             }
             delete[] this->W[i];
-
+            this->W[i] = NULL;
         }
     }
-    delete[] W;
-    
+    delete[] this->W;
+    this->W=NULL;
     if(this->GA) delete [] GA;
     if(this->GHR) delete [] GHR;
+    this->GA = NULL;
+    this->GHR = NULL;
 };
 
 void piecewise_t::allocate(){
@@ -35,12 +38,13 @@ void piecewise_t::allocate(){
         for (size_t j = 0; j < M; j++)
         {
             this->W[i][j] = new int8_t[H+1];
-            
+            std::memset(&this->W[i][j][0],0,((H+1)*sizeof(int8_t)));
         }
-    }
-    // memset(this->W,0,((M*N*H)*sizeof(int8_t)));    
+    } 
     this->GA = new uint32_t[M];
     this->GHR = new uint8_t[H];
+    std::memset(&this->GA[0],0,(M*sizeof(uint32_t)));
+    std::memset(&this->GHR[0],0,(H*sizeof(uint8_t)));
     this->saida = 0;
 }
 taken_t piecewise_t::predict(uint64_t address){
@@ -75,7 +79,7 @@ void piecewise_t::train(uint64_t address,taken_t predict, taken_t correct){
             }
         }
     }
-    for (size_t i = 0; i < H; i++)
+    for (size_t i = 0; i < (H-1); i++)
     {
         this->GA[i+1] = this->GA[i];
         this->GHR[i+1] = this->GHR[i];

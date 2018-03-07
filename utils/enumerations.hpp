@@ -24,6 +24,7 @@ enum cache_status_t{
  * Enum cache Level
 */
 enum cacheLevel_t{
+    INST_CACHE,
     L1,
     L2,
     LLC
@@ -54,8 +55,7 @@ enum instruction_operation_t {
     INSTRUCTION_OPERATION_HMC_ROA,     //#12 READ+OP +Answer
     INSTRUCTION_OPERATION_HMC_ROWA     //#13 READ+OP+WRITE +Answer
 };
-//get char operation
-const char* get_enum_instruction_operation_char(instruction_operation_t type);
+
 // ============================================================================
 /// Enumerates the types of branches
 enum branch_t {
@@ -65,7 +65,12 @@ enum branch_t {
     BRANCH_UNCOND,
     BRANCH_COND
 };
-//Status for packages and uOps
+//get char operation
+const char* get_enum_instruction_operation_char(instruction_operation_t type);
+// ============================================================================
+
+// ============================================================================
+//Packages State
 enum package_state_t {
     PACKAGE_STATE_FREE,
     PACKAGE_STATE_UNTREATED,
@@ -73,6 +78,33 @@ enum package_state_t {
     PACKAGE_STATE_WAIT,
     PACKAGE_STATE_TRANSMIT
 };
+const char *get_enum_package_state_char(package_state_t type);
+// ============================================================================
 
+// ============================================================================
+//PROCESSOR STAGES
+enum processor_stage_t {
+    PROCESSOR_STAGE_FETCH,
+    PROCESSOR_STAGE_DECODE,
+    PROCESSOR_STAGE_RENAME,
+    PROCESSOR_STAGE_DISPATCH,
+    PROCESSOR_STAGE_EXECUTION,
+    PROCESSOR_STAGE_COMMIT
+};
+const char *get_enum_processor_stage_char(processor_stage_t type);
+// ============================================================================
 
+// ============================================================================
+//MEMORY OPERATIONS
+enum memory_operation_t {
+    MEMORY_OPERATION_READ,
+    MEMORY_OPERATION_WRITE,
+    MEMORY_OPERATION_FREE,
+
+};
+const char *get_enum_memory_operation_char(memory_operation_t type);
+// ============================================================================
+
+// ============================================================================
+// ============================================================================
 #endif

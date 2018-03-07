@@ -63,6 +63,7 @@ class circular_buffer_t {
         int32_t push_back(const CB_TYPE& new_element);
         void pop_front();
         void pop_push();
+        void print_all();
 };
 
 
@@ -213,5 +214,16 @@ void circular_buffer_t<CB_TYPE>::pop_push() {
     if (this->end_index >= this->capacity)
         this->end_index = 0;
 };
+// ==============================================================================
+//Imprime todo o circular buffer, debug only
+
+template <class CB_TYPE>
+void circular_buffer_t<CB_TYPE>::print_all() {
+    for (size_t i = 0; i < this->size; i++)
+    {
+        this->data[i].content_to_string();
+    }
+};
+
 
 #endif  // _CIRCULAR_BUFFER_HPP_

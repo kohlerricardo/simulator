@@ -82,6 +82,15 @@ void opcode_package_t::updatePackageReady(uint32_t stallTime){
     this->status = PACKAGE_STATE_READY;
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
 };
+void opcode_package_t::updatePackageWait(uint32_t stallTime){
+    this->status = PACKAGE_STATE_WAIT;
+    this->readyAt = orcs_engine.get_global_cycle()+stallTime;
+};
+void opcode_package_t::updatePackageFree(uint32_t stallTime){
+    this->status = PACKAGE_STATE_FREE;
+    this->readyAt = orcs_engine.get_global_cycle()+stallTime;
+};
+
 /// Convert Instruction variables into String
 std::string opcode_package_t::content_to_string() {
     std::string content_string;

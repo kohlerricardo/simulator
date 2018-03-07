@@ -30,30 +30,33 @@ class orcs_engine_t;
 class trace_reader_t;
 class opcode_package_t;
 
-
 ///////////////////////////////////////////
 // Branch Predictor Classes
 ///////////////////////////////////////////
+
 class btb_line_t;
 class btb_t;
 class twoBit_t;
 class piecewise_t;
 class branch_predictor_t;
+
 ///////////////////////////////////////////
 // Out of order Execution classes
 ///////////////////////////////////////////
+
 class uop_package_t;
+class reorder_buffer_line_t;
+class memory_order_buffer_line_t;
 class processor_t;
+
 ///////////////////////////////////////////
 // Cache Classes
 ///////////////////////////////////////////
 
-// ============
-// CACHE CLASSES
-// class linha_t;
-// class cacheSet_t;
-// class cache_t;
-// class utils_t;
+class linha_t;
+class cacheSet_t;
+class cache_t;
+class cache_manager_t;
 
 ///////////////////////////////////////////
 // Usefull Classes
@@ -85,6 +88,7 @@ extern orcs_engine_t orcs_engine;
 #define MAX_ASSEMBLY_SIZE 32    /// In general 20 is enough
 
 //================= Debug Aid
+#define DEBUG 1
 #define SLEEP 0
 //==========
 
@@ -121,6 +125,8 @@ extern orcs_engine_t orcs_engine;
 // Core Includes
 ///////////////////////////////////////////
 #include "./package/uop_package.hpp"
+#include "./processor/reorder_buffer_line.hpp"
+#include "./processor/memory_order_buffer_line.hpp"
 #include "./processor/processor.hpp"
 ///////////////////////////////////////////
 // Branch Predictor includes
@@ -134,10 +140,10 @@ extern orcs_engine_t orcs_engine;
 // Cache Classes
 ///////////////////////////////////////////
 // // CACHE INCLUDES
-// #include "./cache.hpp"
-// #include "./cacheSet.hpp"
-// #include "./linha.hpp"
-// #include "./utils.hpp"
+#include "./cache/cache.hpp"
+#include "./cache/cacheSet.hpp"
+#include "./cache/linha.hpp"
+#include "./cache/cache_manager.hpp"
 
 
 

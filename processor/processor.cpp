@@ -2,9 +2,16 @@
 
 // =====================================================================
 processor_t::processor_t() {
-
+this->memory_order_buffer_read = NULL;
+this->memory_order_buffer_write = NULL;
 };
-processor_t::~processor_t(){};
+processor_t::~processor_t(){
+	//NULLing Pointers
+	// delete this->fetchBuffer;
+	// delete this->decodeBuffer;
+utils_t::template_delete_array<memory_order_buffer_line_t>(memory_order_buffer_read);
+utils_t::template_delete_array<memory_order_buffer_line_t>(memory_order_buffer_write);
+};
 
 // =====================================================================
 void processor_t::allocate() {
@@ -16,13 +23,27 @@ void processor_t::allocate() {
 	this->insertError = false;
 	this->fetchCounter = 1;
 	this->decodeCounter = 1;
+	this->renameCounter = 1;
+	this->set_stall_wrong_branch(0);
 //======================================================================
 // Initializating structures
 //======================================================================
-
+	//Fetch Buffer
 	this->fetchBuffer.allocate(FETCH_BUFFER);
+	//Decode Buffer
 	this->decodeBuffer.allocate(DECODE_BUFFER);
-
+	//RAT
+    this->register_alias_table = utils_t::template_allocate_initialize_array<reorder_buffer_line_t*>(RAT_SIZE, NULL);
+	//ROB
+	this->reorderBuffer.allocate(ROB_SIZE);
+	for (size_t i = 0; i < this->reorderBuffer.get_capacity(); i++)
+	{
+		this->reorderBuffer[i].reg_deps_ptr_array = utils_t::template_allocate_initialize_array<reorder_buffer_line_t*>(ROB_SIZE,NULL);
+	}
+	//MOB
+	this->memory_order_buffer_read = utils_t::template_allocate_array<memory_order_buffer_line_t>(MOB_READ);
+	this->memory_order_buffer_write = utils_t::template_allocate_array<memory_order_buffer_line_t>(MOB_WRITE);
+	
 };
 bool processor_t::isBusy() {
     return (this->traceIsOver == false ||
@@ -39,40 +60,68 @@ void processor_t::fetch(){
 	opcode_package_t operation;
 	// Trace ->fetchBuffer
 	for(int i = 0 ;i < FETCH_WIDTH;i++){
+		//=============================
+		//Stall full fetch buffer
+		//=============================
 		if(this->fetchBuffer.is_full()){
-			this->add_stallFetch();
+			this->add_stall_full_FetchBuffer();
 			break;
 		}
+		//=============================
+		//Stall branch wrong predict
+		//=============================
+		if(this->get_stall_wrong_branch()>orcs_engine.get_global_cycle()){
+			break;
+		}
+		//=============================
+		//Get new Opcode
+		//=============================
 		if(!orcs_engine.trace_reader->trace_fetch(&operation)){
 			this->traceIsOver = true;
 			break;
 		}
-		///////
+		//============================
 		//add control variables
-		//////
+		//============================
 		operation.opcode_number = this->fetchCounter;
 		this->fetchCounter++;
-		operation.status = PACKAGE_STATE_READY;
-		///
+		operation.status = PACKAGE_STATE_UNTREATED;
+		//============================
+		///Solve Branch
+		//============================
 		if(hasBranch){
 		//solve
-		orcs_engine.global_cycle+=orcs_engine.branchPredictor->solveBranch(this->previousBranch,operation);
+		uint32_t stallWrongBranch=orcs_engine.branchPredictor->solveBranch(this->previousBranch,operation);
+		this->set_stall_wrong_branch(orcs_engine.get_global_cycle()+stallWrongBranch);
+		if(POSITION_FAIL==this->fetchBuffer.push_back(this->previousBranch)){
+			break;
+		}
 		hasBranch = false;
+		this->fetchBuffer.back()->updatePackageReady(FETCH_LATENCY);
 		this->previousBranch.package_clean();
 		}
+		//============================
+		// Operation Branch, set flag
+		//============================
 		if(operation.opcode_operation == INSTRUCTION_OPERATION_BRANCH){
 			orcs_engine.branchPredictor->branches++;
 			this->previousBranch = operation;
 			hasBranch=true;
+			continue;
 		}
-		 
+		//============================
+		//Insert into fetch buffer
+		//============================
 		if(POSITION_FAIL==this->fetchBuffer.push_back(operation)){
 			break;
 		}
+		this->fetchBuffer.back()->updatePackageReady(FETCH_LATENCY);
 		operation.package_clean();
 	}
-	//consulta I$ para saber quando a instrucao ficara pronta. Se resula em I$ miss adianta relogio?
-
+	//============================
+	//Atualiza status dos pacotes
+	// Ready At
+	//============================
 }
 //===========================
 //Elimina os elementos do fetch buffer
@@ -108,7 +157,7 @@ void processor_t::decode(){
 				break;
 			}
 		if(this->decodeBuffer.get_capacity()-this->decodeBuffer.get_size()<MAX_UOP_DECODED){
-			this->add_stallDecode();
+			this->add_stall_full_DecodeBuffer();
 			break;
 		}
 		// ERROR_ASSERT_PRINTF(this->decodeCounter == this->fetchBuffer.front()->opcode_number, "Error On decode");
@@ -295,15 +344,52 @@ void processor_t::decode(){
 };
 void processor_t::rename(){
 	size_t i;
+	uint32_t pos_mob;
 	for (i = 0; i <RENAME_WIDTH; i++)
-	{
-		if(this->decodeBuffer.is_empty()){
+	{	
+		if(this->decodeBuffer.is_empty() || 
+			this->decodeBuffer.front()->status != PACKAGE_STATE_READY ||
+			this->decodeBuffer.front()->readyAt > orcs_engine.get_global_cycle()){
 			break;
 		}
-		printf(this->decodeBuffer.front()->content_to_string().c_str()+'\n');
+		ERROR_ASSERT_PRINTF(this->decodeBuffer.front()->uop_number == this->renameCounter,"Erro, renomeio incorreto")
+		memory_order_buffer_line_t *mob_line = NULL;
+		//=======================
+		// Memory Operation Read
+		//=======================
+		if(this->decodeBuffer.front()->uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
+			pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_read,MOB_READ);
+			if(pos_mob==POSITION_FAIL){
+				this->add_stall_full_MOB_Read();
+				break;
+			}
+			mob_line = &this->memory_order_buffer_read[pos_mob];
+		}
+		//=======================
+		// Memory Operation Write
+		//=======================
+		if(this->decodeBuffer.front()->uop_operation==INSTRUCTION_OPERATION_MEM_STORE){
+			pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_write,MOB_WRITE);
+			if(pos_mob==POSITION_FAIL){
+				this->add_stall_full_MOB_Write();
+				break;
+			}
+			mob_line = &this->memory_order_buffer_write[pos_mob];
+		}
+		//=======================
+		// Verificando se tem espaco no ROB se sim bamos inserir
+		//=======================		
+		if(this->reorderBuffer.is_full()){
+			this->add_stall_full_ROB();
+			break;
+		}
+		
+
+		//remove uop from buffer
 		this->decodeBuffer.pop_front();
-	}
-}
+	}//end for
+	
+}//end method
 void processor_t::clock(){
 /////////////////////////////////////////////////
 //// Verifica se existe coisas no ROB
@@ -311,7 +397,9 @@ void processor_t::clock(){
 //// ExecuteStage
 //// DispatchStage
 /////////////////////////////////////////////////
-
+if(this->reorderBuffer.get_size()>0){
+	printf("no ROB");
+}
 /////////////////////////////////////////////////
 //// Verifica se existe coisas no DecodeBuffer
 //// Rename
@@ -332,7 +420,7 @@ void processor_t::clock(){
 	}
 /////////////////////////////////////////////////
 //// Verifica se trace is over
-//// Fetch and decode
+//// Fetch
 /////////////////////////////////////////////////
 	if((!this->traceIsOver)){
 		this->fetch();

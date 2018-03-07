@@ -1,4 +1,4 @@
-#include "simulator.hpp"
+#include "./simulator.hpp"
 
 orcs_engine_t orcs_engine;
 
@@ -77,14 +77,12 @@ int main(int argc, char **argv) {
     //Branch Predictor
     //==================
     orcs_engine.branchPredictor->allocate();
-
-    // // aloca config cache
-    // orcs_engine.cache = new cache_t[CACHE_LEVELS];
-    // for(size_t i = 0; i<CACHE_LEVELS;i++){
-	// 	orcs_engine.cache[i].allocate((uint32_t)i);
-	// 	}
-		
-
+    //==================
+    //Cache Manager
+    //==================
+    orcs_engine.cacheManager->allocate();
+    
+    //initializate simulator
     orcs_engine.simulator_alive = true;
 
 
@@ -107,6 +105,14 @@ int main(int argc, char **argv) {
     fprintf(stdout,"\n#####################################\n");
     sanity_test_t *test = new sanity_test_t;
     test->check();
+    delete test;
 #endif
+    ORCS_PRINTF("Freeing Memory\n")
+    delete orcs_engine.processor;
+    delete orcs_engine.branchPredictor;
+    
+    delete orcs_engine.cacheManager;
+    ORCS_PRINTF("freed caches")
+    ORCS_PRINTF("Memory Freed")
     return(EXIT_SUCCESS);
 };

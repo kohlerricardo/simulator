@@ -13,10 +13,10 @@ Arquivo definindo os parametros do modelo de processador
 #define DISPATCH_WIDTH 8
 #define COMMIT_WIDTH 8
 // PROCESSOR LATENCIES STAGES
-#define FETCH_LATENCY 1
-#define DECODE_LATENCY 1
-#define RENAME_LATENCY 1
-#define DISPATCH_LATENCY 1
+#define FETCH_LATENCY 5
+#define DECODE_LATENCY 5
+#define RENAME_LATENCY 3
+#define DISPATCH_LATENCY 2
 //ULAS INTEGER LATENCY
 #define LATENCY_INTEGER_ALU 1
 #define LATENCY_INTEGER_MUL 3
@@ -39,11 +39,12 @@ Arquivo definindo os parametros do modelo de processador
 // PROCESSOR BUFFERS SIZE
 #define FETCH_BUFFER 58
 #define DECODE_BUFFER 128
+#define RAT_SIZE 260
 #define ROB_SIZE 224
 #define UNIFIED_RS 97
 //MOB
-#define LOAD_BUFFER 72
-#define STORE_BUFFER 56
+#define MOB_READ 72
+#define MOB_WRITE 56
 
 
 // ===========BRANCH PREDICTOR=============
@@ -73,18 +74,20 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 // ATTR COMMON
 #define LINE_SIZE 64
-#define CACHE_LEVELS 3
+#define CACHE_LEVELS 2
+#define INSTRUCTION_ENABLED 1
+#define OFFSET_SIZE 6
 // ==================== LEVEL 1 =====================
 // D$
 #define L1_DATA_SIZE 32*KILO
 #define L1_DATA_ASSOCIATIVITY 8
 #define L1_DATA_LATENCY 4
-#define L1_DATA_SETS (L1_SIZE/LINE_SIZE)/L1_ASSOCIATIVITY
+#define L1_DATA_SETS (L1_DATA_SIZE/LINE_SIZE)/L1_DATA_ASSOCIATIVITY
 // I$
 #define L1_INST_SIZE 32*KILO
 #define L1_INST_ASSOCIATIVITY 8
 #define L1_INST_LATENCY 4
-#define L1_INST_SETS (L1_SIZE/LINE_SIZE)/L1_ASSOCIATIVITY
+#define L1_INST_SETS (L1_INST_SIZE/LINE_SIZE)/L1_INST_ASSOCIATIVITY
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
 #define L2_SIZE 256*KILO
@@ -93,10 +96,10 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 2*MEGA
+#define LLC_SIZE 1*MEGA
 #define LLC_ASSOCIATIVITY 16
 #define LLC_LATENCY 44
-#define LLC_SETS (LLC_SIZE/BLOCK_SIZE)/LLC_ASSOCIATIVITY
+#define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
 

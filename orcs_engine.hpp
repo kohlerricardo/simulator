@@ -21,8 +21,8 @@ class orcs_engine_t {
         //Branch Predictor
         //==================
         branch_predictor_t *branchPredictor;
-        //cache
-        // cache_t *cache;
+        //cache Manager and cache
+        cache_manager_t *cacheManager;
         // ====================================================================
 		/// Methods
 		// ====================================================================
