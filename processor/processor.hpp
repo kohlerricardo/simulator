@@ -54,6 +54,9 @@ class processor_t {
 	    void allocate();
 	    void clock();
 		void statistics();
+		void update_registers(reorder_buffer_line_t *robLine);
+		int32_t searchPositionROB();
+		void removeFrontROB();
 		// ====================================================================
 		// Stage Methods
 		// ====================================================================
@@ -72,9 +75,13 @@ class processor_t {
 		circular_buffer_t<opcode_package_t> fetchBuffer;
 		
 		//RAT
-		reorder_buffer_line_t* *register_alias_table;
+		reorder_buffer_line_t **register_alias_table;
 		// ROB
-		circular_buffer_t<reorder_buffer_line_t> reorderBuffer;
+        reorder_buffer_line_t *reorderBuffer;
+        uint32_t robStart;
+        uint32_t robEnd;
+        uint32_t robUsed;
+
 		// MOB
 		memory_order_buffer_line_t *memory_order_buffer_read;
 		memory_order_buffer_line_t *memory_order_buffer_write;

@@ -63,6 +63,8 @@ void uop_package_t::updatePackageFree(uint32_t stallTime){
 std::string uop_package_t::content_to_string() {
     std::string content_string;
     content_string = "";
+
+    content_string = content_string + " " + utils_t::uint64_to_string(this->opcode_address);
     content_string = content_string + " " + get_enum_instruction_operation_char(this->uop_operation);
 
     content_string = content_string + " Address $" + utils_t::big_uint64_to_string(this->memory_address);

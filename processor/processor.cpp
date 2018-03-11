@@ -4,13 +4,23 @@
 processor_t::processor_t() {
 this->memory_order_buffer_read = NULL;
 this->memory_order_buffer_write = NULL;
+this->register_alias_table = NULL;
+this->reorderBuffer = NULL;
 };
 processor_t::~processor_t(){
 	//NULLing Pointers
 	// delete this->fetchBuffer;
 	// delete this->decodeBuffer;
-utils_t::template_delete_array<memory_order_buffer_line_t>(memory_order_buffer_read);
-utils_t::template_delete_array<memory_order_buffer_line_t>(memory_order_buffer_write);
+	//deleting MOB read and MOB write
+	utils_t::template_delete_array<memory_order_buffer_line_t>(memory_order_buffer_read);
+	utils_t::template_delete_array<memory_order_buffer_line_t>(memory_order_buffer_write);
+	//deleting deps array rob
+	for (size_t i = 0; i < ROB_SIZE; i++)
+	{
+		utils_t::template_delete_array<reorder_buffer_line_t>(this->reorderBuffer[i].reg_deps_ptr_array[0]);
+	}
+	//delete RAT
+	utils_t::template_delete_array<reorder_buffer_line_t*>(this->register_alias_table);
 };
 
 // =====================================================================
@@ -24,25 +34,41 @@ void processor_t::allocate() {
 	this->fetchCounter = 1;
 	this->decodeCounter = 1;
 	this->renameCounter = 1;
+	this->uopCounter = 1;
 	this->set_stall_wrong_branch(0);
 //======================================================================
 // Initializating structures
 //======================================================================
-	//Fetch Buffer
+//======================================================================
+// FetchBuffer
 	this->fetchBuffer.allocate(FETCH_BUFFER);
-	//Decode Buffer
+//======================================================================
+
+//======================================================================
+// DecodeBuffer
 	this->decodeBuffer.allocate(DECODE_BUFFER);
-	//RAT
+//======================================================================
+//======================================================================
+// Register Alias Table
     this->register_alias_table = utils_t::template_allocate_initialize_array<reorder_buffer_line_t*>(RAT_SIZE, NULL);
-	//ROB
-	this->reorderBuffer.allocate(ROB_SIZE);
-	for (size_t i = 0; i < this->reorderBuffer.get_capacity(); i++)
-	{
-		this->reorderBuffer[i].reg_deps_ptr_array = utils_t::template_allocate_initialize_array<reorder_buffer_line_t*>(ROB_SIZE,NULL);
-	}
+//======================================================================
+//======================================================================
+// Reorder Buffer
+	this->robStart = 0;
+	this->robEnd = 0;
+	this->robUsed = 0;
+	this->reorderBuffer = utils_t::template_allocate_array<reorder_buffer_line_t>(ROB_SIZE);
+    for (uint32_t i = 0; i < ROB_SIZE; i++) {
+        this->reorderBuffer[i].reg_deps_ptr_array = utils_t::template_allocate_initialize_array<reorder_buffer_line_t*>(ROB_SIZE, NULL);
+    }
+//======================================================================
+
+//======================================================================
+// Reorder Buffer
 	//MOB
 	this->memory_order_buffer_read = utils_t::template_allocate_array<memory_order_buffer_line_t>(MOB_READ);
 	this->memory_order_buffer_write = utils_t::template_allocate_array<memory_order_buffer_line_t>(MOB_WRITE);
+//======================================================================
 	
 };
 bool processor_t::isBusy() {
@@ -53,13 +79,11 @@ bool processor_t::isBusy() {
 }
 // =====================================================================
 void processor_t::fetch(){
-//===========================
-//Busca trace,
-// Consulta I$ to stalls 
-//===========================
 	opcode_package_t operation;
 	// Trace ->fetchBuffer
 	for(int i = 0 ;i < FETCH_WIDTH;i++){
+		operation.package_clean();
+
 		//=============================
 		//Stall full fetch buffer
 		//=============================
@@ -116,7 +140,6 @@ void processor_t::fetch(){
 			break;
 		}
 		this->fetchBuffer.back()->updatePackageReady(FETCH_LATENCY);
-		operation.package_clean();
 	}
 	//============================
 	//Atualiza status dos pacotes
@@ -160,11 +183,12 @@ void processor_t::decode(){
 			this->add_stall_full_DecodeBuffer();
 			break;
 		}
-		// ERROR_ASSERT_PRINTF(this->decodeCounter == this->fetchBuffer.front()->opcode_number, "Error On decode");
-		assert((this->decodeCounter == this->fetchBuffer.front()->opcode_number) && "Error On Decode");
+		ERROR_ASSERT_PRINTF(this->decodeCounter == this->fetchBuffer.front()->opcode_number, "Error On decode");
 		this->decodeCounter++;
-		// printf("OPCODE DECODED %s\n",this->fetchBuffer.front()->content_to_string().c_str());
-		//DECODING READ UOP
+		// ORCS_PRINTF("OPCODE DECODED %s\n",this->fetchBuffer.front()->content_to_string().c_str())
+		// =====================
+		//Decode Read 1
+		// =====================
 		if(this->fetchBuffer.front()->is_read){
 			new_uop.package_clean();
 			//creating uop
@@ -189,10 +213,12 @@ void processor_t::decode(){
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-			assert((statusInsert != POSITION_FAIL) && "Erro, Tentando decodificar mais uops que o maximo permitido");
-			// ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
+			// assert((statusInsert != POSITION_FAIL) && "Erro, Tentando decodificar mais uops que o maximo permitido");
+			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
-		//is read2
+		// =====================
+		//Decode Read 2
+		// =====================
 		if(this->fetchBuffer.front()->is_read2){
 			new_uop.package_clean();
 			//creating uop
@@ -204,7 +230,7 @@ void processor_t::decode(){
 			//SE OP DIFERE DE LOAD, ZERA REGISTERS
 			if(this->fetchBuffer.front()->opcode_operation != INSTRUCTION_OPERATION_MEM_LOAD){
 				//limpa regs
-				 for (uint32_t i = 0; i < MAX_REGISTERS; i++) {
+				for (uint32_t i = 0; i < MAX_REGISTERS; i++) {
                     new_uop.read_regs[i] = POSITION_FAIL;
 					new_uop.write_regs[i] = POSITION_FAIL;
                 }
@@ -217,10 +243,12 @@ void processor_t::decode(){
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-			assert((statusInsert != POSITION_FAIL) && "Erro, Tentando decodificar mais uops que o maximo permitido");
-			// ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
+			// assert((statusInsert != POSITION_FAIL) && "Erro, Tentando decodificar mais uops que o maximo permitido");
+			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
-		//ALU.
+		// =====================
+		//Decode ALU Operation
+		// =====================
 		if(this->fetchBuffer.front()->opcode_operation != INSTRUCTION_OPERATION_BRANCH &&
 			this->fetchBuffer.front()->opcode_operation != INSTRUCTION_OPERATION_MEM_LOAD &&
 			this->fetchBuffer.front()->opcode_operation != INSTRUCTION_OPERATION_MEM_STORE){
@@ -230,19 +258,22 @@ void processor_t::decode(){
 				0,
 				0,
 				*this->fetchBuffer.front());
-				if (this->fetchBuffer.front()->is_read || this->fetchBuffer.front()->is_read2){
+				
+			if (this->fetchBuffer.front()->is_read || this->fetchBuffer.front()->is_read2){
+				// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
                 // ===== Read Regs =============================================
 				//registers /258 aux onde pos[i] = fail
 			    bool inserted_258 = false;
                 for (uint32_t i = 0; i < MAX_REGISTERS; i++) {
+					// ORCS_PRINTF("read reg %d\n",new_uop.read_regs[i])
                     if (new_uop.read_regs[i] == POSITION_FAIL) {
+						// ORCS_PRINTF("read reg2 %d\n",new_uop.read_regs[i])
                         new_uop.read_regs[i] = 258;
                         inserted_258 = true;
                         break;
                     }
                 }
-				assert(!inserted_258 && "Max registers used");
-                // ERROR_ASSERT_PRINTF(inserted_258, "Todos Max regs usados.", MAX_REGISTERS)
+                ERROR_ASSERT_PRINTF(inserted_258, "Could not insert register_258, all MAX_REGISTERS(%d) used.\n", MAX_REGISTERS)
             }
             if (this->fetchBuffer.front()->is_write){
                 // ===== Write Regs =============================================
@@ -255,16 +286,16 @@ void processor_t::decode(){
                         break;
                     }
                 }
-                // ERROR_ASSERT_PRINTF(inserted_258, "Todos Max regs usados.", MAX_REGISTERS)
-				assert(!inserted_258 && "Max registers used");
+                ERROR_ASSERT_PRINTF(inserted_258, "Could not insert register_258, all MAX_REGISTERS(%d) used.\n", MAX_REGISTERS)
+				// assert(!inserted_258 && "Max registers used");
             }
 			new_uop.updatePackageReady(DECODE_LATENCY);
-			// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-			assert((statusInsert != POSITION_FAIL) && "Erro, Tentando decodificar mais uops que o maximo permitido");
-			// ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
+			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
-		//branch
+		// =====================
+		//Decode Branch
+		// =====================
 		if(this->fetchBuffer.front()->opcode_operation == INSTRUCTION_OPERATION_BRANCH){
 			new_uop.package_clean();
 			new_uop.opcode_to_uop(this->uopCounter++,
@@ -283,8 +314,7 @@ void processor_t::decode(){
                         break;
                     }
                 }
-                // ERROR_ASSERT_PRINTF(inserted_258, "Todos Max regs usados.", MAX_REGISTERS)
-				assert(!inserted_258 && "Max registers used");
+                ERROR_ASSERT_PRINTF(inserted_258, "Todos Max regs usados.%u\n", MAX_REGISTERS)
             }
             if (this->fetchBuffer.front()->is_write){
                 // ===== Write Regs =============================================
@@ -297,8 +327,7 @@ void processor_t::decode(){
                         break;
                     }
                 }
-                // ERROR_ASSERT_PRINTF(inserted_258, "Todos Max regs usados.", MAX_REGISTERS)
-				assert(!inserted_258 && "MAX regs inserted");
+                ERROR_ASSERT_PRINTF(inserted_258, "Todos Max regs usados. %u \n", MAX_REGISTERS)
             }
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
@@ -306,7 +335,9 @@ void processor_t::decode(){
 			assert((statusInsert != POSITION_FAIL) && "Erro, Tentando decodificar mais uops que o maximo permitido");
 			// ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
-		//Decoding WRITE
+		// =====================
+		//Decode Write
+		// =====================
 		if(this->fetchBuffer.front()->is_write){
 			new_uop.package_clean();
 			// make package
@@ -315,6 +346,7 @@ void processor_t::decode(){
 			this->fetchBuffer.front()->write_address,
 			this->fetchBuffer.front()->write_size,
 			*this->fetchBuffer.front());
+			//
 			if(this->fetchBuffer.front()->opcode_operation !=INSTRUCTION_OPERATION_MEM_STORE){
 				bool inserted_258 = false;
                 for (uint32_t i = 0; i < MAX_REGISTERS; i++) {
@@ -324,8 +356,8 @@ void processor_t::decode(){
                         break;
                     }
                 }
-                // ERROR_ASSERT_PRINTF(inserted_258, "Could not insert register_258, all MAX_REGISTERS(%d) used.", MAX_REGISTERS)
-				assert(!inserted_258 && "Max registers used");
+                ERROR_ASSERT_PRINTF(inserted_258, "Could not insert register_258, all MAX_REGISTERS(%d) used.", MAX_REGISTERS)
+				// assert(!inserted_258 && "Max registers used");
                 // ===== Write Regs =============================================
                 /// Clear WRegs
                 for (uint32_t i = 0; i < MAX_REGISTERS; i++) {
@@ -335,24 +367,89 @@ void processor_t::decode(){
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-			assert((statusInsert != POSITION_FAIL) && "Erro, Tentando decodificar mais uops que o maximo permitido");
-			// ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
+			// assert((statusInsert != POSITION_FAIL) && "Erro, Tentando decodificar mais uops que o maximo permitido");
+			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL,"Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
 	this->fetchBuffer.pop_front();
 	}
 
 };
+
+// ============================================================================
+void processor_t::update_registers(reorder_buffer_line_t *robLine){
+	//Register to READ
+	ORCS_PRINTF("%s\n",robLine->content_to_string().c_str())
+	for (uint32_t i = 0; i < MAX_REGISTERS; i++){
+		if (robLine->uop.read_regs[i]<0){
+			break;
+		}
+		uint32_t read_register = robLine->uop.read_regs[i];
+		ERROR_ASSERT_PRINTF(read_register < RAT_SIZE, "Read Register (%d) > Register Alias Table Size (%d)\n", read_register, RAT_SIZE);
+		if(this->register_alias_table[read_register] != NULL){
+			ORCS_PRINTF("Renaming -> %u\n", read_register)
+			for (uint32_t j = 0; j < ROB_SIZE; j++){
+				if(this->register_alias_table[read_register]->reg_deps_ptr_array[j]==NULL){
+					ORCS_PRINTF("position %u renamed \n",j)
+					this->register_alias_table[read_register]->reg_deps_ptr_array[j]=robLine;
+					robLine->wait_reg_deps_number++;
+					break;
+				}
+			}
+		}
+	}
+// =============================
+// OK, acima funciona OK, acertar o write
+// =============================
+    /// Control the Register Dependency - Register WRITE
+    for (uint32_t k = 0; k < MAX_REGISTERS; k++) {
+        if (robLine->uop.write_regs[k] < 0) {
+            break;
+        }
+        uint32_t write_register = robLine->uop.write_regs[k];
+		ORCS_PRINTF("Renameing %u\n",write_register)
+        ERROR_ASSERT_PRINTF(write_register < RAT_SIZE, "Write Register (%d) > Register Alias Table Size (%d)\n", write_register,RAT_SIZE);
+
+        this->register_alias_table[write_register] = robLine;
+    }
+
+};
+int32_t processor_t::searchPositionROB(){
+	int32_t position = POSITION_FAIL;
+	/// There is free space.
+    if (this->robUsed < ROB_SIZE) {
+        position = this->robEnd;
+        this->robUsed++;
+        this->robEnd++;
+        if (this->robEnd >= ROB_SIZE) {
+            this->robEnd = 0;
+        }
+    }
+    return position;
+};
+void processor_t::removeFrontROB(){
+	ERROR_ASSERT_PRINTF(this->robUsed>0,"Removendo do ROB sem estar usado")
+	ERROR_ASSERT_PRINTF(this->reorderBuffer[this->robStart].reg_deps_ptr_array==NULL,"Removendo sem resolver dependencias")
+	this->reorderBuffer[this->robStart].package_clean();
+	this->robUsed--;
+	this->robStart++;
+	if(this->robStart>=ROB_SIZE){
+		this->robStart=0;
+	}
+};
 void processor_t::rename(){
 	size_t i;
-	uint32_t pos_mob;
+	int32_t pos_mob,pos_rob;
+	reorder_buffer_line_t robEntry;
 	for (i = 0; i <RENAME_WIDTH; i++)
 	{	
+		// Checando se há uop decodificado, se está pronto, e se o ciclo de pronto
+		// é maior ou igual ao atual
 		if(this->decodeBuffer.is_empty() || 
 			this->decodeBuffer.front()->status != PACKAGE_STATE_READY ||
 			this->decodeBuffer.front()->readyAt > orcs_engine.get_global_cycle()){
 			break;
 		}
-		ERROR_ASSERT_PRINTF(this->decodeBuffer.front()->uop_number == this->renameCounter,"Erro, renomeio incorreto")
+		ERROR_ASSERT_PRINTF(this->decodeBuffer.front()->uop_number == this->renameCounter,"Erro, renomeio incorreto\n")
 		memory_order_buffer_line_t *mob_line = NULL;
 		//=======================
 		// Memory Operation Read
@@ -378,15 +475,56 @@ void processor_t::rename(){
 		}
 		//=======================
 		// Verificando se tem espaco no ROB se sim bamos inserir
-		//=======================		
-		if(this->reorderBuffer.is_full()){
+		//=======================	
+		pos_rob = this->searchPositionROB();	
+		if(pos_rob == POSITION_FAIL){
 			this->add_stall_full_ROB();
 			break;
 		}
-		
-
-		//remove uop from buffer
+		this->reorderBuffer[pos_rob].uop = *this->decodeBuffer.front();
+		//remove uop from decodebuffer
+		this->decodeBuffer.front()->package_clean();
 		this->decodeBuffer.pop_front();
+		//////////////////
+		//add counter renamed uops
+		this->renameCounter++;
+		// =======================
+		// Setting controls to ROB.
+		// =======================
+		this->reorderBuffer[pos_rob].stage = PROCESSOR_STAGE_RENAME;
+		this->reorderBuffer[pos_rob].mob_ptr = mob_line;
+		this->reorderBuffer[pos_rob].uop.updatePackageReady(RENAME_LATENCY);
+		//insert pointer to unified Reservoir station
+		// acertar as dependencias de registradores
+		// =======================
+		// Insert into MOB.
+		// =======================
+		if(this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
+			mob_line->opcode_address = robEntry.uop.opcode_address;
+			mob_line->memory_address = robEntry.uop.memory_address;
+			mob_line->memory_size = robEntry.uop.memory_size;
+			mob_line->memory_operation = MEMORY_OPERATION_READ;
+			mob_line->status = PACKAGE_STATE_UNTREATED;
+			mob_line->rob_ptr = &this->reorderBuffer[pos_rob];
+		}else if(this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+			mob_line->opcode_address = robEntry.uop.opcode_address;
+			mob_line->memory_address = robEntry.uop.memory_address;
+			mob_line->memory_size = robEntry.uop.memory_size;
+			mob_line->memory_operation = MEMORY_OPERATION_WRITE;
+			mob_line->status = PACKAGE_STATE_UNTREATED;
+			mob_line->rob_ptr = &this->reorderBuffer[pos_rob];
+		}
+	//====================
+	// Settign status	
+	//====================
+		this->update_registers(&this->reorderBuffer[pos_rob]);
+#if DEBUG
+		// ORCS_PRINTF("ROB:-> %s\n",this->reorderBuffer.back()->content_to_string().c_str())
+		ORCS_PRINTF("=================================\n")
+		// ORCS_PRINTF("MOB:-> %s\n",this->reorderBuffer[pos_rob].mob_ptr->content_to_string().c_str())
+		sleep(1);
+
+#endif
 	}//end for
 	
 }//end method
@@ -397,8 +535,8 @@ void processor_t::clock(){
 //// ExecuteStage
 //// DispatchStage
 /////////////////////////////////////////////////
-if(this->reorderBuffer.get_size()>0){
-	printf("no ROB");
+if(this->robUsed != 0){
+	printf("no ROB\n");
 }
 /////////////////////////////////////////////////
 //// Verifica se existe coisas no DecodeBuffer

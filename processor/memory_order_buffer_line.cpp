@@ -28,11 +28,6 @@ std::string memory_order_buffer_line_t::content_to_string() {
     std::string content_string;
     content_string = "";
 
-    #ifndef SHOW_FREE_PACKAGE
-        if (this->status == PACKAGE_STATE_FREE) {
-            return content_string;
-        }
-    #endif
     content_string = content_string + " |Exec:" + utils_t::uint64_to_string(this->opcode_address);
     content_string = content_string + " |Mem. Operation:" +  get_enum_memory_operation_char(this->memory_operation);
     content_string = content_string + " |Mem. Address:" +  utils_t::uint64_to_string(this->memory_address);

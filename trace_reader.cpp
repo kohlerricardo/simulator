@@ -209,6 +209,11 @@ bool trace_reader_t::trace_string_to_opcode(char *input_string, opcode_package_t
 
     sub_string = strtok_r(NULL, " ", &tmp_ptr);
     opcode->opcode_size = strtoul(sub_string, NULL, 10);
+// =============
+// Setting init values to read and write regs
+// =============
+    memset(opcode->read_regs, POSITION_FAIL, sizeof(int32_t) * MAX_REGISTERS);
+    memset(opcode->write_regs, POSITION_FAIL, sizeof(int32_t) * MAX_REGISTERS);
 
     /// Number of Read Registers
     sub_string = strtok_r(NULL, " ", &tmp_ptr);

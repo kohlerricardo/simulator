@@ -18,6 +18,8 @@ branch_predictor_t::~branch_predictor_t(){
 void branch_predictor_t::allocate(){
     uint32_t size  = BTB_ENTRIES/BTB_WAYS;
     this->btb = new btb_t[size];
+	this->index = 0;
+	this->way = 0;
     for (size_t i = 0; i < size; i++)
     {
         this->btb[i].btb_entry = new btb_line_t[BTB_WAYS];
@@ -67,6 +69,8 @@ uint32_t branch_predictor_t::installLine(opcode_package_t instruction){
 			this->btb[index].btb_entry[i].validade=1;
 			this->btb[index].btb_entry[i].typeBranch=instruction.branch_type;
 			this->btb[index].btb_entry[i].bht=0;
+			this->index = index;
+			this->way = i;
 			return OK;
 		}			
 	}
