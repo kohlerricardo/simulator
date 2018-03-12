@@ -21,13 +21,18 @@ Arquivo definindo os parametros do modelo de processador
 #define COMMIT_LATENCY 2
 //ULAS INTEGER LATENCY
 #define LATENCY_INTEGER_ALU 1
+#define WAIT_NEXT_INT_ALU 1
 #define LATENCY_INTEGER_MUL 3
+#define WAIT_NEXT_INT_MUL 1
 #define LATENCY_INTEGER_DIV 8
+#define WAIT_NEXT_INT_DIV 1
 //FP ULAS LATENCY
 #define LATENCY_FP_DIV 8
+#define WAIT_NEXT_FP_DIV 1
 #define LATENCY_FP_MUL 4
+#define WAIT_NEXT_FP_MUL 1
 #define LATENCY_FP_ALU 4
-
+#define WAIT_NEXT_FP_ALU 1
 // QTDE UFS
 // =====================
 //INTEGER FUS

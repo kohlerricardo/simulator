@@ -671,6 +671,22 @@ void processor_t::dispatch()
 				// op not defined
 				case INSTRUCTION_OPERATION_OTHER:
 				//
+					if(fu_int_alu <=INTEGER_ALU){
+						for (size_t i = 0; i < INTEGER_ALU; i++){
+							if(this->fu_int_alu[i]<=orcs_engine.get_global_cycle()){
+								//Branch instruction, ????
+								if(rob_line->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH){
+									//do something
+								}
+							this->fu_int_alu[i]= orcs_engine.get_global_cycle()+WAIT_NEXT_INT_ALU;
+							fu_int_alu++;
+							dispatched=true;
+							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+							rob_line->uop.updatePackageReady(LATENCY_INTEGER_ALU);
+							break;
+							}
+						}
+					}
 				break;
 				// ====================================================
 				// Integer Multiplication
