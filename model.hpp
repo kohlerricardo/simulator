@@ -11,12 +11,14 @@ Arquivo definindo os parametros do modelo de processador
 #define DECODE_WIDTH 5
 #define RENAME_WIDTH 6
 #define DISPATCH_WIDTH 8
+#define EXECUTE_WIDTH 8
 #define COMMIT_WIDTH 8
 // PROCESSOR LATENCIES STAGES
-#define FETCH_LATENCY 5
+#define FETCH_LATENCY 4
 #define DECODE_LATENCY 5
 #define RENAME_LATENCY 3
 #define DISPATCH_LATENCY 2
+#define COMMIT_LATENCY 2
 //ULAS INTEGER LATENCY
 #define LATENCY_INTEGER_ALU 1
 #define LATENCY_INTEGER_MUL 3
@@ -27,15 +29,33 @@ Arquivo definindo os parametros do modelo de processador
 #define LATENCY_FP_ALU 4
 
 // QTDE UFS
+// =====================
+//INTEGER FUS
+// =====================
 #define INTEGER_ALU 4
 #define INTEGER_MUL 1
 #define INTEGER_DIV 1
+#define QTDE_INTEGER_FU (INTEGER_ALU+INTEGER_MUL+INTEGER_DIV)
+// =====================
+
+// =====================
+// FP FUS
+// =====================
 #define FP_ALU 1
 #define FP_MUL 1
 #define FP_DIV 1
+#define QTDE_FP_FU (FP_ALU+FP_MUL+FP_DIV)
+// =====================
+
+// =====================
+// MEMORY FU
+// =====================
 #define LOAD_UNIT 2
 #define STORE_UNIT 1
-
+#define QTDE_MEMORY_FU (LOAD_UNIT+STORE_UNIT)
+// ======================
+///UNIFIED FUS
+#define UNIFIED_FU_SIZE (QTDE_INTEGER_FU+QTDE_FP_FU+QTDE_MEMORY_FU)
 // PROCESSOR BUFFERS SIZE
 #define FETCH_BUFFER 58
 #define DECODE_BUFFER 128
@@ -92,13 +112,13 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LEVEL 2 =====================
 #define L2_SIZE 256*KILO
 #define L2_ASSOCIATIVITY 4
-#define L2_LATENCY 12
+#define L2_LATENCY 8
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
 #define LLC_SIZE 1*MEGA
 #define LLC_ASSOCIATIVITY 16
-#define LLC_LATENCY 44
+#define LLC_LATENCY 32
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================

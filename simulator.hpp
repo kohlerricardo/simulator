@@ -18,8 +18,7 @@
 #include <cstdlib>
 #include <string>
 #include <cstring>
-
-
+#include <vector>
 
 
 // ============================================================================
@@ -64,8 +63,10 @@ class cache_manager_t;
 template<class CB_TYPE> class circular_buffer_t;
 class utils_t;
 class sanity_test_t;
-
-
+// ====================================
+// DATA Types
+// ====================================
+typedef std::vector <reorder_buffer_line_t*> container_ptr_reorder_buffer_line_t;
 // ============================================================================
 /// Global SINUCA_ENGINE instantiation
 // ============================================================================
