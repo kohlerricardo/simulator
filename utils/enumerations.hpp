@@ -19,7 +19,7 @@ enum cache_status_t{
     HIT,
     MISS
 };
-
+// =====================================================
 /**
  * Enum cache Level
 */
@@ -29,7 +29,9 @@ enum cacheLevel_t{
     L2,
     LLC
 };
-
+//get char operation
+const char* get_enum_cache_level_char(cacheLevel_t type);
+// ======================================================
 /// Enumerates the INSTRUCTION (Opcode and Uop) operation type
 enum instruction_operation_t {
     /// NOP

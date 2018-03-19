@@ -72,3 +72,15 @@ const char *get_enum_package_state_char(package_state_t type) {
     ERROR_PRINTF("Wrong PACKAGE_STATE\n");
     return "FAIL";
 };
+// ============================================================================
+/// Enumerates the cache level, 
+const char *get_enum_cache_level_char(cacheLevel_t type) {
+    switch (type) {
+        case  INST_CACHE:     return "INST CACHE "; break;
+        case L1:     return "L1 DATA CACHE"; break;
+        case L2:     return "L2 UNIFIED CACHE"; break;
+        case LLC:     return "LLC "; break;
+    };
+    ERROR_PRINTF("Wrong CACHE_LEVEL\n");
+    return "FAIL";
+};  

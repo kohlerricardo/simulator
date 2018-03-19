@@ -47,6 +47,11 @@ class processor_t {
 		uint64_t decodeCounter;
 		uint64_t renameCounter;
 		uint64_t uopCounter;
+		uint64_t commit_uop_counter;
+		uint32_t memory_read_executed;
+		uint32_t memory_read_received;
+		uint32_t memory_write_executed;
+		
 		// ====================================================================
 		/// Methods
 		// ====================================================================
@@ -55,9 +60,17 @@ class processor_t {
 	    void allocate();
 	    void clock();
 		void statistics();
+		// ROB RELATED	
 		void update_registers(reorder_buffer_line_t *robLine);
+		void solve_registers_dependency(reorder_buffer_line_t *rob_line);
 		int32_t searchPositionROB();
 		void removeFrontROB();
+		// MOB READ RELATED
+		int32_t search_position_mob_read();
+		void remove_front_mob_read();	
+		// MOB WRITE RELATED
+		int32_t search_position_mob_write();
+		void remove_front_mob_write();
 		// ====================================================================
 		// Stage Methods
 		// ====================================================================
@@ -93,8 +106,16 @@ class processor_t {
 		// ======================
 		// Memory Order Buffer
 		// ======================
+		//READ
 		memory_order_buffer_line_t *memory_order_buffer_read;
+        uint32_t memory_order_buffer_read_start;
+        uint32_t memory_order_buffer_read_end;
+        uint32_t memory_order_buffer_read_used;
+		//WRITE
 		memory_order_buffer_line_t *memory_order_buffer_write;
+		uint32_t memory_order_buffer_write_start;
+        uint32_t memory_order_buffer_write_end;
+        uint32_t memory_order_buffer_write_used;
 		// ======================
 		//Reservation Station 
 		container_ptr_reorder_buffer_line_t unified_reservation_station;

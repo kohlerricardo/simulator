@@ -126,6 +126,8 @@ class utils_t {
         static uint64_t fill_bit(uint32_t start, uint32_t end);
         static uint32_t max(uint32_t val1, uint32_t val2);
         static uint64_t max(uint64_t val1, uint64_t val2);
+        static uint32_t min(uint32_t val1, uint32_t val2);
+        static uint64_t min(uint64_t val1, uint64_t val2);
 
 
         static void bool_to_char(char *string, bool input_int);

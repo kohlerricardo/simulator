@@ -16,51 +16,64 @@ Arquivo definindo os parametros do modelo de processador
 // PROCESSOR LATENCIES STAGES
 #define FETCH_LATENCY 4
 #define DECODE_LATENCY 5
-#define RENAME_LATENCY 3
-#define DISPATCH_LATENCY 2
-#define COMMIT_LATENCY 2
-//ULAS INTEGER LATENCY
+#define RENAME_LATENCY 2
+#define DISPATCH_LATENCY 1
+#define EXECUTE_LATENCY 0
+#define COMMIT_LATENCY 1
+// ========= FUNCTIONAL UNITS RELATED=========
+
+// INTEGER ALU
 #define LATENCY_INTEGER_ALU 1
 #define WAIT_NEXT_INT_ALU 1
+#define INTEGER_ALU 4
+// INTEGER MUL
 #define LATENCY_INTEGER_MUL 3
 #define WAIT_NEXT_INT_MUL 1
+#define INTEGER_MUL 1
+// INTEGER DIV
 #define LATENCY_INTEGER_DIV 8
 #define WAIT_NEXT_INT_DIV 1
-//FP ULAS LATENCY
+#define INTEGER_DIV 1
+
+#define QTDE_INTEGER_FU (INTEGER_ALU+INTEGER_MUL+INTEGER_DIV)
+
+//FP ULAS LATENCY 
+// FLOATING POINT DIV
 #define LATENCY_FP_DIV 8
 #define WAIT_NEXT_FP_DIV 1
+#define FP_DIV 1
+// FLOATING POINT MUL
 #define LATENCY_FP_MUL 4
 #define WAIT_NEXT_FP_MUL 1
+#define FP_MUL 1
+// FLOATING POINT ALU
 #define LATENCY_FP_ALU 4
 #define WAIT_NEXT_FP_ALU 1
-// QTDE UFS
-// =====================
-//INTEGER FUS
-// =====================
-#define INTEGER_ALU 4
-#define INTEGER_MUL 1
-#define INTEGER_DIV 1
-#define QTDE_INTEGER_FU (INTEGER_ALU+INTEGER_MUL+INTEGER_DIV)
-// =====================
-
-// =====================
-// FP FUS
-// =====================
 #define FP_ALU 1
-#define FP_MUL 1
-#define FP_DIV 1
+
 #define QTDE_FP_FU (FP_ALU+FP_MUL+FP_DIV)
 // =====================
 
 // =====================
 // MEMORY FU
 // =====================
+// Load Units
 #define LOAD_UNIT 2
+#define WAIT_NEXT_MEM_LOAD 1
+#define LATENCY_MEM_LOAD 1
+// Store Units
 #define STORE_UNIT 1
+#define WAIT_NEXT_MEM_STORE 1
+#define LATENCY_MEM_STORE 1
+
 #define QTDE_MEMORY_FU (LOAD_UNIT+STORE_UNIT)
+// Parallel Loads
+#define PARALLEL_LOADS 2
+#define PARALLEL_STORES 1
+
 // ======================
 ///UNIFIED FUS
-#define UNIFIED_FU_SIZE (QTDE_INTEGER_FU+QTDE_FP_FU+QTDE_MEMORY_FU)
+
 // PROCESSOR BUFFERS SIZE
 #define FETCH_BUFFER 58
 #define DECODE_BUFFER 128

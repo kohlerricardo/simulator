@@ -218,7 +218,21 @@ uint64_t utils_t::max(uint64_t val1, uint64_t val2) {
         return val2;
 };
 
+// =============================================================================
+uint32_t utils_t::min(uint32_t val1, uint32_t val2) {
+    if (val1 <= val2)
+        return val1;
+    else
+        return val2;
+};
 
+// =============================================================================
+uint64_t utils_t::min(uint64_t val1, uint64_t val2) {
+    if (val1 <=val2)
+        return val1;
+    else
+        return val2;
+};
 // =============================================================================
 std::string utils_t::address_to_binary(uint64_t address) {
     /// Auxiliary strings
