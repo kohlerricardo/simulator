@@ -34,6 +34,7 @@ class reorder_buffer_line_t {
         ~reorder_buffer_line_t();
         void package_clean();
         std::string content_to_string();
+        std::string content_to_string2();
 
         static std::string print_all(reorder_buffer_line_t *input_array, uint32_t size_array);
         // static bool check_age(reorder_buffer_line_t *input_array, uint32_t size_array);

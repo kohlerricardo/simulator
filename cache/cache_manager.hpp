@@ -13,7 +13,8 @@ class cache_manager_t{
         cache_manager_t();
         ~cache_manager_t();
         void allocate();
-        void clock();//for prefetcher
+        void clock();//for prefetcher]
+        void statistics();
         uint32_t searchInstruction(uint64_t instructionAddress);
         uint32_t searchData(uint64_t dataAddress);
         uint32_t writeData(uint64_t dataAddress);

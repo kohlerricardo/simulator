@@ -19,6 +19,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <list>
 
 
 // ============================================================================
@@ -89,7 +90,7 @@ extern orcs_engine_t orcs_engine;
 #define MAX_ASSEMBLY_SIZE 32    /// In general 20 is enough
 
 //================= Debug Aid
-#define DEBUG 1
+
 #define SLEEP 0
 //==========
 

@@ -96,10 +96,8 @@ int main(int argc, char **argv) {
 	orcs_engine.trace_reader->statistics();
     orcs_engine.processor->statistics();
     orcs_engine.branchPredictor->statistics();
-    // orcs_engine.cacheManager->statistics();
-    // for(size_t i = 0; i<CACHE_LEVELS;i++){
-	// 	orcs_engine.cache[i].statistics();
-	// 	}
+    orcs_engine.cacheManager->statistics();
+
 #if SANITY_CHECK
     fprintf(stdout,"\n#####################################\n");
     fprintf(stdout,"\n*** Teste de Sanidade ****\n");

@@ -25,6 +25,7 @@ class uop_package_t{
     void updatePackageWait(uint32_t stallTime);
     void updatePackageFree(uint32_t stallTime);
     std::string content_to_string();
+    std::string content_to_string2();
     // Control variables
     uint64_t opcode_number;
     uint64_t uop_number;

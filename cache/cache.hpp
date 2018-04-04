@@ -9,12 +9,13 @@ class cache_t
         //=============
         // Statistics related
         //=============
-        uint32_t cacheHit;
-        uint32_t cacheMiss;
-        uint32_t cacheAccess;
-        uint32_t cacheRead;
-        uint32_t cacheWrite;
-        uint32_t cacheWriteBack;
+        uint64_t cacheHit;
+        uint64_t cacheMiss;
+        uint64_t cacheAccess;
+        uint64_t cacheRead;
+        uint64_t cacheWrite;
+        uint64_t cacheWriteBack;
+        uint64_t changeLine;
     public:
         cache_t();
         ~cache_t();
@@ -49,12 +50,13 @@ class cache_t
         uint32_t read(uint64_t address,uint32_t &ttc);
         uint32_t write(uint64_t address,int32_t line);
         //getters setters
-        INSTANTIATE_GET_SET_ADD(uint32_t,cacheHit);
-        INSTANTIATE_GET_SET_ADD(uint32_t,cacheMiss);
-        INSTANTIATE_GET_SET_ADD(uint32_t,cacheAccess);
-        INSTANTIATE_GET_SET_ADD(uint32_t,cacheRead);
-        INSTANTIATE_GET_SET_ADD(uint32_t,cacheWrite);
-        INSTANTIATE_GET_SET_ADD(uint32_t,cacheWriteBack);
+        INSTANTIATE_GET_SET_ADD(uint64_t,cacheHit);
+        INSTANTIATE_GET_SET_ADD(uint64_t,cacheMiss);
+        INSTANTIATE_GET_SET_ADD(uint64_t,cacheAccess);
+        INSTANTIATE_GET_SET_ADD(uint64_t,cacheRead);
+        INSTANTIATE_GET_SET_ADD(uint64_t,cacheWrite);
+        INSTANTIATE_GET_SET_ADD(uint64_t,cacheWriteBack);
+        INSTANTIATE_GET_SET_ADD(uint64_t,changeLine);
    
 };
 

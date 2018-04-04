@@ -538,3 +538,13 @@ std::string utils_t::int64_to_string(int64_t input_int) {
 //     *vm_usage     = vsize / 1024.0 / 1024.0;
 //     *resident_set = rss * page_size_mb;
 // };
+
+void utils_t::smallSeparator(){
+    ORCS_PRINTF("#======================#\n")
+};
+void utils_t::largeSeparator(){
+    ORCS_PRINTF("#===============================================#\n")
+};
+void utils_t::largestSeparator(){
+    ORCS_PRINTF("#========================================================================#\n")
+};

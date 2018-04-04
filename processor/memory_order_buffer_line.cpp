@@ -18,7 +18,7 @@ void memory_order_buffer_line_t::package_clean() {
         this->memory_size=0;
         this->rob_ptr=NULL;                 /// rob pointer
         this->uop_executed=false;
-        this->readyAt = 0;        
+        this->readyAt = orcs_engine.get_global_cycle();        
         this->status = PACKAGE_STATE_FREE;
         this->memory_operation = MEMORY_OPERATION_FREE;
         this->born_cicle=orcs_engine.get_global_cycle();
@@ -30,6 +30,7 @@ std::string memory_order_buffer_line_t::content_to_string() {
     content_string = "";
 
     content_string = content_string + " |Exec:" + utils_t::uint64_to_string(this->opcode_address);
+    content_string = content_string + " |Executed:" + utils_t::bool_to_string(this->uop_executed);
     content_string = content_string + " |Mem. Operation:" +  get_enum_memory_operation_char(this->memory_operation);
     content_string = content_string + " |Mem. Address:" +  utils_t::uint64_to_string(this->memory_address);
     content_string = content_string + " |Status:" +  get_enum_package_state_char(this->status);
@@ -42,7 +43,7 @@ std::string memory_order_buffer_line_t::content_to_string() {
 // ============================================================================
 int32_t memory_order_buffer_line_t::find_free(memory_order_buffer_line_t *input_array, uint32_t size_array) {
     for (uint32_t i = 0; i < size_array ; i++) {
-        if (input_array[i].status == PACKAGE_STATE_FREE) {
+        if (input_array[i].status == PACKAGE_STATE_FREE){
             return i;
         }
     }

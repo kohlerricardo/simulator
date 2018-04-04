@@ -152,4 +152,8 @@ class utils_t {
         static std::string int64_to_string(int64_t input_int);
 
         static void process_mem_usage(double *stat_vm_usage, double *resident_set);
+
+        static void smallSeparator();
+        static void largeSeparator();
+        static void largestSeparator();
 };

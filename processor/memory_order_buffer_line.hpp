@@ -8,7 +8,7 @@ class memory_order_buffer_line_t {
 
         /// Memory Dependencies Control
         bool uop_executed;
-        uint32_t readyAt;        
+        uint64_t readyAt;        
         package_state_t status;
         memory_operation_t memory_operation;
         uint64_t born_cicle;

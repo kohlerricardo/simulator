@@ -27,7 +27,17 @@ class processor_t {
 	//=============
 	//Statistics Commit
 	//=============
-    
+	uint64_t stat_inst_int_alu_completed;
+	uint64_t stat_inst_mul_alu_completed;
+	uint64_t stat_inst_div_alu_completed;
+	uint64_t stat_inst_int_fp_completed;
+	uint64_t stat_inst_mul_fp_completed;
+	uint64_t stat_inst_div_fp_completed;
+	uint64_t stat_inst_nop_completed;
+	uint64_t stat_inst_load_completed;
+	uint64_t stat_inst_store_completed;
+	uint64_t stat_inst_branch_completed;
+	uint64_t stat_inst_other_completed;
     public:
 		
 		// ====================================================================
@@ -60,14 +70,18 @@ class processor_t {
 	    void allocate();
 	    void clock();
 		void statistics();
+		void printConfiguration();
+		// ====================================================================
 		// ROB RELATED	
 		void update_registers(reorder_buffer_line_t *robLine);
 		void solve_registers_dependency(reorder_buffer_line_t *rob_line);
 		int32_t searchPositionROB();
 		void removeFrontROB();
+		// ====================================================================
 		// MOB READ RELATED
 		int32_t search_position_mob_read();
 		void remove_front_mob_read();	
+		// ====================================================================
 		// MOB WRITE RELATED
 		int32_t search_position_mob_write();
 		void remove_front_mob_write();
@@ -79,9 +93,12 @@ class processor_t {
 		void rename();
 		void dispatch();
 		void execute();
-		void mob();
+		void mob_read();
+		void mob_write();
 		void commit();
+		// ====================================================================
 		bool isBusy();
+		void printStructures();
 		// ====================================================================
 		// Structures
 		// ====================================================================
@@ -107,15 +124,17 @@ class processor_t {
 		// Memory Order Buffer
 		// ======================
 		//READ
-		memory_order_buffer_line_t *memory_order_buffer_read;
-        uint32_t memory_order_buffer_read_start;
-        uint32_t memory_order_buffer_read_end;
-        uint32_t memory_order_buffer_read_used;
+		// memory_order_buffer_line_t *memory_order_buffer_read;
+        // uint32_t memory_order_buffer_read_start;
+        // uint32_t memory_order_buffer_read_end;
+        // uint32_t memory_order_buffer_read_used;
+		std::list<memory_order_buffer_line_t> memory_order_buffer_read; 
 		//WRITE
-		memory_order_buffer_line_t *memory_order_buffer_write;
-		uint32_t memory_order_buffer_write_start;
-        uint32_t memory_order_buffer_write_end;
-        uint32_t memory_order_buffer_write_used;
+		// memory_order_buffer_line_t *memory_order_buffer_write;
+		// uint32_t memory_order_buffer_write_start;
+        // uint32_t memory_order_buffer_write_end;
+        // uint32_t memory_order_buffer_write_used;
+		std::list<memory_order_buffer_line_t> memory_order_buffer_write; 
 		// ======================
 		//Reservation Station 
 		container_ptr_reorder_buffer_line_t unified_reservation_station;
@@ -148,9 +167,30 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_ROB);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_empty_RS);
 		// ====================================================================
+		// Statistics inst completed
+		// ====================================================================
+		
+
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_branch_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_alu_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_fp_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_alu_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_fp_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_alu_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_fp_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_load_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_store_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_nop_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_other_completed);
+
+		// ====================================================================
 		// Compare methods
 		// ====================================================================
 		bool inline cmp_fetch_block(uint64_t addressA,uint64_t addressB){
 			return ((addressA >> OFFSET_SIZE)==(addressB >> OFFSET_SIZE));
 		}
+		// ====================================================================
+		// Debug AID
+		// ====================================================================
+		void solve_for_debug();
 };

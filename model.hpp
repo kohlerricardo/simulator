@@ -7,16 +7,24 @@ Arquivo definindo os parametros do modelo de processador
 #define _SKYLAKE_HPP_
 // =========== PROCESSOR =============
 // PROCESSOR STAGES WIDHT
-#define FETCH_WIDTH 4
-#define DECODE_WIDTH 5
-#define RENAME_WIDTH 6
-#define DISPATCH_WIDTH 8
-#define EXECUTE_WIDTH 8
-#define COMMIT_WIDTH 8
+#define FETCH_WIDTH 1
+#define DECODE_WIDTH 1
+#define RENAME_WIDTH 1
+#define DISPATCH_WIDTH 1
+#define EXECUTE_WIDTH 1
+#define COMMIT_WIDTH 1
+// ==============================
+// #define FETCH_WIDTH 4
+// #define DECODE_WIDTH 5
+// #define RENAME_WIDTH 6
+// #define DISPATCH_WIDTH 8
+// #define EXECUTE_WIDTH 8
+// #define COMMIT_WIDTH 8
+// =============================
 // PROCESSOR LATENCIES STAGES
-#define FETCH_LATENCY 4
-#define DECODE_LATENCY 5
-#define RENAME_LATENCY 2
+#define FETCH_LATENCY 1
+#define DECODE_LATENCY 1
+#define RENAME_LATENCY 1
 #define DISPATCH_LATENCY 1
 #define EXECUTE_LATENCY 0
 #define COMMIT_LATENCY 1
@@ -93,8 +101,8 @@ Arquivo definindo os parametros do modelo de processador
 #define PIECEWISE 1 
 
 
-#define BTB_MISS_PENALITY 8
-#define MISSPREDICTION_PENALITY 15
+#define BTB_MISS_PENALITY 5
+#define MISSPREDICTION_PENALITY 10
 #define N 128
 #define M 128
 #define H 43
@@ -145,11 +153,26 @@ Arquivo definindo os parametros do modelo de processador
 #define RAM_LATENCY 170
 #define RAM_SIZE 4 * MEGA * KILO
 // =====================RAM=======================
-
+#define LATENCY_TOTAL (L1_DATA_LATENCY+LLC_LATENCY+RAM_LATENCY)
 // =====================CHECKS=======================
 #define SANITY_CHECK 1
+// ==========DEBUGS
+#define DEBUG 0
 
+#if DEBUG
+#define FETCH_DEBUG 0
+#define DECODE_DEBUG 0
+#define RENAME_DEBUG 0
+#define DISPATCH_DEBUG 0
+#define EXECUTE_DEBUG 0
+#define MOB_DEBUG 1
+#define COMMIT_DEBUG 1
+#define CACHE_MANAGER_DEBUG 0
 
+#endif
 
+#define PERIODIC_CHECK 0
+#define CLOCKS_TO_CHECK 100000
+#define WAIT_CYCLE 661030
 // **************** END DEFINES ******************
 #endif //_SKYLAKE_HPP_

@@ -88,3 +88,16 @@ std::string uop_package_t::content_to_string() {
 
     return content_string;
 };
+/// Convert Instruction variables into String
+std::string uop_package_t::content_to_string2() {
+    std::string content_string;
+    content_string = "";
+
+    content_string = content_string + " " + utils_t::uint64_to_string(this->opcode_address);
+    content_string = content_string + " " + get_enum_instruction_operation_char(this->uop_operation);
+
+    content_string = content_string + " Status Opcode "+ get_enum_package_state_char(this->status);
+    content_string = content_string + " Ready At" + utils_t::uint64_to_string(this->readyAt);
+
+    return content_string;
+};

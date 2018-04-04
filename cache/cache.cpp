@@ -9,8 +9,8 @@ cache_t::cache_t()
 
 cache_t::~cache_t()
 {
-	if(this->sets) delete[] &sets;
-}
+	// if(this->sets) delete &sets;
+}    
 // ==================
 // @*linha -linha to be printed
 // ==================
@@ -46,6 +46,12 @@ void cache_t::allocate(cacheLevel_t level){
 				this->sets[i].linhas = new linha_t[L1_INST_ASSOCIATIVITY];
 				std::memset(&this->sets[i].linhas[0],0,(L1_INST_ASSOCIATIVITY*sizeof(linha_t)));
 			}
+			this->set_cacheAccess(0);
+			this->set_cacheHit(0);
+			this->set_cacheMiss(0);
+			this->set_cacheRead(0);
+			this->set_cacheWrite(0);
+			this->set_cacheWriteBack(0);
 			break;
 			}
 		case L1:{
@@ -62,6 +68,12 @@ void cache_t::allocate(cacheLevel_t level){
 				this->sets[i].linhas = new linha_t[L1_DATA_ASSOCIATIVITY];
 				std::memset(&this->sets[i].linhas[0],0,(L1_DATA_ASSOCIATIVITY*sizeof(linha_t)));
 			}
+			this->set_cacheAccess(0);
+			this->set_cacheHit(0);
+			this->set_cacheMiss(0);
+			this->set_cacheRead(0);
+			this->set_cacheWrite(0);
+			this->set_cacheWriteBack(0);
 			break;
 			}
 		case L2:{
@@ -78,6 +90,12 @@ void cache_t::allocate(cacheLevel_t level){
 				this->sets[i].linhas = new linha_t[L2_ASSOCIATIVITY];
 				std::memset(&this->sets[i].linhas[0],0,(L2_ASSOCIATIVITY*sizeof(linha_t)));
 			}
+			this->set_cacheAccess(0);
+			this->set_cacheHit(0);
+			this->set_cacheMiss(0);
+			this->set_cacheRead(0);
+			this->set_cacheWrite(0);
+			this->set_cacheWriteBack(0);
 			break;
 		}
 		case LLC:{
@@ -94,9 +112,15 @@ void cache_t::allocate(cacheLevel_t level){
 				this->sets[i].linhas = new linha_t[LLC_ASSOCIATIVITY];
 				std::memset(&this->sets[i].linhas[0],0,(LLC_ASSOCIATIVITY*sizeof(linha_t)));
 			}
+			this->set_cacheAccess(0);
+			this->set_cacheHit(0);
+			this->set_cacheMiss(0);
+			this->set_cacheRead(0);
+			this->set_cacheWrite(0);
+			this->set_cacheWriteBack(0);
 			break;
-			}
 		}
+	}
 };
 // ==================
 // @address -address to get index
@@ -120,8 +144,8 @@ inline uint32_t cache_t::idxSetCalculation(uint64_t address){
 };
 // ==================
 // @address -address to make a read
-// @return latency to complete
-// rewrite
+// @ttc latency to complete
+// @return HIT or MISS
 // ==================
 uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 	uint32_t idx = this->idxSetCalculation(address);
@@ -130,8 +154,8 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 	this->add_cacheAccess();
 	for (size_t i = 0; i < this->nLines; i++)
 	{
-		if(this->sets[idx].linhas[i].tag == tag){
-			// if ready att menor ou igual, delay padrao obtido do cacti
+		if((this->sets[idx].linhas[i].tag == tag) && (this->sets[idx].linhas[i].valid = 1)){
+			// if ready at menor ou igual, delay padrao obtido do cacti
 			if(this->sets[idx].linhas[i].readyAt<=orcs_engine.get_global_cycle()){
 				this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
 				//add cache hit
@@ -147,18 +171,35 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 				this->add_cacheHit();
 				return HIT;
 			}else{
-				// Se ready at maior, ttc = readyAt+ L1 latency da busca
+				// Se ready at maior, ttc = readyAt+latency da busca
 				this->add_cacheHit();
 				if(this->level == INST_CACHE){
-					ttc+=(this->sets[idx].linhas[i].readyAt+L1_INST_LATENCY);
+					ttc+=(this->sets[idx].linhas[i].readyAt - orcs_engine.get_global_cycle());
+					ttc+=L1_INST_LATENCY;
 				}else if(this->level == L1){
-					ttc+=(this->sets[idx].linhas[i].readyAt+L1_DATA_LATENCY);
+					ttc+=(this->sets[idx].linhas[i].readyAt - orcs_engine.get_global_cycle());
+					ttc+=L1_DATA_LATENCY;
+				}else if(this->level == L2){
+					ttc+=(this->sets[idx].linhas[i].readyAt - orcs_engine.get_global_cycle());
+					ttc+=L2_LATENCY;
+				}else{
+					ttc+=(this->sets[idx].linhas[i].readyAt - orcs_engine.get_global_cycle());
+					ttc+=LLC_LATENCY;
 				}
 				this->sets[idx].linhas[i].lru = ttc;
 				return HIT;
 			}
 		}else{
 			this->add_cacheMiss();
+			if(this->level == INST_CACHE){
+					ttc+=L1_INST_LATENCY;
+				}else if(this->level == L1){
+					ttc+=L1_DATA_LATENCY;
+				}else if(this->level == L2){
+					ttc+=L2_LATENCY;
+				}else{
+					ttc+=LLC_LATENCY;
+				}
 			return MISS;
 		}
 	}
@@ -175,13 +216,21 @@ uint32_t cache_t::write(uint64_t address,int32_t line){
 	this->add_cacheAccess();
 		if(line == POSITION_FAIL){
 			for (size_t i = 0; i < this->nLines; i++){
-				if(this->sets[idx].linhas[i].tag == tag){
+				if((this->sets[idx].linhas[i].tag == tag) && (this->sets[idx].linhas[i].valid = 1)){
 					line = i;
 					break;
 				}
 			}
 		}
-		this->sets[idx].linhas[line].dirty=1;
+		//acertar lru.
+		if(this->sets[idx].linhas[line].readyAt<=orcs_engine.get_global_cycle()){
+			this->sets[idx].linhas[line].dirty=1;
+			this->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle();
+		}else{
+			this->sets[idx].linhas[line].dirty=1;
+			this->sets[idx].linhas[line].lru = this->sets[idx].linhas[line].readyAt+L1_DATA_LATENCY;
+		}
+	
 	return OK;	
 };
 // ==================
@@ -191,7 +240,6 @@ uint32_t cache_t::write(uint64_t address,int32_t line){
 uint32_t cache_t::installLine(uint64_t address){
 	uint32_t idx = this->idxSetCalculation(address);
 	uint32_t tag = this->tagSetCalculation(address);
-	ORCS_PRINTF("address %lu idx %u  tag %u\n",address,idx,tag)
 	for (size_t i = 0; i < this->nLines; i++)
 	{
 		if(this->sets[idx].linhas[i].valid==0){
@@ -199,13 +247,15 @@ uint32_t cache_t::installLine(uint64_t address){
 			this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
 			this->sets[idx].linhas[i].valid = 1;
 			this->sets[idx].linhas[i].dirty = 0;
-			this->sets[idx].linhas[i].readyAt = orcs_engine.get_global_cycle()+RAM_LATENCY;
+			this->sets[idx].linhas[i].readyAt = orcs_engine.get_global_cycle()+LATENCY_TOTAL;
+			// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[i].readyAt)
 			return i;
 		}
-	ORCS_PRINTF("not valid line\n")
+	// ORCS_PRINTF("not valid line\n")
 	}
 	uint32_t line = this->searchLru(&this->sets[idx]);
-	ORCS_PRINTF("line after lru search %u\n",line)
+	this->add_changeLine();
+	// ORCS_PRINTF("line after lru search %u\n",line)
 	if(this->sets[idx].linhas[line].dirty==1){
 		this->writeBack(address,&this->sets[idx].linhas[line]);
 		this->add_cacheWriteBack();
@@ -214,7 +264,8 @@ uint32_t cache_t::installLine(uint64_t address){
 	this->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle();
 	this->sets[idx].linhas[line].valid = 1;	
 	this->sets[idx].linhas[line].dirty = 0;	
-	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+RAM_LATENCY;
+	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+LATENCY_TOTAL;
+	// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[line].readyAt)
 	return line;
 };
 // ===================
@@ -237,12 +288,13 @@ inline uint32_t cache_t::searchLru(cacheSet_t *set){
 //====================
 inline void cache_t::writeBack(uint64_t address, linha_t *linha){
 	if(this->level == L1){
-		//move line to llc alterar (1 = LLC)
+		//move line to llc alterar (data_cache[1] = LLC)
 		this->moveLineTo(address,&orcs_engine.cacheManager->data_cache[1],linha);
 		// invalidando a linha recem feita WB. 
 		linha->valid = 0;
 	}else{
 		orcs_engine.cacheManager->data_cache[0].shotdown(address);
+		orcs_engine.cacheManager->inst_cache->shotdown(address);
 		std::memset(linha,0,sizeof(linha_t));
 	}
 };
@@ -337,10 +389,12 @@ void cache_t::shotdown(uint64_t address){
 // ====================
 void cache_t::statistics(){
 	ORCS_PRINTF("Cache Level: %s\n",get_enum_cache_level_char(this->level))
-	ORCS_PRINTF("Cache Access: %u\n",this->get_cacheAccess())
-	ORCS_PRINTF("Cache Hits: %u %.2f\n",this->get_cacheHit(),float((this->get_cacheHit()/this->get_cacheAccess())*100))
-	ORCS_PRINTF("Cache Miss: %u %.2f\n",this->get_cacheMiss(),float((this->get_cacheMiss()/this->get_cacheAccess())*100))
-	ORCS_PRINTF("Cache Read: %u %.2f\n",this->get_cacheRead(),float((this->get_cacheRead()/this->get_cacheAccess())*100))
-	ORCS_PRINTF("Cache Write: %u %.2f\n",this->get_cacheWrite(),float((this->get_cacheWrite()/this->get_cacheAccess())*100))
-	ORCS_PRINTF("Cache WriteBack: %u %.2f\n",this->get_cacheWriteBack(),float((this->get_cacheWriteBack()/this->get_cacheWrite())*100))
+	ORCS_PRINTF("Cache Access: %lu\n",this->get_cacheAccess())
+	ORCS_PRINTF("Cache Hits: %lu %.2f\n",this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()))
+	ORCS_PRINTF("Cache Miss: %lu %.2f\n",this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()))
+	ORCS_PRINTF("Cache Read: %lu %.2f\n",this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()))
+	ORCS_PRINTF("Cache Write: %lu %.2f\n",this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()))
+	if(this->get_cacheWriteBack()!=0){
+		ORCS_PRINTF("Cache WriteBack: %lu %.2f\n",this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()))
+	}
 }
