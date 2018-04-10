@@ -96,9 +96,9 @@ inline uint32_t branch_predictor_t::searchLRU(btb_t *btb){
 };
 void branch_predictor_t::statistics(){
     
-    fprintf(stdout,"//=================\n");
-    fprintf(stdout,"BTB Hits: %u\n",this->btbHits);
-    fprintf(stdout,"BTB Miss: %u\n\n",this->btbMiss);
+    fprintf(stdout,"//=================\\\n");
+    fprintf(stdout,"BTB Hits: %u -> %.2f\n",this->btbHits,(this->btbHits*100.0)/(float)(this->btbHits+this->btbMiss));
+    fprintf(stdout,"BTB Miss: %u -> %.2f\n\n",this->btbMiss,(this->btbMiss*100.0)/(float)(this->btbHits+this->btbMiss));
     fprintf(stdout,"Total Branchs: %u\n",this->branches);
     fprintf(stdout,"Total Branchs Taken: %u -> %.2f \n",this->branchTaken,((this->branchTaken*100.0)/this->branches));
     fprintf(stdout,"Total Branchs Not Taken: %u -> %.2f\n",this->branchNotTaken,((this->branchNotTaken*100.0)/this->branches));

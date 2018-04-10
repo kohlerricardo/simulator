@@ -7,19 +7,19 @@ Arquivo definindo os parametros do modelo de processador
 #define _SKYLAKE_HPP_
 // =========== PROCESSOR =============
 // PROCESSOR STAGES WIDHT
-#define FETCH_WIDTH 1
-#define DECODE_WIDTH 1
-#define RENAME_WIDTH 1
-#define DISPATCH_WIDTH 1
-#define EXECUTE_WIDTH 1
-#define COMMIT_WIDTH 1
+// #define FETCH_WIDTH 1
+// #define DECODE_WIDTH 1
+// #define RENAME_WIDTH 1
+// #define DISPATCH_WIDTH 1
+// #define EXECUTE_WIDTH 1
+// #define COMMIT_WIDTH 1
 // ==============================
-// #define FETCH_WIDTH 4
-// #define DECODE_WIDTH 5
-// #define RENAME_WIDTH 6
-// #define DISPATCH_WIDTH 8
-// #define EXECUTE_WIDTH 8
-// #define COMMIT_WIDTH 8
+#define FETCH_WIDTH 4
+#define DECODE_WIDTH 5
+#define RENAME_WIDTH 6
+#define DISPATCH_WIDTH 8
+#define EXECUTE_WIDTH 8
+#define COMMIT_WIDTH 8
 // =============================
 // PROCESSOR LATENCIES STAGES
 #define FETCH_LATENCY 1
@@ -162,17 +162,17 @@ Arquivo definindo os parametros do modelo de processador
 #if DEBUG
 #define FETCH_DEBUG 0
 #define DECODE_DEBUG 0
-#define RENAME_DEBUG 0
+#define RENAME_DEBUG 1
 #define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 0
-#define MOB_DEBUG 1
-#define COMMIT_DEBUG 1
+#define MOB_DEBUG 0
+#define COMMIT_DEBUG 0
 #define CACHE_MANAGER_DEBUG 0
 
 #endif
 
 #define PERIODIC_CHECK 0
-#define CLOCKS_TO_CHECK 100000
-#define WAIT_CYCLE 661030
+#define CLOCKS_TO_CHECK 1000
+#define WAIT_CYCLE 2400
 // **************** END DEFINES ******************
 #endif //_SKYLAKE_HPP_

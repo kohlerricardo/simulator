@@ -21,7 +21,6 @@ void cache_manager_t::allocate(){
 uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
-    int32_t sacrifice = POSITION_FAIL;
     uint32_t hit = this->inst_cache->read(instructionAddress,ttc);
     // this->inst_cache->add_cacheAccess();
     //if hit, add Searched instructions. Must be equal inst cache hit 
@@ -43,7 +42,7 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
         // ==========
         
         if(hit == HIT){
-            this->data_cache[1].returnLine(instructionAddress,this->inst_cache,sacrifice);
+            this->data_cache[1].returnLine(instructionAddress,this->inst_cache);
             #if CACHE_MANAGER_DEBUG
                 ORCS_PRINTF("Latency LLC HIT %u\n",latency_request)
             #endif
@@ -54,10 +53,14 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
                 ORCS_PRINTF("Latency LLC MISS %u\n",latency_request)
             #endif
             // ====================
-            // add mem controller, to install lines
+            // Install cache lines
             // ====================
-            this->inst_cache->installLine(instructionAddress);
-            this->data_cache[1].installLine(instructionAddress);
+            linha_t *linha_inst = NULL;
+            linha_t *linha_llc = NULL;
+            linha_llc = this->data_cache[1].installLine(instructionAddress);
+            linha_inst = this->inst_cache->installLine(instructionAddress);
+            linha_inst->linha_ptr_sup=linha_llc;
+            linha_llc->linha_ptr_inf=linha_inst;
         }
     }
     return latency_request;
@@ -65,7 +68,6 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
 uint32_t cache_manager_t::searchData(uint64_t dataAddress){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
-    int32_t sacrifice = POSITION_FAIL;
     uint32_t hit = this->data_cache[0].read(dataAddress,ttc);
     latency_request+=ttc;
     //if hit, add Searched instructions. Must be equal inst cache hit 
@@ -87,7 +89,7 @@ uint32_t cache_manager_t::searchData(uint64_t dataAddress){
             ORCS_PRINTF("L1 MISS LR %u\n",latency_request)
         #endif
         if(hit == HIT){
-            this->data_cache[1].returnLine(dataAddress,&this->data_cache[0],sacrifice);
+            this->data_cache[1].returnLine(dataAddress,&this->data_cache[0]);
             #if CACHE_MANAGER_DEBUG
                 ORCS_PRINTF("LLC Hit TTC %u\n",ttc)
                 ORCS_PRINTF("LLC Hit LR %u\n",latency_request)
@@ -99,10 +101,14 @@ uint32_t cache_manager_t::searchData(uint64_t dataAddress){
             ORCS_PRINTF("LLC MISS LR %u\n",latency_request)
         #endif
             // ====================
-            // add mem controller, to install lines
+            // Install cache lines
             // ====================
-            this->data_cache[0].installLine(dataAddress);
-            this->data_cache[1].installLine(dataAddress);
+            linha_t *linha_l1 = NULL;
+            linha_t *linha_llc = NULL;
+            linha_llc = this->data_cache[1].installLine(dataAddress);
+            linha_l1 = this->data_cache[0].installLine(dataAddress);
+            linha_l1->linha_ptr_sup=linha_llc;
+            linha_llc->linha_ptr_inf=linha_l1;
         }
     }
     return latency_request;
@@ -110,7 +116,6 @@ uint32_t cache_manager_t::searchData(uint64_t dataAddress){
 uint32_t cache_manager_t::writeData(uint64_t dataAddress){
 
     uint32_t ttc = 0;
-    int32_t line=POSITION_FAIL;
     uint32_t latency_request = 0;
     uint32_t hit = this->data_cache[0].read(dataAddress,ttc);
     latency_request+=ttc;
@@ -120,7 +125,7 @@ uint32_t cache_manager_t::writeData(uint64_t dataAddress){
             ORCS_PRINTF("L1 Hit TTC %u\n",ttc)   
             ORCS_PRINTF("L1 Hit LR %u\n",latency_request)
         #endif
-        this->data_cache[0].write(dataAddress,line);
+        this->data_cache[0].write(dataAddress);
     }else{   
         hit = this->data_cache[1].read(dataAddress,ttc);
         // ==========
@@ -130,8 +135,10 @@ uint32_t cache_manager_t::writeData(uint64_t dataAddress){
 
         if(hit == HIT){
             latency_request+=ttc;
-            this->data_cache[1].returnLine(dataAddress,&this->data_cache[0],line);
-            this->data_cache[0].write(dataAddress,line);
+            // linha_t* linha_l1 = NULL;
+            // install line new on d0
+            this->data_cache[1].returnLine(dataAddress,&this->data_cache[0]);
+            this->data_cache[0].write(dataAddress);
         }else{
             //llc inst miss
             latency_request+=RAM_LATENCY;
@@ -140,9 +147,17 @@ uint32_t cache_manager_t::writeData(uint64_t dataAddress){
             // algo no estilo 
             // ttc = orcs_engine.memory_controller->request(dataAddress);
             // ====================
-            this->data_cache[0].installLine(dataAddress);
-            this->data_cache[1].installLine(dataAddress);
-            this->data_cache[0].write(dataAddress,line);
+
+            // ====================
+            // Install cache lines
+            // ====================
+            linha_t *linha_l1 = NULL;
+            linha_t *linha_llc = NULL;
+            linha_llc = this->data_cache[1].installLine(dataAddress);
+            linha_l1 = this->data_cache[0].installLine(dataAddress);
+            linha_l1->linha_ptr_sup=linha_llc;
+            linha_llc->linha_ptr_inf=linha_l1;
+            this->data_cache[0].write(dataAddress);
         }
     }
     return latency_request;

@@ -740,7 +740,7 @@ void processor_t::update_registers(reorder_buffer_line_t *new_rob_line){
 */
 void processor_t::rename(){
         #if RENAME_DEBUG
-            ORCS_PRINTF("Rename Stage")
+            ORCS_PRINTF("Rename Stage\n")
         #endif
     size_t i;
     int32_t pos_rob;
@@ -764,36 +764,36 @@ void processor_t::rename(){
         if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_LOAD)
         {
              
-            if (this->memory_order_buffer_read.size() >= MOB_READ)
+            if (this->memory_order_buffer_read.size() == MOB_READ)
             {
                 this->add_stall_full_MOB_Read();
                 break;
             }
-            this->memory_order_buffer_read.push_back(mob_line);
         }
         //=======================
         // Memory Operation Write
         //=======================
         if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
         {
-            if (this->memory_order_buffer_write.size() >= MOB_WRITE)
+            if (this->memory_order_buffer_write.size() == MOB_WRITE)
             {
                 this->add_stall_full_MOB_Write();
                 break;
             }
-            this->memory_order_buffer_write.push_back(mob_line);
         }
         //=======================
         // Verificando se tem espaco no ROB se sim bamos inserir
         //=======================
         pos_rob = this->searchPositionROB();
         #if RENAME_DEBUG
-        ORCS_PRINTF("pos_rob %u\n",pos_rob)
-        ORCS_PRINTF("Rob Start %u\n",this->robStart)
-        ORCS_PRINTF("Rob Used %u\n",this->robUsed)
-        ORCS_PRINTF("uop %s\n",this->decodeBuffer.front()->content_to_string().c_str())
-        // ORCS_PRINTF("decode buffer size %u\n",this->decodeBuffer.get_size())
-        // sleep(1);
+			if(orcs_engine.get_global_cycle()>=WAIT_CYCLE){
+				ORCS_PRINTF("pos_rob %u\n",pos_rob)
+				ORCS_PRINTF("Rob Start %u\n",this->robStart)
+				ORCS_PRINTF("Rob Used %u\n",this->robUsed)
+				ORCS_PRINTF("uop %s\n",this->decodeBuffer.front()->content_to_string().c_str())
+				// ORCS_PRINTF("decode buffer size %u\n",this->decodeBuffer.get_size())
+				sleep(1);
+			}
         #endif 
  
         if (pos_rob == POSITION_FAIL)
@@ -821,11 +821,11 @@ void processor_t::rename(){
         // Insert into MOB.
         // =======================
         if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD)
-        {   
+        {   		
             #if RENAME_DEBUG
             ORCS_PRINTF("Mem Load\n")
             #endif 
-             
+			this->memory_order_buffer_read.push_back(mob_line);
             this->memory_order_buffer_read.back().opcode_address = this->reorderBuffer[pos_rob].uop.opcode_address;
             this->memory_order_buffer_read.back().memory_address = this->reorderBuffer[pos_rob].uop.memory_address;
             this->memory_order_buffer_read.back().memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
@@ -840,6 +840,7 @@ void processor_t::rename(){
             #if RENAME_DEBUG
             ORCS_PRINTF("Mem Store\n")
             #endif 
+			this->memory_order_buffer_write.push_back(mob_line);
             this->memory_order_buffer_write.back().opcode_address = this->reorderBuffer[pos_rob].uop.opcode_address;
             this->memory_order_buffer_write.back().memory_address = this->reorderBuffer[pos_rob].uop.memory_address;
             this->memory_order_buffer_write.back().memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
@@ -1078,7 +1079,8 @@ void processor_t::execute(){
 	// remover do MOB e atualizar os registradores, 
 	// ==================================
 	
-	for (mob_line = this->memory_order_buffer_read.begin(); mob_line!=this->memory_order_buffer_read.end() ;++mob_line){
+	for (mob_line = this->memory_order_buffer_read.begin(); 
+	mob_line!=this->memory_order_buffer_read.end() ;++mob_line){
 		if(mob_line->status == PACKAGE_STATE_READY && 
 		mob_line->uop_executed == true && 
 		mob_line->readyAt <=orcs_engine.get_global_cycle()){
@@ -1089,7 +1091,7 @@ void processor_t::execute(){
 			ORCS_PRINTF("Solving %s\n",this->memory_order_buffer_read[entry].rob_ptr->content_to_string().c_str())
 			#endif
 			this->solve_registers_dependency(mob_line->rob_ptr);
-			this->memory_order_buffer_read.erase(mob_line--);
+			mob_line = this->memory_order_buffer_read.erase(mob_line);
 		}
 	}
 	// =====================================	
@@ -1199,24 +1201,25 @@ void processor_t::execute(){
 		ORCS_PRINTF("Solving %s\n",this->memory_order_buffer_write[entry].rob_ptr->content_to_string().c_str())
 		#endif
 		this->solve_registers_dependency(mob_line->rob_ptr);
-		this->memory_order_buffer_write.erase(mob_line--);
+		mob_line = this->memory_order_buffer_write.erase(mob_line);
 	}
 }
 } //end method
 
 void processor_t::mob_read(){	
 	uint32_t ttc=0;
-	// uint32_t mem_op_executed = 0;
+	uint32_t mem_op_executed = 0;
 	#if MOB_DEBUG
-	
+	ORCS_PRINTF("MOB Read")
 	#endif
 
 	std::list<memory_order_buffer_line_t>::iterator mob_line;
 	for (mob_line = this->memory_order_buffer_read.begin();
 			mob_line!=this->memory_order_buffer_read.end(); ++mob_line){
-		// if(mem_op_executed==PARALLEL_LOADS){
-		// 	break;
-		// }
+		ERROR_ASSERT_PRINTF(mob_line->memory_operation != MEMORY_OPERATION_FREE,"Error, Operation Free not allowed ")
+		if(mem_op_executed==PARALLEL_LOADS){
+			break;
+		}
 		if(	mob_line->status == PACKAGE_STATE_UNTREATED && 
 			mob_line->uop_executed == true &&
 			mob_line->readyAt <=orcs_engine.get_global_cycle()){
@@ -1226,27 +1229,26 @@ void processor_t::mob_read(){
 				this->memory_read_executed--;
 			}
 			#if MOB_DEBUG
-				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 					ORCS_PRINTF("On MOB READ Stage\n")
 					ORCS_PRINTF("Time to complete READ %u\n",ttc)
 					ORCS_PRINTF("MOB Line After EXECUTE %s\n",mob_line->content_to_string().c_str())
-				}
 			#endif
 
 	}
 }; //end method
 void processor_t::mob_write(){
 	uint32_t ttc=0;
-	// uint32_t mem_op_executed = 0;
+	uint32_t mem_op_executed = 0;
 	#if MOB_DEBUG
-	
+	ORCS_PRINTF("MOB Write")
 	#endif
 	std::list<memory_order_buffer_line_t>::iterator mob_line;
 	for (mob_line = this->memory_order_buffer_write.begin();
 			mob_line!=this->memory_order_buffer_write.end(); ++mob_line){
-		// if(mem_op_executed==PARALLEL_STORES){
-		// 	break;
-		// }
+		ERROR_ASSERT_PRINTF(mob_line->memory_operation != MEMORY_OPERATION_FREE,"Error, Operation Free not allowed ")
+		if(mem_op_executed==PARALLEL_STORES){
+			break;
+		}
 		if(	mob_line->status == PACKAGE_STATE_UNTREATED && 
 			mob_line->uop_executed == true &&
 			mob_line->readyAt <=orcs_engine.get_global_cycle()){
@@ -1256,11 +1258,10 @@ void processor_t::mob_write(){
 				this->memory_write_executed--;
 			}
 			#if MOB_DEBUG
-				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 					ORCS_PRINTF("On MOB READ Stage\n")
 					ORCS_PRINTF("Time to complete READ %u\n",ttc)
 					ORCS_PRINTF("MOB Line After EXECUTE %s\n",mob_line->content_to_string().c_str())
-				}
+			
 			#endif
 
 	}
