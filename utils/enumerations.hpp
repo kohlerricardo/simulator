@@ -106,7 +106,13 @@ enum memory_operation_t {
 };
 const char *get_enum_memory_operation_char(memory_operation_t type);
 // ============================================================================
-
+// Stages of prefetcher
+enum status_stride_prefetcher_t{
+    INVALID,
+    TRAINING,
+    ACTIVE
+};
+const char *get_enum_status_stride_prefetcher_char(status_stride_prefetcher_t type);
 // ============================================================================
 // ============================================================================
 #endif

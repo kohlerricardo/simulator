@@ -145,6 +145,22 @@ Arquivo definindo os parametros do modelo de processador
 #define RAM_LATENCY 170
 #define RAM_SIZE 4 * MEGA * KILO
 // =====================RAM=======================
+
+// =====================PREFETCHER=======================
+#define PREFETCHER_ACTIVE 1
+#define STRIDE_TABLE_SIZE 16
+#define DEGREE 1
+#define DISTANCE 5
+// active prefetchers
+#define STRIDE 1
+// =====================PREFETCHER=======================
+
+
+
+
+
+
+
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
 // ==========DEBUGS

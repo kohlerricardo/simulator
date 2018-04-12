@@ -153,13 +153,17 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 	this->add_cacheRead();
 	for (size_t i = 0; i < this->nLines; i++){
 		if(this->sets[idx].linhas[i].tag == tag){
-			this->add_cacheAccess();
-			this->add_cacheHit();
 			// =====================================================
 			// Se ready Cycle for menor que o atual, a latencia é
 			// apenas da leitura, sendo um hit.
 			// =====================================================
 			if(this->sets[idx].linhas[i].readyAt<=orcs_engine.get_global_cycle()){
+				#if PREFETCHER_ACTIVE
+				if (this->sets[idx].linhas[i].prefetched == 1){
+					orcs_engine.cacheManager->prefetcher->add_usefulPrefetches();
+					this->sets[idx].linhas[i].prefetched =0;
+				}
+				#endif
 				this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
 				//add cache hit
 				if(this->level == INST_CACHE){
@@ -173,17 +177,27 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 			}
 			// =====================================================
 			// Se ready Cycle for maior que o atual, a latencia é
-			// dada pela demora a chegar, mais a latencia do acesso
+			// dada pela demora a chegar
 			// =====================================================
 			else{
+				#if PREFETCHER_ACTIVE
+				if (this->sets[idx].linhas[i].prefetched == 1){
+					orcs_engine.cacheManager->prefetcher->add_latePrefetches();
+					orcs_engine.cacheManager->prefetcher->add_usefulPrefetches();
+					uint32_t latePrefetcher = orcs_engine.cacheManager->prefetcher->get_totalCycleLate()+
+					(this->sets[idx].linhas[i].readyAt - orcs_engine.get_global_cycle());
+					orcs_engine.cacheManager->prefetcher->set_totalCycleLate(latePrefetcher);
+					this->sets[idx].linhas[i].prefetched =0;
+				}
+				#endif
 				ttc+=(this->sets[idx].linhas[i].readyAt - orcs_engine.get_global_cycle());
 				this->sets[idx].linhas[i].lru = ttc;
 				return HIT;
 			}				
 		}
 	}
-	this->add_cacheAccess();
-	this->add_cacheMiss();
+	// this->add_cacheAccess();
+	// this->add_cacheMiss();
 		if(this->level == INST_CACHE){
 				ttc+=L1_INST_LATENCY;
 			}else if(this->level == L1){
@@ -237,6 +251,7 @@ linha_t* cache_t::installLine(uint64_t address){
 			this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle()+RAM_LATENCY;
 			this->sets[idx].linhas[i].valid = 1;
 			this->sets[idx].linhas[i].dirty = 0;
+			this->sets[idx].linhas[i].prefetched = 0;
 			this->sets[idx].linhas[i].readyAt = orcs_engine.get_global_cycle()+RAM_LATENCY;
 			// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[i].readyAt)
 			return &this->sets[idx].linhas[i];
@@ -248,9 +263,6 @@ linha_t* cache_t::installLine(uint64_t address){
 	this->add_changeLine();
 	// ORCS_PRINTF("line after lru search %u\n",line)
 	if(this->sets[idx].linhas[line].dirty==1){
-		// if(this->level == INST_CACHE){
-		// 	this->printLine(&this->sets[idx].linhas[line]);
-		// }
 		this->writeBack(&this->sets[idx].linhas[line]);
 		this->add_cacheWriteBack();
 		}
@@ -258,6 +270,7 @@ linha_t* cache_t::installLine(uint64_t address){
 	this->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle()+RAM_LATENCY;
 	this->sets[idx].linhas[line].valid = 1;	
 	this->sets[idx].linhas[line].dirty = 0;	
+	this->sets[idx].linhas[line].prefetched = 0;	
 	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+RAM_LATENCY;
 	// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[line].readyAt)
 	return &this->sets[idx].linhas[line];

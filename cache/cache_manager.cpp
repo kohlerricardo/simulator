@@ -19,35 +19,51 @@ void cache_manager_t::allocate(){
     this->data_cache[1].allocate(LLC); //LLC 
     this->hit=0;
     this->miss=0;
+    //Allocate Prefetcher
+    #if PREFETCHER_ACTIVE
+    this->prefetcher = new prefetcher_t;
+    this->prefetcher->allocate();
+    #endif
 };
 uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
     uint32_t hit = this->inst_cache->read(instructionAddress,ttc);
-    // this->inst_cache->add_cacheAccess();
     //if hit, add Searched instructions. Must be equal inst cache hit 
     latency_request+=ttc;
     if(hit==HIT){
-        #if CACHE_MANAGER_DEBUG
-            ORCS_PRINTF("Latency L1 %u\n",latency_request)
-        #endif
+        this->inst_cache->add_cacheAccess();
+        this->inst_cache->add_cacheHit();
         this->add_instructionSearched();    
     }else
     {   
+        // =========================
+        this->inst_cache->add_cacheAccess();
+        this->inst_cache->add_cacheMiss();
+        this->add_instructionLLCSearched();
+        // =========================
         hit = this->data_cache[1].read(instructionAddress,ttc);
         // ==========
         // update inst cache miss, update instruction llc search.
         // Inst cache miss must be equal llc search inst
         // ORCS_PRINTF("Latency L1 MISS %u\n",latency_request)
-        this->add_instructionLLCSearched();
+
         latency_request+=ttc;        
         // ==========
         if(hit == HIT){
+            //========================================= 
+            this->data_cache[1].add_cacheAccess();
+            this->data_cache[1].add_cacheHit();
+            //========================================= 
             this->data_cache[1].returnLine(instructionAddress,this->inst_cache);
             #if CACHE_MANAGER_DEBUG
                 ORCS_PRINTF("Latency LLC HIT %u\n",latency_request)
             #endif
         }else{
+            //========================================= 
+            this->data_cache[1].add_cacheAccess();
+            this->data_cache[1].add_cacheMiss();
+            //========================================= 
             //llc inst miss
             latency_request+=RAM_LATENCY;
             #if CACHE_MANAGER_DEBUG
@@ -66,19 +82,23 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     }
     return latency_request;
 };
-uint32_t cache_manager_t::searchData(uint64_t dataAddress){
+uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
-    uint32_t hit = this->data_cache[0].read(dataAddress,ttc);
+    uint32_t hit = this->data_cache[0].read(mob_line->memory_address,ttc);
     latency_request+=ttc;
     //if hit, add Searched instructions. Must be equal inst cache hit 
     if(hit==HIT){
-        #if CACHE_MANAGER_DEBUG
-            ORCS_PRINTF("L1 Hit TTC %u\n",ttc)   
-            ORCS_PRINTF("L1 Hit LR %u\n",latency_request)   
-        #endif
+        //========================================= 
+        this->data_cache[0].add_cacheAccess();
+        this->data_cache[0].add_cacheHit();
+        //========================================= 
     }else{
-        hit = this->data_cache[1].read(dataAddress,ttc);
+                //========================================= 
+        this->data_cache[0].add_cacheAccess();
+        this->data_cache[0].add_cacheMiss();
+        //========================================= 
+        hit = this->data_cache[1].read(mob_line->memory_address,ttc);
         // ==========
         // update inst cache miss, update instruction llc search.
         // Inst cache miss must be equal llc search inst
@@ -89,12 +109,27 @@ uint32_t cache_manager_t::searchData(uint64_t dataAddress){
             ORCS_PRINTF("L1 MISS LR %u\n",latency_request)
         #endif
         if(hit == HIT){
-            this->data_cache[1].returnLine(dataAddress,&this->data_cache[0]);
+            //========================================= 
+            this->data_cache[1].add_cacheAccess();
+            this->data_cache[1].add_cacheHit();
+            //========================================= 
+            this->data_cache[1].returnLine(mob_line->memory_address,&this->data_cache[0]);
             #if CACHE_MANAGER_DEBUG
                 ORCS_PRINTF("LLC Hit TTC %u\n",ttc)
                 ORCS_PRINTF("LLC Hit LR %u\n",latency_request)
             #endif
         }else{
+            
+            //========================================= 
+            this->data_cache[1].add_cacheAccess();
+            this->data_cache[1].add_cacheMiss();
+            //========================================= 
+
+            //========================================= 
+            #if PREFETCHER_ACTIVE
+            this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
+            #endif
+            //========================================= 
             //llc inst miss
             latency_request+=RAM_LATENCY;
         #if CACHE_MANAGER_DEBUG
@@ -105,43 +140,65 @@ uint32_t cache_manager_t::searchData(uint64_t dataAddress){
             // ====================
             linha_t *linha_l1 = NULL;
             linha_t *linha_llc = NULL;
-            linha_llc = this->data_cache[1].installLine(dataAddress);
-            linha_l1 = this->data_cache[0].installLine(dataAddress);
+            linha_llc = this->data_cache[1].installLine(mob_line->memory_address);
+            linha_l1 = this->data_cache[0].installLine(mob_line->memory_address);
             linha_l1->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_l1;
         }
     }
     return latency_request;
 };
-uint32_t cache_manager_t::writeData(uint64_t dataAddress){
+uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
 
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
-    uint32_t hit = this->data_cache[0].read(dataAddress,ttc);
+    uint32_t hit = this->data_cache[0].read(mob_line->memory_address,ttc);
     latency_request+=ttc;
     //if hit, add Searched instructions. Must be equal inst cache hit 
     if(hit==HIT){
-
+        //========================================= 
+        this->data_cache[0].add_cacheAccess();
+        this->data_cache[0].add_cacheHit();
+        //========================================= 
         #if CACHE_MANAGER_DEBUG
             ORCS_PRINTF("L1 Hit TTC %u\n",ttc)   
             ORCS_PRINTF("L1 Hit LR %u\n",latency_request)
         #endif
-        this->data_cache[0].write(dataAddress);
+        this->data_cache[0].write(mob_line->memory_address); 
     }else{   
+        //========================================= 
+        this->data_cache[0].add_cacheAccess();
+        this->data_cache[0].add_cacheMiss();
+        //========================================= 
         ttc = 0;
-        hit = this->data_cache[1].read(dataAddress,ttc);
+        hit = this->data_cache[1].read(mob_line->memory_address,ttc);
         // ==========
         // update inst cache miss, update instruction llc search.
         // Inst cache miss must be equal llc search inst
         // ==========
 
         if(hit == HIT){
+            //========================================= 
+            this->data_cache[1].add_cacheAccess();
+            this->data_cache[1].add_cacheHit();
+            //========================================= 
             latency_request+=ttc;
             // linha_t* linha_l1 = NULL;
             // install line new on d0
-            this->data_cache[1].returnLine(dataAddress,&this->data_cache[0]);
-            this->data_cache[0].write(dataAddress);
+            this->data_cache[1].returnLine(mob_line->memory_address,&this->data_cache[0]);
+            this->data_cache[0].write(mob_line->memory_address);
         }else{
+            //========================================= 
+            this->data_cache[1].add_cacheAccess();
+            this->data_cache[1].add_cacheMiss();
+            //========================================= 
+            
+            //========================================= 
+            #if PREFETCHER_ACTIVE
+            this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
+            #endif
+            //========================================= 
+            
             //llc inst miss
             latency_request+=RAM_LATENCY;
             // ====================
@@ -155,11 +212,11 @@ uint32_t cache_manager_t::writeData(uint64_t dataAddress){
             // ====================
             linha_t *linha_l1 = NULL;
             linha_t *linha_llc = NULL;
-            linha_llc = this->data_cache[1].installLine(dataAddress);
-            linha_l1 = this->data_cache[0].installLine(dataAddress);
+            linha_llc = this->data_cache[1].installLine(mob_line->memory_address);
+            linha_l1 = this->data_cache[0].installLine(mob_line->memory_address);
             linha_l1->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_l1;
-            this->data_cache[0].write(dataAddress);
+            this->data_cache[0].write(mob_line->memory_address);
         }
     }
     return latency_request;
@@ -173,40 +230,40 @@ void cache_manager_t::insertQueueWrite(memory_order_buffer_line_t mob_line){
     this->read_buffer.push(mob_line);
 };
 void cache_manager_t::clock(){
-    uint32_t read_executed = 0,write_executed=0;
-    while(!this->read_buffer.empty()){
-        if(read_executed >= PARALLEL_LOADS){
-            break;
-        }
+    // uint32_t read_executed = 0,write_executed=0;
+    // while(!this->read_buffer.empty()){
+    //     if(read_executed >= PARALLEL_LOADS){
+    //         break;
+    //     }
 
-        if(this->read_buffer.top().readyAt >= orcs_engine.get_global_cycle()){
-            break;
-        }
-        uint32_t latency = 0;
-        latency = this->searchData(this->read_buffer.top().memory_address);
-        this->read_buffer.top().rob_ptr->uop.updatePackageReady(latency);
-        this->read_buffer.top().rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
-        this->read_buffer.top().rob_ptr->mob_ptr->readyAt=this->read_buffer.top().rob_ptr->mob_ptr->readyAt+latency;
-        read_executed++;
-        this->read_buffer.pop();
-    }
-     while(!this->write_buffer.empty()){
-        if(write_executed >= PARALLEL_STORES){
-            break;
-        }
-        if(this->write_buffer.top().readyAt >= orcs_engine.get_global_cycle()){
-            break;
-        }
-        uint32_t latency = 0;
-        latency = this->searchData(this->write_buffer.top().memory_address);
-        //se não terminar ou travar, significa que nao ta atualizando o mob,
-        // entao tem atualizar via top().rob_ptr->mob_ptr.updateXXXX
-        this->write_buffer.top().rob_ptr->uop.updatePackageReady(latency);
-        this->write_buffer.top().rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
-        this->write_buffer.top().rob_ptr->mob_ptr->readyAt=this->write_buffer.top().rob_ptr->mob_ptr->readyAt+latency;
-        write_executed++;
-        this->write_buffer.pop();
-    }
+    //     if(this->read_buffer.top().readyAt >= orcs_engine.get_global_cycle()){
+    //         break;
+    //     }
+    //     uint32_t latency = 0;
+    //     latency = this->searchData(this->read_buffer.top().memory_address);
+    //     this->read_buffer.top().rob_ptr->uop.updatePackageReady(latency);
+    //     this->read_buffer.top().rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
+    //     this->read_buffer.top().rob_ptr->mob_ptr->readyAt=this->read_buffer.top().rob_ptr->mob_ptr->readyAt+latency;
+    //     read_executed++;
+    //     this->read_buffer.pop();
+    // }
+    //  while(!this->write_buffer.empty()){
+    //     if(write_executed >= PARALLEL_STORES){
+    //         break;
+    //     }
+    //     if(this->write_buffer.top().readyAt >= orcs_engine.get_global_cycle()){
+    //         break;
+    //     }
+    //     uint32_t latency = 0;
+    //     latency = this->searchData(this->write_buffer.top().memory_address);
+    //     //se não terminar ou travar, significa que nao ta atualizando o mob,
+    //     // entao tem atualizar via top().rob_ptr->mob_ptr.updateXXXX
+    //     this->write_buffer.top().rob_ptr->uop.updatePackageReady(latency);
+    //     this->write_buffer.top().rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
+    //     this->write_buffer.top().rob_ptr->mob_ptr->readyAt=this->write_buffer.top().rob_ptr->mob_ptr->readyAt+latency;
+    //     write_executed++;
+    //     this->write_buffer.pop();
+    // }
 }
 void cache_manager_t::statistics(){
     ORCS_PRINTF("##############  Cache Manager ##################\n")
@@ -221,5 +278,8 @@ void cache_manager_t::statistics(){
     this->data_cache[0].statistics();
     ORCS_PRINTF("##############  LLC Cache ##################\n")
     this->data_cache[1].statistics();
-
+    #if PREFETCHER_ACTIVE
+    ORCS_PRINTF("##############  PREFETCHER ##################\n")
+    this->prefetcher->statistics();
+    #endif
 };

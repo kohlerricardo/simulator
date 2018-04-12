@@ -20,14 +20,21 @@ class cache_manager_t{
         void clock();//for prefetcher
         void statistics();
         uint32_t searchInstruction(uint64_t instructionAddress);
-        uint32_t searchData(uint64_t dataAddress);
-        uint32_t writeData(uint64_t dataAddress);
+        uint32_t searchData(memory_order_buffer_line_t *mob_line);
+        uint32_t writeData(memory_order_buffer_line_t *mob_line);
         void insertQueueRead(memory_order_buffer_line_t mob_line);
         void insertQueueWrite(memory_order_buffer_line_t mob_line);
         INSTANTIATE_GET_SET_ADD(uint64_t,instructionSearched);
         INSTANTIATE_GET_SET_ADD(uint64_t,instructionLLCSearched);
         INSTANTIATE_GET_SET_ADD(uint64_t,hit);
         INSTANTIATE_GET_SET_ADD(uint64_t,miss);
-};
+        // ==========================================
+        // Prefetcher
+        // ==========================================
+        #if PREFETCHER_ACTIVE
+        prefetcher_t *prefetcher;
+        #endif 
+        
+};  
 
 #endif // !CACHE_MANAGER_H

@@ -16,6 +16,7 @@ FD_PROCESSOR = processor
 FD_BRANCH_PREDICTOR = branch_predictor
 FD_OTHER = utils
 FD_CACHE = cache
+FD_PREFETCHER = prefetcher
 
 
 
@@ -38,14 +39,16 @@ SRC_CACHE = $(FD_CACHE)/cache.cpp\
 SRC_OTHER = $(FD_OTHER)/utils.cpp\
 			$(FD_OTHER)/enumerations.cpp\
 			$(FD_OTHER)/sanityTest.cpp
+SRC_PREFETCHER = $(FD_PREFETCHER)/prefetcher.cpp\
+				 $(FD_PREFETCHER)/stride_prefetcher.cpp
 SRC_CORE =  simulator.cpp orcs_engine.cpp\
 			$(SRC_TRACE_READER)\
 			$(SRC_PACKAGE)\
 			$(SRC_PROCESSOR)\
 			$(SRC_OTHER)\
 			$(SRC_BRANCH_PREDICTOR)\
-			$(SRC_CACHE)
-			
+			$(SRC_CACHE)\
+			$(SRC_PREFETCHER)
 
 ########################################################
 OBJS_CORE = ${SRC_CORE:.cpp=.o}

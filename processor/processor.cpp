@@ -1224,7 +1224,7 @@ void processor_t::mob_read(){
 			mob_line->uop_executed == true &&
 			mob_line->readyAt <=orcs_engine.get_global_cycle()){
 				// orcs_engine.cacheManager->insertQueueRead(*mob_line);
-				ttc = orcs_engine.cacheManager->searchData(mob_line->memory_address);
+				ttc = orcs_engine.cacheManager->searchData(&(*mob_line));
 				mob_line->updatePackageReady(ttc);
 				mob_line->rob_ptr->uop.updatePackageReady(ttc);
 				this->memory_read_executed--;
@@ -1254,7 +1254,7 @@ void processor_t::mob_write(){
 			mob_line->uop_executed == true &&
 			mob_line->readyAt <=orcs_engine.get_global_cycle()){
 				// orcs_engine.cacheManager->insertQueueWrite(*mob_line);
-				ttc = orcs_engine.cacheManager->writeData(mob_line->memory_address);
+				ttc = orcs_engine.cacheManager->writeData(&(*mob_line));
 				mob_line->updatePackageReady(ttc);
 				mob_line->rob_ptr->uop.updatePackageReady(ttc);
 				this->memory_write_executed--;

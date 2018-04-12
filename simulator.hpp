@@ -66,6 +66,12 @@ template<class CB_TYPE> class circular_buffer_t;
 class utils_t;
 class sanity_test_t;
 class priority_memory_access_t;
+///////////////////////////////////////////
+// Prefetcher Classes
+///////////////////////////////////////////
+class prefetcher_t;
+class stride_table_t;
+class stride_prefetcher_t;
 // ====================================
 // DATA Types
 // ====================================
@@ -153,6 +159,11 @@ extern orcs_engine_t orcs_engine;
 #include "./cache/cacheSet.hpp"
 #include "./cache/linha.hpp"
 #include "./cache/cache_manager.hpp"
+///////////////////////////////////////////
+// // Prefetcher INCLUDES
+#include "./prefetcher/prefetcher.hpp"
+#include "./prefetcher/stride_table.hpp"
+#include "./prefetcher/stride_prefetcher.hpp"
 
 ///////////////////////////////////////////
 #endif  // _ORCS_ORCS_HPP_
