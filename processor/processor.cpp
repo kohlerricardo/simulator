@@ -1223,6 +1223,7 @@ void processor_t::mob_read(){
 		if(	mob_line->status == PACKAGE_STATE_UNTREATED && 
 			mob_line->uop_executed == true &&
 			mob_line->readyAt <=orcs_engine.get_global_cycle()){
+				// orcs_engine.cacheManager->insertQueueRead(*mob_line);
 				ttc = orcs_engine.cacheManager->searchData(mob_line->memory_address);
 				mob_line->updatePackageReady(ttc);
 				mob_line->rob_ptr->uop.updatePackageReady(ttc);
@@ -1252,6 +1253,7 @@ void processor_t::mob_write(){
 		if(	mob_line->status == PACKAGE_STATE_UNTREATED && 
 			mob_line->uop_executed == true &&
 			mob_line->readyAt <=orcs_engine.get_global_cycle()){
+				// orcs_engine.cacheManager->insertQueueWrite(*mob_line);
 				ttc = orcs_engine.cacheManager->writeData(mob_line->memory_address);
 				mob_line->updatePackageReady(ttc);
 				mob_line->rob_ptr->uop.updatePackageReady(ttc);
@@ -1471,6 +1473,14 @@ void processor_t::statistics()
 	std::cout << "######################################################\n"
 			  << std::endl;
 	std::cout << "Total Cicle ;" << orcs_engine.get_global_cycle() << std::endl;
+	ORCS_PRINTF("######################################################\n")
+	ORCS_PRINTF("Stage Counters\n")
+	ORCS_PRINTF("Stage Fetch: %lu\n",this->fetchCounter)
+	ORCS_PRINTF("Stage Decode: %lu\n",this->decodeCounter)
+	ORCS_PRINTF("Stage Rename: %lu\n",this->renameCounter)
+	ORCS_PRINTF("Stage Commit: %lu\n",this->commit_uop_counter)
+
+
 };
 
 void processor_t::printConfiguration(){

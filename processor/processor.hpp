@@ -193,4 +193,7 @@ class processor_t {
 		// Debug AID
 		// ====================================================================
 		void solve_for_debug();
+		bool front_read_executed;
+		bool front_write_executed;
+
 };

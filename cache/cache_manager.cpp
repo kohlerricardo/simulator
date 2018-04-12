@@ -17,6 +17,8 @@ void cache_manager_t::allocate(){
     this->data_cache = new cache_t[CACHE_LEVELS];
     this->data_cache[0].allocate(L1); //L1
     this->data_cache[1].allocate(LLC); //LLC 
+    this->hit=0;
+    this->miss=0;
 };
 uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     uint32_t ttc = 0;
@@ -40,7 +42,6 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
         this->add_instructionLLCSearched();
         latency_request+=ttc;        
         // ==========
-        
         if(hit == HIT){
             this->data_cache[1].returnLine(instructionAddress,this->inst_cache);
             #if CACHE_MANAGER_DEBUG
@@ -76,8 +77,7 @@ uint32_t cache_manager_t::searchData(uint64_t dataAddress){
             ORCS_PRINTF("L1 Hit TTC %u\n",ttc)   
             ORCS_PRINTF("L1 Hit LR %u\n",latency_request)   
         #endif
-    }else
-    {   
+    }else{
         hit = this->data_cache[1].read(dataAddress,ttc);
         // ==========
         // update inst cache miss, update instruction llc search.
@@ -121,12 +121,14 @@ uint32_t cache_manager_t::writeData(uint64_t dataAddress){
     latency_request+=ttc;
     //if hit, add Searched instructions. Must be equal inst cache hit 
     if(hit==HIT){
+
         #if CACHE_MANAGER_DEBUG
             ORCS_PRINTF("L1 Hit TTC %u\n",ttc)   
             ORCS_PRINTF("L1 Hit LR %u\n",latency_request)
         #endif
         this->data_cache[0].write(dataAddress);
     }else{   
+        ttc = 0;
         hit = this->data_cache[1].read(dataAddress,ttc);
         // ==========
         // update inst cache miss, update instruction llc search.
@@ -162,11 +164,56 @@ uint32_t cache_manager_t::writeData(uint64_t dataAddress){
     }
     return latency_request;
 };
+void cache_manager_t::insertQueueRead(memory_order_buffer_line_t mob_line){
+    ERROR_ASSERT_PRINTF(mob_line.memory_operation == MEMORY_OPERATION_READ,"Error, Inserting Not Read Operation")
+    this->read_buffer.push(mob_line);
+};
+void cache_manager_t::insertQueueWrite(memory_order_buffer_line_t mob_line){
+    ERROR_ASSERT_PRINTF(mob_line.memory_operation == MEMORY_OPERATION_WRITE,"Error, Inserting Not Write Operation")
+    this->read_buffer.push(mob_line);
+};
+void cache_manager_t::clock(){
+    uint32_t read_executed = 0,write_executed=0;
+    while(!this->read_buffer.empty()){
+        if(read_executed >= PARALLEL_LOADS){
+            break;
+        }
+
+        if(this->read_buffer.top().readyAt >= orcs_engine.get_global_cycle()){
+            break;
+        }
+        uint32_t latency = 0;
+        latency = this->searchData(this->read_buffer.top().memory_address);
+        this->read_buffer.top().rob_ptr->uop.updatePackageReady(latency);
+        this->read_buffer.top().rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
+        this->read_buffer.top().rob_ptr->mob_ptr->readyAt=this->read_buffer.top().rob_ptr->mob_ptr->readyAt+latency;
+        read_executed++;
+        this->read_buffer.pop();
+    }
+     while(!this->write_buffer.empty()){
+        if(write_executed >= PARALLEL_STORES){
+            break;
+        }
+        if(this->write_buffer.top().readyAt >= orcs_engine.get_global_cycle()){
+            break;
+        }
+        uint32_t latency = 0;
+        latency = this->searchData(this->write_buffer.top().memory_address);
+        //se não terminar ou travar, significa que nao ta atualizando o mob,
+        // entao tem atualizar via top().rob_ptr->mob_ptr.updateXXXX
+        this->write_buffer.top().rob_ptr->uop.updatePackageReady(latency);
+        this->write_buffer.top().rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
+        this->write_buffer.top().rob_ptr->mob_ptr->readyAt=this->write_buffer.top().rob_ptr->mob_ptr->readyAt+latency;
+        write_executed++;
+        this->write_buffer.pop();
+    }
+}
 void cache_manager_t::statistics(){
     ORCS_PRINTF("##############  Cache Manager ##################\n")
     ORCS_PRINTF("Instruction Searched : %lu\n",this->get_instructionSearched())
     ORCS_PRINTF("Instruction LLC Searched : %lu\n",this->get_instructionLLCSearched())
-    ORCS_PRINTF("Data Searched : %lu\n",this->get_dataSearched())
+    ORCS_PRINTF("L1 Hits: %lu\n",this->get_hit())
+    ORCS_PRINTF("L1 Miss: %lu\n",this->get_miss())
     
     ORCS_PRINTF("############## Instruction Cache ##################\n")
     this->inst_cache->statistics();

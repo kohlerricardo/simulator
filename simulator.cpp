@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
 
     /// Start CLOCK for all the components
     while (orcs_engine.simulator_alive) {
+        // orcs_engine.cacheManager->clock();
         orcs_engine.processor->clock();
         orcs_engine.global_cycle++;
     }
@@ -106,12 +107,12 @@ int main(int argc, char **argv) {
     test->check();
     delete test;
 #endif
-    ORCS_PRINTF("Freeing Memory\n")
+    // ORCS_PRINTF("Freeing Memory\n")
     delete orcs_engine.processor;
     delete orcs_engine.branchPredictor;
     
     delete orcs_engine.cacheManager;
-    ORCS_PRINTF("freed caches")
-    ORCS_PRINTF("Memory Freed")
+    // ORCS_PRINTF("freed caches")
+    // ORCS_PRINTF("Memory Freed")
     return(EXIT_SUCCESS);
 };

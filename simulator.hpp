@@ -20,6 +20,7 @@
 #include <cstring>
 #include <vector>
 #include <list>
+#include <queue>
 
 
 // ============================================================================
@@ -64,6 +65,7 @@ class cache_manager_t;
 template<class CB_TYPE> class circular_buffer_t;
 class utils_t;
 class sanity_test_t;
+class priority_memory_access_t;
 // ====================================
 // DATA Types
 // ====================================
@@ -109,7 +111,8 @@ extern orcs_engine_t orcs_engine;
 // ============================================================================
 /// Base Includes
 // ============================================================================
-#include "./model.hpp"
+// #include "./model_skylake.hpp"
+#include "./model_sandyBridge.hpp"
 #include "./simulator.hpp"
 #include "./orcs_engine.hpp"
 #include "./trace_reader.hpp"
@@ -139,6 +142,10 @@ extern orcs_engine_t orcs_engine;
 #include "./branch_predictor/piecewise.hpp"
 #include "./branch_predictor/branch_predictor.hpp"
 ///////////////////////////////////////////
+// Compare classes to priority queue
+///////////////////////////////////////////
+#include "./utils/class_order.hpp"
+///////////////////////////////////////////
 // Cache Classes
 ///////////////////////////////////////////
 // // CACHE INCLUDES
@@ -147,6 +154,5 @@ extern orcs_engine_t orcs_engine;
 #include "./cache/linha.hpp"
 #include "./cache/cache_manager.hpp"
 
-
-
+///////////////////////////////////////////
 #endif  // _ORCS_ORCS_HPP_

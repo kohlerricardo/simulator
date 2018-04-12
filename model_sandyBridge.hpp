@@ -3,59 +3,51 @@
 Arquivo definindo os parametros do modelo de processador
 */
 
-#ifndef _SKYLAKE_HPP_
-#define _SKYLAKE_HPP_
+#ifndef _SANDYBRIDGE_HPP_
+#define _SANDYBRIDGE_HPP_
 // =========== PROCESSOR =============
-// PROCESSOR STAGES WIDHT
-// #define FETCH_WIDTH 1
-// #define DECODE_WIDTH 1
-// #define RENAME_WIDTH 1
-// #define DISPATCH_WIDTH 1
-// #define EXECUTE_WIDTH 1
-// #define COMMIT_WIDTH 1
-// ==============================
-#define FETCH_WIDTH 4
+#define FETCH_WIDTH 6
 #define DECODE_WIDTH 5
-#define RENAME_WIDTH 6
-#define DISPATCH_WIDTH 8
+#define RENAME_WIDTH 5
+#define DISPATCH_WIDTH 6
 #define EXECUTE_WIDTH 8
-#define COMMIT_WIDTH 8
+#define COMMIT_WIDTH 4
 // =============================
 // PROCESSOR LATENCIES STAGES
-#define FETCH_LATENCY 1
-#define DECODE_LATENCY 1
-#define RENAME_LATENCY 1
-#define DISPATCH_LATENCY 1
+#define FETCH_LATENCY 3
+#define DECODE_LATENCY 3
+#define RENAME_LATENCY 3
+#define DISPATCH_LATENCY 2
 #define EXECUTE_LATENCY 0
-#define COMMIT_LATENCY 1
+#define COMMIT_LATENCY 3
 // ========= FUNCTIONAL UNITS RELATED=========
 
 // INTEGER ALU
 #define LATENCY_INTEGER_ALU 1
 #define WAIT_NEXT_INT_ALU 1
-#define INTEGER_ALU 4
+#define INTEGER_ALU 3
 // INTEGER MUL
 #define LATENCY_INTEGER_MUL 3
 #define WAIT_NEXT_INT_MUL 1
 #define INTEGER_MUL 1
 // INTEGER DIV
-#define LATENCY_INTEGER_DIV 8
-#define WAIT_NEXT_INT_DIV 1
+#define LATENCY_INTEGER_DIV 32
+#define WAIT_NEXT_INT_DIV 32
 #define INTEGER_DIV 1
 
 #define QTDE_INTEGER_FU (INTEGER_ALU+INTEGER_MUL+INTEGER_DIV)
 
 //FP ULAS LATENCY 
 // FLOATING POINT DIV
-#define LATENCY_FP_DIV 8
-#define WAIT_NEXT_FP_DIV 1
+#define LATENCY_FP_DIV 10
+#define WAIT_NEXT_FP_DIV 10
 #define FP_DIV 1
 // FLOATING POINT MUL
-#define LATENCY_FP_MUL 4
+#define LATENCY_FP_MUL 5
 #define WAIT_NEXT_FP_MUL 1
 #define FP_MUL 1
 // FLOATING POINT ALU
-#define LATENCY_FP_ALU 4
+#define LATENCY_FP_ALU 3
 #define WAIT_NEXT_FP_ALU 1
 #define FP_ALU 1
 
@@ -83,19 +75,19 @@ Arquivo definindo os parametros do modelo de processador
 ///UNIFIED FUS
 
 // PROCESSOR BUFFERS SIZE
-#define FETCH_BUFFER 58
-#define DECODE_BUFFER 128
+#define FETCH_BUFFER 18
+#define DECODE_BUFFER 28
 #define RAT_SIZE 260
-#define ROB_SIZE 224
-#define UNIFIED_RS 97
+#define ROB_SIZE 168
+#define UNIFIED_RS 54
 //MOB
-#define MOB_READ 72
-#define MOB_WRITE 56
+#define MOB_READ 64
+#define MOB_WRITE 36
 
 
 // ===========BRANCH PREDICTOR=============
 #define BTB_ENTRIES 4096
-#define BTB_WAYS 2
+#define BTB_WAYS 4
 //COUNTERS
 #define TWO_BIT 0
 #define PIECEWISE 1 
@@ -127,12 +119,12 @@ Arquivo definindo os parametros do modelo de processador
 // D$
 #define L1_DATA_SIZE 32*KILO
 #define L1_DATA_ASSOCIATIVITY 8
-#define L1_DATA_LATENCY 4
+#define L1_DATA_LATENCY 2
 #define L1_DATA_SETS (L1_DATA_SIZE/LINE_SIZE)/L1_DATA_ASSOCIATIVITY
 // I$
 #define L1_INST_SIZE 32*KILO
 #define L1_INST_ASSOCIATIVITY 8
-#define L1_INST_LATENCY 4
+#define L1_INST_LATENCY 2
 #define L1_INST_SETS (L1_INST_SIZE/LINE_SIZE)/L1_INST_ASSOCIATIVITY
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
@@ -142,9 +134,9 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 1*MEGA
-#define LLC_ASSOCIATIVITY 16
-#define LLC_LATENCY 32
+#define LLC_SIZE 4*MEGA
+#define LLC_ASSOCIATIVITY 20
+#define LLC_LATENCY 6
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
@@ -153,9 +145,8 @@ Arquivo definindo os parametros do modelo de processador
 #define RAM_LATENCY 170
 #define RAM_SIZE 4 * MEGA * KILO
 // =====================RAM=======================
-#define LATENCY_TOTAL (L1_DATA_LATENCY+LLC_LATENCY+RAM_LATENCY)
 // =====================CHECKS=======================
-#define SANITY_CHECK 1
+#define SANITY_CHECK 0
 // ==========DEBUGS
 #define DEBUG 0
 
@@ -172,7 +163,7 @@ Arquivo definindo os parametros do modelo de processador
 #endif
 
 #define PERIODIC_CHECK 0
-#define CLOCKS_TO_CHECK 1000
+#define CLOCKS_TO_CHECK 1000000
 #define WAIT_CYCLE 2400
 // **************** END DEFINES ******************
-#endif //_SKYLAKE_HPP_
+#endif //_SANDYBRIDGE_HPP
