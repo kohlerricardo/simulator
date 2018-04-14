@@ -155,6 +155,13 @@ Arquivo definindo os parametros do modelo de processador
 #define STRIDE 1
 // =====================PREFETCHER=======================
 
+// =====================MEMORY DESAMBIGUATION=======================
+#define LOAD_HASH_SIZE 512
+#define STORE_HASH_SIZE 512
+#define DESAMBIGUATION_BLOCK_SIZE 4
+
+// =====================MEMORY DESAMBIGUATION=======================
+
 
 
 

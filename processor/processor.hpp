@@ -24,6 +24,8 @@ class processor_t {
 	//=============
 	//Statistics Execute
 	//=============
+	uint64_t stat_disambiguation_read_false_positive;
+	uint64_t stat_disambiguation_write_false_positive;
 	//=============
 	//Statistics Commit
 	//=============
@@ -85,6 +87,10 @@ class processor_t {
 		// MOB WRITE RELATED
 		int32_t search_position_mob_write();
 		void remove_front_mob_write();
+		void make_memory_dependencies(memory_order_buffer_line_t *mob_line);
+		void solve_memory_dependency(memory_order_buffer_line_t *mob_line);
+
+
 		// ====================================================================
 		// Stage Methods
 		// ====================================================================
@@ -124,17 +130,24 @@ class processor_t {
 		// Memory Order Buffer
 		// ======================
 		//READ
-		// memory_order_buffer_line_t *memory_order_buffer_read;
+		memory_order_buffer_line_t *memory_order_buffer_read;
         // uint32_t memory_order_buffer_read_start;
         // uint32_t memory_order_buffer_read_end;
         // uint32_t memory_order_buffer_read_used;
-		std::list<memory_order_buffer_line_t> memory_order_buffer_read; 
+		// std::list<memory_order_buffer_line_t> memory_order_buffer_read; 
+		memory_order_buffer_line_t* *disambiguation_load_hash;
+		uint32_t disambiguation_load_hash_bits_mask;
+		uint32_t disambiguation_load_hash_bits_shift;
+		
 		//WRITE
-		// memory_order_buffer_line_t *memory_order_buffer_write;
+		memory_order_buffer_line_t *memory_order_buffer_write;
 		// uint32_t memory_order_buffer_write_start;
         // uint32_t memory_order_buffer_write_end;
         // uint32_t memory_order_buffer_write_used;
-		std::list<memory_order_buffer_line_t> memory_order_buffer_write; 
+		// std::list<memory_order_buffer_line_t> memory_order_buffer_write; 
+		memory_order_buffer_line_t* *disambiguation_store_hash;
+		uint32_t disambiguation_store_hash_bits_shift;
+		uint32_t disambiguation_store_hash_bits_mask;
 		// ======================
 		//Reservation Station 
 		container_ptr_reorder_buffer_line_t unified_reservation_station;
@@ -166,6 +179,8 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_MOB_Write);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_ROB);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_empty_RS);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_read_false_positive);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_write_false_positive);
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================

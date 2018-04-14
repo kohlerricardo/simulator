@@ -1,13 +1,15 @@
-#include "../simulator.hpp"
+#include "./../simulator.hpp"
 #include <string>
 
 // ============================================================================
 memory_order_buffer_line_t::memory_order_buffer_line_t() {
     this->package_clean();
+    this->mem_deps_ptr_array = NULL;
 };
 
 // ============================================================================
 memory_order_buffer_line_t::~memory_order_buffer_line_t() {
+    utils_t::template_delete_array<memory_order_buffer_line_t*>(mem_deps_ptr_array);
 };
 
 
@@ -18,10 +20,12 @@ void memory_order_buffer_line_t::package_clean() {
         this->memory_size=0;
         this->rob_ptr=NULL;                 /// rob pointer
         this->uop_executed=false;
-        this->readyAt = orcs_engine.get_global_cycle();        
+        this->uop_number = 0;
+        this->readyAt = 0;  
         this->status = PACKAGE_STATE_FREE;
         this->memory_operation = MEMORY_OPERATION_FREE;
         this->born_cicle=orcs_engine.get_global_cycle();
+        this->wait_mem_deps_number = 0;
 };
 
 // ============================================================================
@@ -49,17 +53,19 @@ int32_t memory_order_buffer_line_t::find_free(memory_order_buffer_line_t *input_
     }
     return POSITION_FAIL;
 };
+// ============================================================================
 int32_t memory_order_buffer_line_t::find_old_request_state_ready(memory_order_buffer_line_t *input_array, uint32_t size_array, package_state_t state) {
     int32_t old_pos = POSITION_FAIL;
-    uint64_t old_uop_number = INT64_MAX;
+    uint64_t old_uop_number = UINT64_MAX;
 
     /// Find the oldest UOP inside the MOB.... and it have 0 deps.
     for (uint32_t i = 0; i < size_array ; i++) {
         if (input_array[i].status == state &&
-        input_array[i].rob_ptr->uop.uop_number < old_uop_number &&
+        input_array[i].uop_number < old_uop_number &&
+        input_array[i].wait_mem_deps_number == 0 &&
         input_array[i].uop_executed == true &&
         input_array[i].readyAt <= orcs_engine.get_global_cycle()) {
-            old_uop_number = input_array[i].rob_ptr->uop.uop_number;
+            old_uop_number = input_array[i].uop_number;
             old_pos = i;
         }
     }
