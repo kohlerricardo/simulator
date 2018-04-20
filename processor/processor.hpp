@@ -26,6 +26,7 @@ class processor_t {
 	//=============
 	uint64_t stat_disambiguation_read_false_positive;
 	uint64_t stat_disambiguation_write_false_positive;
+	uint64_t stat_address_to_address;
 	//=============
 	//Statistics Commit
 	//=============
@@ -181,6 +182,7 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_empty_RS);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_read_false_positive);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_write_false_positive);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_address_to_address);
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================

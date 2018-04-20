@@ -700,36 +700,19 @@ void processor_t::solve_memory_dependency(memory_order_buffer_line_t *mob_line) 
 
         /// There is an unsolved dependency
         mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number--;
-	/*
-        if (this->solve_address_to_address) {
+	
+        if (ADDRESS_TO_ADDRESS == 1) {
             if (mob_line->mem_deps_ptr_array[j]->uop_executed == true &&
             mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number == 0 &&
             mob_line->mem_deps_ptr_array[j]->memory_operation == MEMORY_OPERATION_READ &&
             mob_line->mem_deps_ptr_array[j]->memory_address == mob_line->memory_address &&
             mob_line->mem_deps_ptr_array[j]->memory_size == mob_line->memory_size) {
-                /// Solve the LOAD->LOAD and STORE->LOAD
-
-                PROCESSOR_DEBUG_PRINTF("THIS: %s %" PRIu64 " \t",
-                                        mob_line->memory_operation == MEMORY_OPERATION_READ ? "READ" : "WRITE",
-                                        mob_line->memory_address);
-
-                PROCESSOR_DEBUG_PRINTF("SOLVES: %s %" PRIu64 "\n",
-                                        mob_line->mem_deps_ptr_array[j]->memory_operation == MEMORY_OPERATION_READ ? "READ" : "WRITE",
-                                        mob_line->mem_deps_ptr_array[j]->memory_address);
-
                 this->add_stat_address_to_address();
-                mob_line->mem_deps_ptr_array[j]->state = PACKAGE_STATE_READY;
-                mob_line->mem_deps_ptr_array[j]->ready_cycle =  sinuca_engine.get_global_cycle() + this->register_forward_latency;
-                mob_line->mem_deps_ptr_array[j]->is_answer = true;
-
-                /// Remove from the executed "list"
-                this->memory_order_buffer_read_executed--;
-                /// Add to the received "list"
-                this->memory_order_buffer_read_received++;
+                mob_line->mem_deps_ptr_array[j]->status = PACKAGE_STATE_READY;
+                mob_line->mem_deps_ptr_array[j]->readyAt =  orcs_engine.get_global_cycle() + REGISTER_FORWARD;
 
             }
         }
-	*/
         /// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
         mob_line->mem_deps_ptr_array[j] = NULL;
     }
@@ -904,7 +887,9 @@ void processor_t::solve_memory_dependency(memory_order_buffer_line_t *mob_line) 
 			if(this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD || 
 				this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE ){
 				mob_line->rob_ptr = &this->reorderBuffer[pos_rob];
+				#if DESAMBIGUATION_ENABLED
 				this->make_memory_dependencies(this->reorderBuffer[pos_rob].mob_ptr);
+				#endif
 			}
 		} //end for
 
@@ -1267,7 +1252,9 @@ void processor_t::execute(){
 			// solving register dependence
 			this->solve_registers_dependency(this->memory_order_buffer_read[i].rob_ptr);
 			// solving memory dependency
+			#if DESAMBIGUATION_ENABLED
 			this->solve_memory_dependency(&this->memory_order_buffer_read[i]);
+			#endif
 			this->memory_order_buffer_read[i].package_clean();
 		}
 	}
@@ -1379,14 +1366,16 @@ void processor_t::execute(){
 		// solving register dependence
 		this->solve_registers_dependency(this->memory_order_buffer_write[i].rob_ptr);
 		// solving memory dependency
+		#if DESAMBIGUATION_ENABLED
 		this->solve_memory_dependency(&this->memory_order_buffer_write[i]);
+		#endif
 		this->memory_order_buffer_write[i].package_clean();
 	}
 }
 } //end method
 
 void processor_t::mob_read(){	
-	uint32_t ttc=0;
+	
 	int32_t position_mem = POSITION_FAIL;
 	memory_order_buffer_line_t *mob_line = NULL; 
 	#if MOB_DEBUG
@@ -1399,22 +1388,27 @@ void processor_t::mob_read(){
 		if(position_mem != POSITION_FAIL){
 			mob_line = &this->memory_order_buffer_read[position_mem];
 		}
-	}
-	if(mob_line != NULL){
-		// orcs_engine.cacheManager->insertQueueRead(*mob_line);
-		ttc = orcs_engine.cacheManager->searchData(mob_line);
-		mob_line->updatePackageReady(ttc);
-		mob_line->rob_ptr->uop.updatePackageReady(ttc);
-		this->memory_read_executed--;
-		#if MOB_DEBUG
+		if(mob_line != NULL){
+			#if DESAMBIGUATION_ENABLED
+				uint32_t ttc=0;
+				ttc = orcs_engine.cacheManager->searchData(mob_line);
+				mob_line->updatePackageReady(ttc);
+				mob_line->rob_ptr->uop.updatePackageReady(ttc);
+			#else
+				orcs_engine.cacheManager->insertQueueRead(mob_line);
+			#endif
+			this->memory_read_executed--;
+			#if MOB_DEBUG
 				ORCS_PRINTF("On MOB READ Stage\n")
 				ORCS_PRINTF("Time to complete READ %u\n",ttc)
 				ORCS_PRINTF("MOB Line After EXECUTE %s\n",mob_line->content_to_string().c_str())
-		#endif
-	}//end if mob_line null
+			#endif
+		}//end if mob_line null
+	}
+	
 }; //end method
 void processor_t::mob_write(){
-	uint32_t ttc=0;
+	
 	int32_t position_mem = POSITION_FAIL;
 	memory_order_buffer_line_t *mob_line = NULL; 
 	#if MOB_DEBUG
@@ -1427,19 +1421,24 @@ void processor_t::mob_write(){
 		if(position_mem != POSITION_FAIL){
 			mob_line = &this->memory_order_buffer_write[position_mem];
 		}
-	}
-	if(mob_line != NULL){
-		// orcs_engine.cacheManager->insertQueueRead(*mob_line);
-		ttc = orcs_engine.cacheManager->writeData(mob_line);
-		mob_line->updatePackageReady(ttc);
-		mob_line->rob_ptr->uop.updatePackageReady(ttc);
+		if(mob_line != NULL){
+			#if DESAMBIGUATION_ENABLED
+				uint32_t ttc=0;
+				ttc = orcs_engine.cacheManager->writeData(mob_line);
+				mob_line->updatePackageReady(ttc);
+				mob_line->rob_ptr->uop.updatePackageReady(ttc);
+			#else
+				orcs_engine.cacheManager->insertQueueWrite(mob_line);
+			#endif
 		this->memory_read_executed--;
 		#if MOB_DEBUG
 				ORCS_PRINTF("On MOB READ Stage\n")
 				ORCS_PRINTF("Time to complete READ %u\n",ttc)
 				ORCS_PRINTF("MOB Line After EXECUTE %s\n",mob_line->content_to_string().c_str())
 		#endif
-	}//end if mob_line null
+		}//end if mob_line null
+	}
+	
 };
 
 void processor_t::commit(){
@@ -1636,6 +1635,7 @@ void processor_t::clock()
 	#if PERIODIC_CHECK
 		if(orcs_engine.get_global_cycle()%CLOCKS_TO_CHECK==0){
 			this->printStructures();
+			// ORCS_PRINTF("Opcodes Processed %lu",orcs_engine.trace_reader->get_fetch_instructions())
 		}
 	#endif
 };
@@ -1653,6 +1653,8 @@ void processor_t::statistics()
 	ORCS_PRINTF("Stage Rename: %lu\n",this->renameCounter)
 	ORCS_PRINTF("Stage Commit: %lu\n",this->commit_uop_counter)
 	utils_t::largeSeparator();
+	ORCS_PRINTF("IPC: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()))
+	
 	ORCS_PRINTF("=================== MEMORY DESAMBIGUATION =====================\n")
 	utils_t::largeSeparator();
 	ORCS_PRINTF("Read False Positive: %lu\n",this->get_stat_disambiguation_read_false_positive())

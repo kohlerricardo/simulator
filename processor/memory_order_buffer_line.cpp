@@ -57,7 +57,6 @@ int32_t memory_order_buffer_line_t::find_free(memory_order_buffer_line_t *input_
 int32_t memory_order_buffer_line_t::find_old_request_state_ready(memory_order_buffer_line_t *input_array, uint32_t size_array, package_state_t state) {
     int32_t old_pos = POSITION_FAIL;
     uint64_t old_uop_number = UINT64_MAX;
-
     /// Find the oldest UOP inside the MOB.... and it have 0 deps.
     for (uint32_t i = 0; i < size_array ; i++) {
         if (input_array[i].status == state &&

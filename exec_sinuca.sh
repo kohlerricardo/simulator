@@ -11,10 +11,12 @@ cd ${ROOT}
 ORCS_D="orcs.d"
 SINUCA_D="sinuca.d"
 mkdir ${ORCS_D}
-# mkdir ${SINUCA_D}
+mkdir ${SINUCA_D}
 for i in ${LIST_BENCHS[@]}
 do  
-    ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} >>${ORCS_D}'/'${i}.txt
+    # { time ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i}; } 2>>${ORCS_D}'/'${i}.txt
+    # sleep 5
+    ${SINUCA} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} "-result" ${SINUCA_D}'/'${i}.txt
     sleep 5
 done
 # /home/ricardo/sinuca/./sinuca -config /home/ricardo/sinuca/config_examples/sandy_1core/sandy_1core.cfg -trace /home/ricardo/ProgramasMestrado/traces/spec_cpu2006/astar.CINT.PP200M/astar.CINT.PP200M

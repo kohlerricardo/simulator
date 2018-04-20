@@ -134,7 +134,7 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 4*MEGA
+#define LLC_SIZE 20*MEGA
 #define LLC_ASSOCIATIVITY 20
 #define LLC_LATENCY 6
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
@@ -142,31 +142,28 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 
 // =====================RAM=======================
-#define RAM_LATENCY 170
+#define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
 // =====================RAM=======================
 
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
-#define STRIDE_TABLE_SIZE 16
+#define STRIDE_TABLE_SIZE 32    
 #define DEGREE 1
-#define DISTANCE 5
+#define DISTANCE 8
 // active prefetchers
 #define STRIDE 1
 // =====================PREFETCHER=======================
 
 // =====================MEMORY DESAMBIGUATION=======================
+#define DESAMBIGUATION_ENABLED 1
 #define LOAD_HASH_SIZE 512
 #define STORE_HASH_SIZE 512
 #define DESAMBIGUATION_BLOCK_SIZE 4
 
+#define ADDRESS_TO_ADDRESS 1
+#define REGISTER_FORWARD 0
 // =====================MEMORY DESAMBIGUATION=======================
-
-
-
-
-
-
 
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
@@ -176,17 +173,17 @@ Arquivo definindo os parametros do modelo de processador
 #if DEBUG
 #define FETCH_DEBUG 0
 #define DECODE_DEBUG 0
-#define RENAME_DEBUG 1
+#define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 0
 #define MOB_DEBUG 0
-#define COMMIT_DEBUG 0
+#define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 
 #endif
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 1000000
-#define WAIT_CYCLE 2400
+#define WAIT_CYCLE 5500
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP

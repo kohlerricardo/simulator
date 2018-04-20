@@ -114,9 +114,8 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             this->data_cache[1].add_cacheHit();
             //========================================= 
             this->data_cache[1].returnLine(mob_line->memory_address,&this->data_cache[0]);
-            #if CACHE_MANAGER_DEBUG
-                ORCS_PRINTF("LLC Hit TTC %u\n",ttc)
-                ORCS_PRINTF("LLC Hit LR %u\n",latency_request)
+            #if PREFETCHER_ACTIVE
+                this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
             #endif
         }else{
             
@@ -132,9 +131,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             //========================================= 
             //llc inst miss
             latency_request+=RAM_LATENCY;
-        #if CACHE_MANAGER_DEBUG
-            ORCS_PRINTF("LLC MISS LR %u\n",latency_request)
-        #endif
+
             // ====================
             // Install cache lines
             // ====================
@@ -187,6 +184,9 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
             // install line new on d0
             this->data_cache[1].returnLine(mob_line->memory_address,&this->data_cache[0]);
             this->data_cache[0].write(mob_line->memory_address);
+            #if PREFETCHER_ACTIVE
+            this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
+            #endif
         }else{
             //========================================= 
             this->data_cache[1].add_cacheAccess();
@@ -221,49 +221,49 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
     }
     return latency_request;
 };
-void cache_manager_t::insertQueueRead(memory_order_buffer_line_t mob_line){
-    ERROR_ASSERT_PRINTF(mob_line.memory_operation == MEMORY_OPERATION_READ,"Error, Inserting Not Read Operation")
+void cache_manager_t::insertQueueRead(memory_order_buffer_line_t* mob_line){
+    ERROR_ASSERT_PRINTF(mob_line->memory_operation == MEMORY_OPERATION_READ,"Error, Inserting Not Read Operation")
     this->read_buffer.push(mob_line);
 };
-void cache_manager_t::insertQueueWrite(memory_order_buffer_line_t mob_line){
-    ERROR_ASSERT_PRINTF(mob_line.memory_operation == MEMORY_OPERATION_WRITE,"Error, Inserting Not Write Operation")
+void cache_manager_t::insertQueueWrite(memory_order_buffer_line_t* mob_line){
+    ERROR_ASSERT_PRINTF(mob_line->memory_operation == MEMORY_OPERATION_WRITE,"Error, Inserting Not Write Operation")
     this->read_buffer.push(mob_line);
 };
 void cache_manager_t::clock(){
-    // uint32_t read_executed = 0,write_executed=0;
-    // while(!this->read_buffer.empty()){
-    //     if(read_executed >= PARALLEL_LOADS){
-    //         break;
-    //     }
+    uint32_t read_executed = 0,write_executed=0;
+    while(!this->read_buffer.empty()){
+        if(read_executed >= PARALLEL_LOADS){
+            break;
+        }
 
-    //     if(this->read_buffer.top().readyAt >= orcs_engine.get_global_cycle()){
-    //         break;
-    //     }
-    //     uint32_t latency = 0;
-    //     latency = this->searchData(this->read_buffer.top().memory_address);
-    //     this->read_buffer.top().rob_ptr->uop.updatePackageReady(latency);
-    //     this->read_buffer.top().rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
-    //     this->read_buffer.top().rob_ptr->mob_ptr->readyAt=this->read_buffer.top().rob_ptr->mob_ptr->readyAt+latency;
-    //     read_executed++;
-    //     this->read_buffer.pop();
-    // }
-    //  while(!this->write_buffer.empty()){
-    //     if(write_executed >= PARALLEL_STORES){
-    //         break;
-    //     }
-    //     if(this->write_buffer.top().readyAt >= orcs_engine.get_global_cycle()){
-    //         break;
-    //     }
-    //     uint32_t latency = 0;
-    //     latency = this->searchData(this->write_buffer.top().memory_address);
-    //     //se não terminar ou travar, significa que nao ta atualizando o mob,
-    //     // entao tem atualizar via top().rob_ptr->mob_ptr.updateXXXX
-    //     this->write_buffer.top().rob_ptr->uop.updatePackageReady(latency);
-    //     this->write_buffer.top().rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
-    //     this->write_buffer.top().rob_ptr->mob_ptr->readyAt=this->write_buffer.top().rob_ptr->mob_ptr->readyAt+latency;
-    //     write_executed++;
-    //     this->write_buffer.pop();
-    // }
+        if(this->read_buffer.top()->readyAt >= orcs_engine.get_global_cycle()){
+            break;
+        }
+        uint32_t latency = 0;
+        latency = this->searchData(this->read_buffer.top());
+        // this->read_buffer.top()->rob_ptr->uop.updatePackageReady(latency);
+        this->read_buffer.top()->rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
+        this->read_buffer.top()->rob_ptr->mob_ptr->readyAt=this->read_buffer.top()->rob_ptr->mob_ptr->readyAt+latency;
+        read_executed++;
+        this->read_buffer.pop();
+    }
+     while(!this->write_buffer.empty()){
+        if(write_executed >= PARALLEL_STORES){
+            break;
+        }
+        if(this->write_buffer.top()->readyAt >= orcs_engine.get_global_cycle()){
+            break;
+        }
+        uint32_t latency = 0;
+        latency = this->searchData(this->write_buffer.top());
+        //se não terminar ou travar, significa que nao ta atualizando o mob,
+        // entao tem atualizar via top()->rob_ptr->mob_ptr.updateXXXX
+        // this->write_buffer.top()->rob_ptr->uop.updatePackageReady(latency);
+        this->write_buffer.top()->rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
+        this->write_buffer.top()->rob_ptr->mob_ptr->readyAt=this->write_buffer.top()->rob_ptr->mob_ptr->readyAt+latency;
+        write_executed++;
+        this->write_buffer.pop();
+    }
 }
 void cache_manager_t::statistics(){
     ORCS_PRINTF("##############  Cache Manager ##################\n")

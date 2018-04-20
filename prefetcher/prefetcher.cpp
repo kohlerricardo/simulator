@@ -23,7 +23,7 @@ void prefetcher_t::allocate(){
 // @*cache - cache to be instaled line prefetched
 // ================================================================
 void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache){
-    int64_t newAddress = this->prefetcher->verify(mob_line->rob_ptr->uop.opcode_address,mob_line->memory_address);
+    int64_t newAddress = this->prefetcher->verify(mob_line->opcode_address,mob_line->memory_address);
     uint32_t sacrifice;
     if(newAddress != POSITION_FAIL){
         uint32_t status = cache->read(newAddress,sacrifice);
@@ -40,4 +40,4 @@ void prefetcher_t::statistics(){
     ORCS_PRINTF("Late Prefetches: %u -> %.4f \n",this->get_latePrefetches(),((this->get_latePrefetches()*100.0)/this->get_totalPrefetched()))
     ORCS_PRINTF("MediaAtraso: %.3f\n",(float)this->get_totalCycleLate()/(float)this->get_latePrefetches())
 
-};
+}; 
