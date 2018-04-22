@@ -57,7 +57,7 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
             //========================================= 
             this->data_cache[1].returnLine(instructionAddress,this->inst_cache);
             #if CACHE_MANAGER_DEBUG
-                ORCS_PRINTF("Latency LLC HIT %u\n",latency_request)
+                // ORCS_PRINTF("Latency LLC HIT %u\n",latency_request)
             #endif
         }else{
             //========================================= 
@@ -67,7 +67,7 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
             //llc inst miss
             latency_request+=RAM_LATENCY;
             #if CACHE_MANAGER_DEBUG
-                ORCS_PRINTF("Latency LLC MISS %u\n",latency_request)
+                // ORCS_PRINTF("Latency LLC MISS %u\n",latency_request)
             #endif
             // ====================
             // Install cache lines
@@ -82,7 +82,7 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     }
     return latency_request;
 };
-uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
+uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_status_t *has_llc_miss){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
     uint32_t hit = this->data_cache[0].read(mob_line->memory_address,ttc);
@@ -105,8 +105,8 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
         // ==========
         latency_request+=ttc;
         #if CACHE_MANAGER_DEBUG
-            ORCS_PRINTF("L1 MISS TTC %u\n",ttc)
-            ORCS_PRINTF("L1 MISS LR %u\n",latency_request)
+            // ORCS_PRINTF("L1 MISS TTC %u\n",ttc)
+            // ORCS_PRINTF("L1 MISS LR %u\n",latency_request)
         #endif
         if(hit == HIT){
             //========================================= 
@@ -114,11 +114,18 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             this->data_cache[1].add_cacheHit();
             //========================================= 
             this->data_cache[1].returnLine(mob_line->memory_address,&this->data_cache[0]);
+            // =========== Prefetcher ==================
             #if PREFETCHER_ACTIVE
                 this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
             #endif
         }else{
-            
+            // ====================
+            // Print Operations dependents on a miss
+            // ====================
+            #if CACHE_MANAGER_DEBUG
+            mob_line->print_all_operation_deps();
+            #endif
+            *has_llc_miss=MISS;
             //========================================= 
             this->data_cache[1].add_cacheAccess();
             this->data_cache[1].add_cacheMiss();
@@ -141,6 +148,8 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             linha_l1 = this->data_cache[0].installLine(mob_line->memory_address);
             linha_l1->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_l1;
+
+
         }
     }
     return latency_request;
@@ -158,8 +167,8 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
         this->data_cache[0].add_cacheHit();
         //========================================= 
         #if CACHE_MANAGER_DEBUG
-            ORCS_PRINTF("L1 Hit TTC %u\n",ttc)   
-            ORCS_PRINTF("L1 Hit LR %u\n",latency_request)
+            // ORCS_PRINTF("L1 Hit TTC %u\n",ttc)   
+            // ORCS_PRINTF("L1 Hit LR %u\n",latency_request)
         #endif
         this->data_cache[0].write(mob_line->memory_address); 
     }else{   
@@ -230,40 +239,7 @@ void cache_manager_t::insertQueueWrite(memory_order_buffer_line_t* mob_line){
     this->read_buffer.push(mob_line);
 };
 void cache_manager_t::clock(){
-    uint32_t read_executed = 0,write_executed=0;
-    while(!this->read_buffer.empty()){
-        if(read_executed >= PARALLEL_LOADS){
-            break;
-        }
-
-        if(this->read_buffer.top()->readyAt >= orcs_engine.get_global_cycle()){
-            break;
-        }
-        uint32_t latency = 0;
-        latency = this->searchData(this->read_buffer.top());
-        // this->read_buffer.top()->rob_ptr->uop.updatePackageReady(latency);
-        this->read_buffer.top()->rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
-        this->read_buffer.top()->rob_ptr->mob_ptr->readyAt=this->read_buffer.top()->rob_ptr->mob_ptr->readyAt+latency;
-        read_executed++;
-        this->read_buffer.pop();
-    }
-     while(!this->write_buffer.empty()){
-        if(write_executed >= PARALLEL_STORES){
-            break;
-        }
-        if(this->write_buffer.top()->readyAt >= orcs_engine.get_global_cycle()){
-            break;
-        }
-        uint32_t latency = 0;
-        latency = this->searchData(this->write_buffer.top());
-        //se não terminar ou travar, significa que nao ta atualizando o mob,
-        // entao tem atualizar via top()->rob_ptr->mob_ptr.updateXXXX
-        // this->write_buffer.top()->rob_ptr->uop.updatePackageReady(latency);
-        this->write_buffer.top()->rob_ptr->mob_ptr->status=PACKAGE_STATE_READY;
-        this->write_buffer.top()->rob_ptr->mob_ptr->readyAt=this->write_buffer.top()->rob_ptr->mob_ptr->readyAt+latency;
-        write_executed++;
-        this->write_buffer.pop();
-    }
+   
 }
 void cache_manager_t::statistics(){
     ORCS_PRINTF("##############  Cache Manager ##################\n")

@@ -88,11 +88,6 @@ int main(int argc, char **argv) {
 
     /// Start CLOCK for all the components
     while (orcs_engine.simulator_alive) {
-        #if DESAMBIGUATION_ENABLED
-        
-        #else
-        orcs_engine.cacheManager->clock();
-        #endif
         orcs_engine.processor->clock();
         orcs_engine.global_cycle++;
     }

@@ -73,24 +73,22 @@ int32_t memory_order_buffer_line_t::find_old_request_state_ready(memory_order_bu
 // ============================================================================
 
 // ============================================================================
-std::string memory_order_buffer_line_t::print_all(memory_order_buffer_line_t *input_array, uint32_t size_array) {
-    std::string content_string;
-    std::string final_string;
-
-    final_string = "";
-    for (uint32_t i = 0; i < size_array ; i++) {
-        content_string = "";
-        content_string = input_array[i].content_to_string();
-        if (content_string.size() > 1) {
-            final_string = final_string + "[" + utils_t::uint32_to_string(i) + "] " + content_string + "\n";
+void memory_order_buffer_line_t::print_all_operation_deps() {
+    ORCS_PRINTF("==============================\n")
+    for (uint32_t i = 0; i < ROB_SIZE ; i++) {
+        if (this->rob_ptr->reg_deps_ptr_array[i] == NULL) {
+            break;
         }
+        ORCS_PRINTF("%s\n",this->rob_ptr->reg_deps_ptr_array[i]->content_to_string().c_str())
     }
-    return final_string;
+    ORCS_PRINTF("==============================\n")
+    sleep(2);
 };
 // ============================================================================
 // Update status package
 // ============================================================================
 void memory_order_buffer_line_t::updatePackageUntrated(uint32_t stallTime){
+
     this->status = PACKAGE_STATE_UNTREATED;
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
 };

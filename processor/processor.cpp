@@ -779,121 +779,121 @@ void processor_t::solve_memory_dependency(memory_order_buffer_line_t *mob_line) 
 */
 // =================================================
 
-	void processor_t::rename(){
-			#if RENAME_DEBUG
-				ORCS_PRINTF("Rename Stage\n")
-			#endif
-		size_t i;
-		int32_t pos_rob,pos_mob;
+void processor_t::rename(){
+		#if RENAME_DEBUG
+			ORCS_PRINTF("Rename Stage\n")
+		#endif
+	size_t i;
+	int32_t pos_rob,pos_mob;
 
-		
-		for (i = 0; i < RENAME_WIDTH;i++)
+	
+	for (i = 0; i < RENAME_WIDTH;i++)
+	{
+		memory_order_buffer_line_t *mob_line = NULL;
+		// Checando se há uop decodificado, se está pronto, e se o ciclo de pronto
+		// é maior ou igual ao atual
+		if (this->decodeBuffer.is_empty() ||
+			this->decodeBuffer.front()->status != PACKAGE_STATE_READY ||
+			this->decodeBuffer.front()->readyAt > orcs_engine.get_global_cycle()){
+			break;
+		}
+		ERROR_ASSERT_PRINTF(this->decodeBuffer.front()->uop_number == this->renameCounter, "Erro, renomeio incorreto\n")
+		//=======================
+		// Memory Operation Read
+		//=======================
+		if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
+			pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_read,MOB_READ);
+			if(pos_mob == POSITION_FAIL){
+				this->add_stall_full_MOB_Read();
+				break;
+			}
+			mob_line = &this->memory_order_buffer_read[pos_mob];
+		}
+		//=======================
+		// Memory Operation Write
+		//=======================
+		if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+			pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_write,MOB_WRITE);
+			if(pos_mob == POSITION_FAIL){
+				this->add_stall_full_MOB_Write();
+				break;
+			}
+			mob_line = &this->memory_order_buffer_write[pos_mob];
+		}
+		//=======================
+		// Verificando se tem espaco no ROB se sim bamos inserir
+		//=======================
+		pos_rob = this->searchPositionROB();
+		if (pos_rob == POSITION_FAIL)
 		{
-			memory_order_buffer_line_t *mob_line = NULL;
-			// Checando se há uop decodificado, se está pronto, e se o ciclo de pronto
-			// é maior ou igual ao atual
-			if (this->decodeBuffer.is_empty() ||
-				this->decodeBuffer.front()->status != PACKAGE_STATE_READY ||
-				this->decodeBuffer.front()->readyAt > orcs_engine.get_global_cycle()){
-				break;
-			}
-			ERROR_ASSERT_PRINTF(this->decodeBuffer.front()->uop_number == this->renameCounter, "Erro, renomeio incorreto\n")
-			//=======================
-			// Memory Operation Read
-			//=======================
-			if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
-				pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_read,MOB_READ);
-				if(pos_mob == POSITION_FAIL){
-					this->add_stall_full_MOB_Read();
-					break;
-				}
-				mob_line = &this->memory_order_buffer_read[pos_mob];
-			}
-			//=======================
-			// Memory Operation Write
-			//=======================
-			if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
-				pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_write,MOB_WRITE);
-				if(pos_mob == POSITION_FAIL){
-					this->add_stall_full_MOB_Write();
-					break;
-				}
-				mob_line = &this->memory_order_buffer_write[pos_mob];
-			}
-			//=======================
-			// Verificando se tem espaco no ROB se sim bamos inserir
-			//=======================
-			pos_rob = this->searchPositionROB();
-			if (pos_rob == POSITION_FAIL)
-			{
-				this->add_stall_full_ROB();
-				break;
-			}
-			// ===============================================
-			// Insserting on ROB
-			// ===============================================
-			this->reorderBuffer[pos_rob].uop = *this->decodeBuffer.front();
-			//remove uop from decodebuffer
-			this->decodeBuffer.front()->package_clean();
-			this->decodeBuffer.pop_front();
-			this->renameCounter++;
-				
-			// =======================
-			// Setting controls to ROB.
-			// =======================
-			this->reorderBuffer[pos_rob].stage = PROCESSOR_STAGE_RENAME;
-			this->reorderBuffer[pos_rob].uop.updatePackageReady(RENAME_LATENCY+DISPATCH_LATENCY);
-			this->reorderBuffer[pos_rob].mob_ptr = mob_line;
-			// =======================
-			// Making registers dependences
-			// =======================
-			this->update_registers(&this->reorderBuffer[pos_rob]);
+			this->add_stall_full_ROB();
+			break;
+		}
+		// ===============================================
+		// Insserting on ROB
+		// ===============================================
+		this->reorderBuffer[pos_rob].uop = *this->decodeBuffer.front();
+		//remove uop from decodebuffer
+		this->decodeBuffer.front()->package_clean();
+		this->decodeBuffer.pop_front();
+		this->renameCounter++;
+			
+		// =======================
+		// Setting controls to ROB.
+		// =======================
+		this->reorderBuffer[pos_rob].stage = PROCESSOR_STAGE_RENAME;
+		this->reorderBuffer[pos_rob].uop.updatePackageReady(RENAME_LATENCY+DISPATCH_LATENCY);
+		this->reorderBuffer[pos_rob].mob_ptr = mob_line;
+		// =======================
+		// Making registers dependences
+		// =======================
+		this->update_registers(&this->reorderBuffer[pos_rob]);
+		#if RENAME_DEBUG
+			ORCS_PRINTF("Rename %s\n",this->reorderBuffer[pos_rob].content_to_string().c_str())
+		#endif
+		// =======================
+		// Insert into Reservation Station
+		// =======================
+		this->unified_reservation_station.push_back(&this->reorderBuffer[pos_rob]);
+		// =======================
+		// Insert into MOB.
+		// =======================
+		if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){	
 			#if RENAME_DEBUG
-				ORCS_PRINTF("Rename %s\n",this->reorderBuffer[pos_rob].content_to_string().c_str())
+			ORCS_PRINTF("Mem Load\n")
+			#endif 
+			this->reorderBuffer[pos_rob].mob_ptr->opcode_address = this->reorderBuffer[pos_rob].uop.opcode_address;
+			this->reorderBuffer[pos_rob].mob_ptr->memory_address = this->reorderBuffer[pos_rob].uop.memory_address;
+			this->reorderBuffer[pos_rob].mob_ptr->memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
+			this->reorderBuffer[pos_rob].mob_ptr->memory_operation = MEMORY_OPERATION_READ;
+			this->reorderBuffer[pos_rob].mob_ptr->status = PACKAGE_STATE_UNTREATED;
+			this->reorderBuffer[pos_rob].mob_ptr->born_cicle = orcs_engine.get_global_cycle();
+			this->reorderBuffer[pos_rob].mob_ptr->uop_number = this->reorderBuffer[pos_rob].uop.uop_number;
+		}
+		else if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
+		{
+			#if RENAME_DEBUG
+			ORCS_PRINTF("Mem Store\n")
+			#endif 
+			this->reorderBuffer[pos_rob].mob_ptr->opcode_address = this->reorderBuffer[pos_rob].uop.opcode_address;
+			this->reorderBuffer[pos_rob].mob_ptr->memory_address = this->reorderBuffer[pos_rob].uop.memory_address;
+			this->reorderBuffer[pos_rob].mob_ptr->memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
+			this->reorderBuffer[pos_rob].mob_ptr->memory_operation = MEMORY_OPERATION_WRITE;
+			this->reorderBuffer[pos_rob].mob_ptr->status = PACKAGE_STATE_UNTREATED;
+			this->reorderBuffer[pos_rob].mob_ptr->born_cicle = orcs_engine.get_global_cycle();
+			this->reorderBuffer[pos_rob].mob_ptr->uop_number = this->reorderBuffer[pos_rob].uop.uop_number;
+		}
+		//linking rob and mob
+		if(this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD || 
+			this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE ){
+			mob_line->rob_ptr = &this->reorderBuffer[pos_rob];
+			#if DESAMBIGUATION_ENABLED
+			this->make_memory_dependencies(this->reorderBuffer[pos_rob].mob_ptr);
 			#endif
-			// =======================
-			// Insert into Reservation Station
-			// =======================
-			this->unified_reservation_station.push_back(&this->reorderBuffer[pos_rob]);
-			// =======================
-			// Insert into MOB.
-			// =======================
-			if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){	
-				#if RENAME_DEBUG
-				ORCS_PRINTF("Mem Load\n")
-				#endif 
-				this->reorderBuffer[pos_rob].mob_ptr->opcode_address = this->reorderBuffer[pos_rob].uop.opcode_address;
-				this->reorderBuffer[pos_rob].mob_ptr->memory_address = this->reorderBuffer[pos_rob].uop.memory_address;
-				this->reorderBuffer[pos_rob].mob_ptr->memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
-				this->reorderBuffer[pos_rob].mob_ptr->memory_operation = MEMORY_OPERATION_READ;
-				this->reorderBuffer[pos_rob].mob_ptr->status = PACKAGE_STATE_UNTREATED;
-				this->reorderBuffer[pos_rob].mob_ptr->born_cicle = orcs_engine.get_global_cycle();
-				this->reorderBuffer[pos_rob].mob_ptr->uop_number = this->reorderBuffer[pos_rob].uop.uop_number;
-			}
-			else if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
-			{
-				#if RENAME_DEBUG
-				ORCS_PRINTF("Mem Store\n")
-				#endif 
-				this->reorderBuffer[pos_rob].mob_ptr->opcode_address = this->reorderBuffer[pos_rob].uop.opcode_address;
-				this->reorderBuffer[pos_rob].mob_ptr->memory_address = this->reorderBuffer[pos_rob].uop.memory_address;
-				this->reorderBuffer[pos_rob].mob_ptr->memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
-				this->reorderBuffer[pos_rob].mob_ptr->memory_operation = MEMORY_OPERATION_WRITE;
-				this->reorderBuffer[pos_rob].mob_ptr->status = PACKAGE_STATE_UNTREATED;
-				this->reorderBuffer[pos_rob].mob_ptr->born_cicle = orcs_engine.get_global_cycle();
-				this->reorderBuffer[pos_rob].mob_ptr->uop_number = this->reorderBuffer[pos_rob].uop.uop_number;
-			}
-			//linking rob and mob
-			if(this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD || 
-				this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE ){
-				mob_line->rob_ptr = &this->reorderBuffer[pos_rob];
-				#if DESAMBIGUATION_ENABLED
-				this->make_memory_dependencies(this->reorderBuffer[pos_rob].mob_ptr);
-				#endif
-			}
-		} //end for
+		}
+	} //end for
 
-	} //end method
+} //end method""
 
 /*
 void processor_t::rename(){
@@ -1261,6 +1261,11 @@ void processor_t::execute(){
 	// =====================================	
 	uint32_t uop_total_executed = 0;
 	for (size_t i = 0; i < this->unified_functional_units.size(); i++){
+		if(this->has_llc_miss==MISS){
+			// if(this->halt_execute_chain >= orcs_engine.get_global_cycle()){
+			// 	break;
+			// }
+		}
 		reorder_buffer_line_t *rob_line = this->unified_functional_units[i];
 		if(uop_total_executed == EXECUTE_WIDTH){
 			break;
@@ -1391,7 +1396,7 @@ void processor_t::mob_read(){
 		if(mob_line != NULL){
 			#if DESAMBIGUATION_ENABLED
 				uint32_t ttc=0;
-				ttc = orcs_engine.cacheManager->searchData(mob_line);
+				ttc = orcs_engine.cacheManager->searchData(mob_line,&this->has_llc_miss);
 				mob_line->updatePackageReady(ttc);
 				mob_line->rob_ptr->uop.updatePackageReady(ttc);
 			#else
@@ -1582,8 +1587,8 @@ void processor_t::solve_registers_dependency(reorder_buffer_line_t *rob_line) {
 void processor_t::clock()
 {
 	#if DEBUG
-	ORCS_PRINTF("====================================================================\n")
-	ORCS_PRINTF("Cycle %lu\n",orcs_engine.get_global_cycle())
+	// ORCS_PRINTF("====================================================================\n")
+	// ORCS_PRINTF("Cycle %lu\n",orcs_engine.get_global_cycle())
 	#endif
 	/////////////////////////////////////////////////
 	//// Verifica se existe coisas no ROB
@@ -1630,7 +1635,7 @@ void processor_t::clock()
 		orcs_engine.simulator_alive = false;
 	}
 	#if DEBUG
-	ORCS_PRINTF("===================================================================\n")
+	// ORCS_PRINTF("===================================================================\n")
 	#endif
 	#if PERIODIC_CHECK
 		if(orcs_engine.get_global_cycle()%CLOCKS_TO_CHECK==0){
@@ -1659,6 +1664,7 @@ void processor_t::statistics()
 	utils_t::largeSeparator();
 	ORCS_PRINTF("Read False Positive: %lu\n",this->get_stat_disambiguation_read_false_positive())
 	ORCS_PRINTF("Write False Positive: %lu\n",this->get_stat_disambiguation_write_false_positive())
+	ORCS_PRINTF("Solve Address to Address: %lu\n",this->get_stat_address_to_address())
 	utils_t::largestSeparator();
 };
 

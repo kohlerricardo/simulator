@@ -20,7 +20,7 @@ class cache_manager_t{
         void clock();//for prefetcher
         void statistics();
         uint32_t searchInstruction(uint64_t instructionAddress);
-        uint32_t searchData(memory_order_buffer_line_t *mob_line);
+        uint32_t searchData(memory_order_buffer_line_t *mob_line,cache_status_t *has_llc_miss);
         uint32_t writeData(memory_order_buffer_line_t *mob_line);
         void insertQueueRead(memory_order_buffer_line_t* mob_line);
         void insertQueueWrite(memory_order_buffer_line_t* mob_line);

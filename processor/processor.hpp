@@ -201,16 +201,8 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_other_completed);
 
 		// ====================================================================
-		// Compare methods
+		// EMC Methods and attr
 		// ====================================================================
-		bool inline cmp_fetch_block(uint64_t addressA,uint64_t addressB){
-			return ((addressA >> OFFSET_SIZE)==(addressB >> OFFSET_SIZE));
-		}
-		// ====================================================================
-		// Debug AID
-		// ====================================================================
-		void solve_for_debug();
-		bool front_read_executed;
-		bool front_write_executed;
-
+		cache_status_t has_llc_miss;
+		uint64_t halt_execute_chain;
 };

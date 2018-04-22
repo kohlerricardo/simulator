@@ -168,7 +168,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
 // ==========DEBUGS
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #define FETCH_DEBUG 0
@@ -177,8 +177,9 @@ Arquivo definindo os parametros do modelo de processador
 #define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 0
 #define MOB_DEBUG 0
-#define COMMIT_DEBUG 1
-#define CACHE_MANAGER_DEBUG 0
+#define COMMIT_DEBUG 0
+#define CACHE_MANAGER_DEBUG 1
+#define MEM_CONTROLLER_DEBUG 0
 
 #endif
 

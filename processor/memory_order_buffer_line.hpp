@@ -26,7 +26,7 @@ class memory_order_buffer_line_t {
 
         static int32_t find_free(memory_order_buffer_line_t *input_array, uint32_t size_array);
         static int32_t find_old_request_state_ready(memory_order_buffer_line_t *input_array, uint32_t size_array, package_state_t state);
-        static std::string print_all(memory_order_buffer_line_t *input_array, uint32_t size_array);
+        void  print_all_operation_deps();
         // =====================================================================
         // Update status
         // =====================================================================
