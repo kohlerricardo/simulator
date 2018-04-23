@@ -17,13 +17,20 @@ void cache_manager_t::allocate(){
     this->data_cache = new cache_t[CACHE_LEVELS];
     this->data_cache[0].allocate(L1); //L1
     this->data_cache[1].allocate(LLC); //LLC 
-    this->hit=0;
-    this->miss=0;
+    //Read/Write counters
+    this->set_readHit(0);
+    this->set_readMiss(0);
+    this->set_writeHit(0);
+    this->set_writeMiss(0);
+
     //Allocate Prefetcher
     #if PREFETCHER_ACTIVE
     this->prefetcher = new prefetcher_t;
     this->prefetcher->allocate();
     #endif
+    this->inst_load_miss=0;
+    this->inst_load_load=0;
+    this->inst_load_deps=0;
 };
 uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     uint32_t ttc = 0;
@@ -94,7 +101,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_
         this->data_cache[0].add_cacheHit();
         //========================================= 
     }else{
-                //========================================= 
+        //========================================= 
         this->data_cache[0].add_cacheAccess();
         this->data_cache[0].add_cacheMiss();
         //========================================= 
@@ -119,11 +126,12 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_
                 this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
             #endif
         }else{
+            this->add_readMiss();
             // ====================
             // Print Operations dependents on a miss
             // ====================
             #if CACHE_MANAGER_DEBUG
-            mob_line->print_all_operation_deps();
+            mob_line->print_all_operation_deps(this->inst_load_miss,this->inst_load_deps,this->inst_load_load);
             #endif
             *has_llc_miss=MISS;
             //========================================= 
@@ -197,6 +205,7 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
             this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
             #endif
         }else{
+            this->add_writeMiss();
             //========================================= 
             this->data_cache[1].add_cacheAccess();
             this->data_cache[1].add_cacheMiss();
@@ -242,20 +251,27 @@ void cache_manager_t::clock(){
    
 }
 void cache_manager_t::statistics(){
-    ORCS_PRINTF("##############  Cache Manager ##################\n")
-    ORCS_PRINTF("Instruction Searched : %lu\n",this->get_instructionSearched())
-    ORCS_PRINTF("Instruction LLC Searched : %lu\n",this->get_instructionLLCSearched())
-    ORCS_PRINTF("L1 Hits: %lu\n",this->get_hit())
-    ORCS_PRINTF("L1 Miss: %lu\n",this->get_miss())
-    
-    ORCS_PRINTF("############## Instruction Cache ##################\n")
+
+    if(orcs_engine.output_file_name == NULL){
+        ORCS_PRINTF("##############  Cache Memories ##################\n")
+    }
+    else{
+        FILE *output = fopen(orcs_engine.output_file_name,"a+");
+            if(output != NULL){
+                utils_t::largestSeparator(output);  
+                fprintf(output,"##############  Cache Memories ##################\n");
+                utils_t::largestSeparator(output);  
+            }
+            fclose(output);
+        }    
+    // ORCS_PRINTF("############## Instruction Cache ##################\n")
     this->inst_cache->statistics();
-    ORCS_PRINTF("##############  Data Cache L1 ##################\n")
+    // ORCS_PRINTF("##############  Data Cache L1 ##################\n")
     this->data_cache[0].statistics();
-    ORCS_PRINTF("##############  LLC Cache ##################\n")
+    // ORCS_PRINTF("##############  LLC Cache ##################\n")
     this->data_cache[1].statistics();
+    // Prefetcher
     #if PREFETCHER_ACTIVE
-    ORCS_PRINTF("##############  PREFETCHER ##################\n")
     this->prefetcher->statistics();
     #endif
 };

@@ -73,16 +73,42 @@ int32_t memory_order_buffer_line_t::find_old_request_state_ready(memory_order_bu
 // ============================================================================
 
 // ============================================================================
-void memory_order_buffer_line_t::print_all_operation_deps() {
-    ORCS_PRINTF("==============================\n")
-    for (uint32_t i = 0; i < ROB_SIZE ; i++) {
-        if (this->rob_ptr->reg_deps_ptr_array[i] == NULL) {
-            break;
+void memory_order_buffer_line_t::print_all_operation_deps(uint64_t &ld_llc_miss,uint64_t &llc_miss_deps,uint64_t &inst_ld_ld) {
+    // ORCS_PRINTF("==============================\n")
+    // ORCS_PRINTF("%s\n",this->rob_ptr->content_to_string().c_str())
+    // ORCS_PRINTF("======\n")
+    bool hasLoad = false;
+    uint32_t numbOp=0;
+    ld_llc_miss++;
+    if(this->rob_ptr->reg_deps_ptr_array !=NULL){
+        for (uint32_t i = 0; i < ROB_SIZE; i++){
+            if(this->rob_ptr->reg_deps_ptr_array[i]==NULL){
+                break;
+            }
+            numbOp++;
+            if(this->rob_ptr->reg_deps_ptr_array[i]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
+            hasLoad=true;
+            }
+            // ORCS_PRINTF("%s\n",this->rob_ptr->reg_deps_ptr_array[i]->content_to_string().c_str())
         }
-        ORCS_PRINTF("%s\n",this->rob_ptr->reg_deps_ptr_array[i]->content_to_string().c_str())
     }
-    ORCS_PRINTF("==============================\n")
-    sleep(2);
+    if(hasLoad){
+            ORCS_PRINTF("numero Operacoes deps %u\n",numbOp)
+            llc_miss_deps++;
+            for (uint32_t i = 0; i < ROB_SIZE; i++){
+                if(this->rob_ptr->reg_deps_ptr_array[i]==NULL){
+                    break;
+                }
+                inst_ld_ld++;
+                ORCS_PRINTF("%s\n",this->rob_ptr->reg_deps_ptr_array[i]->content_to_string2().c_str())
+                // if(this->rob_ptr->reg_deps_ptr_array[i]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
+                //     break;
+                // }
+            }
+            hasLoad=false;
+        }
+    // ORCS_PRINTF("==============================\n")
+    // sleep(2);
 };
 // ============================================================================
 // Update status package

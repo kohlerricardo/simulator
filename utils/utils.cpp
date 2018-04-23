@@ -548,3 +548,12 @@ void utils_t::largeSeparator(){
 void utils_t::largestSeparator(){
     ORCS_PRINTF("#========================================================================#\n")
 };
+void utils_t::smallSeparator(FILE * file){
+    fprintf(file,"#======================#\n");
+};
+void utils_t::largeSeparator(FILE * file){
+   fprintf(file,"#===============================================#\n");
+};
+void utils_t::largestSeparator(FILE * file){
+   fprintf(file,"#========================================================================#\n");
+};

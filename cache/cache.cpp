@@ -410,13 +410,34 @@ void cache_t::shotdown(uint64_t address){
 // statistics of a level of cache
 // ====================
 void cache_t::statistics(){
-	ORCS_PRINTF("Cache Level: %s\n",get_enum_cache_level_char(this->level))
-	ORCS_PRINTF("Cache Access: %lu\n",this->get_cacheAccess())
-	ORCS_PRINTF("Cache Hits: %lu %.4f\n",this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()))
-	ORCS_PRINTF("Cache Miss: %lu %.4f\n",this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()))
-	ORCS_PRINTF("Cache Read: %lu %.4f\n",this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()))
-	ORCS_PRINTF("Cache Write: %lu %.4f\n",this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()))
-	if(this->get_cacheWriteBack()!=0){
-		ORCS_PRINTF("Cache WriteBack: %lu %.4f\n",this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()))
+	if(orcs_engine.output_file_name == NULL){
+		ORCS_PRINTF("Cache Level: %s\n",get_enum_cache_level_char(this->level))
+		ORCS_PRINTF("Cache Access: %lu\n",this->get_cacheAccess())
+		ORCS_PRINTF("Cache Hits: %lu %.4f\n",this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()))
+		ORCS_PRINTF("Cache Miss: %lu %.4f\n",this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()))
+		ORCS_PRINTF("Cache Read: %lu %.4f\n",this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()))
+		ORCS_PRINTF("Cache Write: %lu %.4f\n",this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()))
+		if(this->get_cacheWriteBack()!=0){
+			ORCS_PRINTF("Cache WriteBack: %lu %.4f\n",this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()))
+		}
+	}else{
+		FILE *output = fopen(orcs_engine.output_file_name,"a+");
+		if(output != NULL){
+			utils_t::largeSeparator(output);
+			fprintf(output,"Cache Level: %s\n",get_enum_cache_level_char(this->level));
+			fprintf(output,"Cache Access: %lu\n",this->get_cacheAccess());
+			fprintf(output,"Cache Hits: %lu %.4f\n",this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()));
+			fprintf(output,"Cache Miss: %lu %.4f\n",this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()));
+			fprintf(output,"Cache Read: %lu %.4f\n",this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()));
+			fprintf(output,"Cache Write: %lu %.4f\n",this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()));
+			if(this->get_cacheWriteBack()!=0){
+				fprintf(output,"Cache WriteBack: %lu %.4f\n",this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()));
+			}
+			utils_t::largeSeparator(output);
+		}
+		fclose(output);
 	}
+
+
+
 }

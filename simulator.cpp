@@ -5,7 +5,7 @@ orcs_engine_t orcs_engine;
 // =============================================================================
 static void display_use() {
     ORCS_PRINTF("**** OrCS - Ordinary Computer Simulator ****\n\n");
-    ORCS_PRINTF("Please provide -t <trace_file_basename>\n");
+    ORCS_PRINTF("Please provide -t <trace_file_basename> -f <output filename>\n");
 };
 
 // =============================================================================
@@ -15,13 +15,14 @@ static void process_argv(int argc, char **argv) {
     static struct option long_options[] = {
         {"help",        no_argument, 0, 'h'},
         {"trace",       required_argument, 0, 't'},
+        {"output_filename",       optional_argument, 0, 'f'},
         {NULL,          0, NULL, 0}
     };
 
     // Count number of traces
     int opt;
     int option_index = 0;
-    while ((opt = getopt_long_only(argc, argv, "h:t:",
+    while ((opt = getopt_long_only(argc, argv, "h:t:f:",
                  long_options, &option_index)) != -1) {
         switch (opt) {
         case 0:
@@ -37,6 +38,9 @@ static void process_argv(int argc, char **argv) {
 
         case 't':
             orcs_engine.arg_trace_file_name = optarg;
+            break;
+        case 'f':
+            orcs_engine.output_file_name = optarg;
             break;
         case '?':
             break;
@@ -81,7 +85,10 @@ int main(int argc, char **argv) {
     //Cache Manager
     //==================
     orcs_engine.cacheManager->allocate();
-    
+    //==================
+    //Enhaced Memory Controller
+    //==================
+
     //initializate simulator
     orcs_engine.simulator_alive = true;
 
@@ -91,7 +98,7 @@ int main(int argc, char **argv) {
         orcs_engine.processor->clock();
         orcs_engine.global_cycle++;
     }
-
+    // to be prinf
 	ORCS_PRINTF("End of Simulation\n")
 	orcs_engine.trace_reader->statistics();
     orcs_engine.processor->statistics();

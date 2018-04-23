@@ -8,7 +8,10 @@ class orcs_engine_t {
         char *arg_trace_file_name;
         /// Control the Global Cycle
         uint64_t global_cycle;
-
+        // =======================================
+        // output File name
+        // =======================================
+        char *output_file_name;
         bool simulator_alive;
 
         /// Components modeled

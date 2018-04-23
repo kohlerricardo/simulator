@@ -434,10 +434,21 @@ bool trace_reader_t::trace_fetch(opcode_package_t *m) {
 
 // =====================================================================
 void trace_reader_t::statistics() {
-	ORCS_PRINTF("######################################################\n");
-	ORCS_PRINTF("trace_reader_t\n");
-	ORCS_PRINTF("fetch_instructions:%lu\n", this->fetch_instructions);
-	
+    if(orcs_engine.output_file_name == NULL){
+        utils_t::largestSeparator();
+        ORCS_PRINTF("trace_reader_t\n");
+        ORCS_PRINTF("fetch_instructions:%lu\n", this->fetch_instructions);
+    }
+    else{
+        FILE *output = fopen(orcs_engine.output_file_name,"a+");
+		if(output != NULL){
+			utils_t::largestSeparator(output);
+            fprintf(output,"trace_reader_t\n");
+            fprintf(output,"fetch_instructions: %lu\n", this->fetch_instructions);
+            utils_t::largestSeparator(output);
+        }
+        fclose(output);
+    }
 };
 
 

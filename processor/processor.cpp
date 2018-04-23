@@ -1647,25 +1647,48 @@ void processor_t::clock()
 // =====================================================================
 void processor_t::statistics()
 {
-
+	if(orcs_engine.output_file_name == NULL){
 	utils_t::largestSeparator();
+	ORCS_PRINTF("Total Cicle : %lu",orcs_engine.get_global_cycle())
 	utils_t::largeSeparator();
-	std::cout << "Total Cicle ;" << orcs_engine.get_global_cycle() << std::endl;
+	ORCS_PRINTF("Stage Opcode and Uop Counters\n")
 	utils_t::largeSeparator();
-	ORCS_PRINTF("Stage Counters\n")
 	ORCS_PRINTF("Stage Fetch: %lu\n",this->fetchCounter)
 	ORCS_PRINTF("Stage Decode: %lu\n",this->decodeCounter)
 	ORCS_PRINTF("Stage Rename: %lu\n",this->renameCounter)
 	ORCS_PRINTF("Stage Commit: %lu\n",this->commit_uop_counter)
-	utils_t::largeSeparator();
-	ORCS_PRINTF("IPC: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()))
-	
+	utils_t::largestSeparator();
 	ORCS_PRINTF("=================== MEMORY DESAMBIGUATION =====================\n")
-	utils_t::largeSeparator();
+	utils_t::largestSeparator();
 	ORCS_PRINTF("Read False Positive: %lu\n",this->get_stat_disambiguation_read_false_positive())
 	ORCS_PRINTF("Write False Positive: %lu\n",this->get_stat_disambiguation_write_false_positive())
 	ORCS_PRINTF("Solve Address to Address: %lu\n",this->get_stat_address_to_address())
 	utils_t::largestSeparator();
+	ORCS_PRINTF("Instruction Per Cicle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()))
+	}
+	else{
+		FILE *output = fopen(orcs_engine.output_file_name,"a+");
+		if(output != NULL){
+			utils_t::largestSeparator(output);
+			fprintf(output,"Total Cicle : %lu\n",orcs_engine.get_global_cycle());
+			utils_t::largeSeparator(output);
+			fprintf(output,"Stage Opcode and Uop Counters\n");
+			utils_t::largeSeparator(output);
+			fprintf(output,"Stage Fetch: %lu\n",this->fetchCounter);
+			fprintf(output,"Stage Decode: %lu\n",this->decodeCounter);
+			fprintf(output,"Stage Rename: %lu\n",this->renameCounter);
+			fprintf(output,"Stage Commit: %lu\n",this->commit_uop_counter);
+			utils_t::largestSeparator(output);
+			fprintf(output,"======================== MEMORY DESAMBIGUATION ===========================\n");
+			utils_t::largestSeparator(output);
+			fprintf(output,"Read False Positive: %lu\n",this->get_stat_disambiguation_read_false_positive());
+			fprintf(output,"Write False Positive: %lu\n",this->get_stat_disambiguation_write_false_positive());
+			fprintf(output,"Solve Address to Address: %lu\n",this->get_stat_address_to_address());
+			utils_t::largestSeparator(output);
+			fprintf(output,"Instruction Per Cicle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()));
+		}
+		fclose(output);
+	}
 };
 
 void processor_t::printConfiguration(){

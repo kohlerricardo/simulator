@@ -26,7 +26,7 @@ class memory_order_buffer_line_t {
 
         static int32_t find_free(memory_order_buffer_line_t *input_array, uint32_t size_array);
         static int32_t find_old_request_state_ready(memory_order_buffer_line_t *input_array, uint32_t size_array, package_state_t state);
-        void  print_all_operation_deps();
+        void  print_all_operation_deps(uint64_t &ld_llc_miss,uint64_t &llc_miss_deps,uint64_t &inst_ld_ld);
         // =====================================================================
         // Update status
         // =====================================================================

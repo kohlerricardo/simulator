@@ -156,4 +156,7 @@ class utils_t {
         static void smallSeparator();
         static void largeSeparator();
         static void largestSeparator();
+        static void smallSeparator(FILE *file);
+        static void largeSeparator(FILE *file);
+        static void largestSeparator(FILE *file);
 };
