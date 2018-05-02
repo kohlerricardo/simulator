@@ -72,6 +72,10 @@ class priority_memory_access_t;
 class prefetcher_t;
 class stride_table_t;
 class stride_prefetcher_t;
+///////////////////////////////////////////
+// Memory Controller Classes
+///////////////////////////////////////////
+class memory_controller_t;
 // ====================================
 // DATA Types
 // ====================================
@@ -164,6 +168,8 @@ extern orcs_engine_t orcs_engine;
 #include "./prefetcher/prefetcher.hpp"
 #include "./prefetcher/stride_table.hpp"
 #include "./prefetcher/stride_prefetcher.hpp"
-
+///////////////////////////////////////////
+// // MemoryController INCLUDES
+#include "./main_memory/memory_controller.hpp"
 ///////////////////////////////////////////
 #endif  // _ORCS_ORCS_HPP_

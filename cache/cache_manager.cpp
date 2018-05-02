@@ -151,13 +151,13 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_
             linha_l1 = this->data_cache[0].installLine(mob_line->memory_address);
             linha_l1->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_l1;
-
-            // ====================
-            // Print Operations dependents on a miss
-            // ====================
-            #if CACHE_MANAGER_DEBUG
-            mob_line->print_all_operation_deps(this->inst_load_miss,this->inst_load_deps,this->inst_load_load);
-            #endif
+            // =====================================
+            //EMC
+            // =====================================
+            // linha_t *linha_emc = NULL;
+            // linha_emc = orcs_engine.emc->data_cache->installLine(mob_line->memory_address);
+            // linha_llc->linha_ptr_emc=linha_emc;
+            // linha_emc->linha_ptr_llc=linha_llc;
             *has_llc_miss=MISS;
         }
     }
@@ -275,4 +275,5 @@ void cache_manager_t::statistics(){
     #if PREFETCHER_ACTIVE
     this->prefetcher->statistics();
     #endif
+    ORCS_PRINTF("Media inst entre Loads deps %.3f\n",(float(this->inst_load_load)/float(this->inst_load_deps)))
 };

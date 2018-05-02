@@ -40,7 +40,9 @@ class reorder_buffer_line_t {
         // ====================================================================
         /// Generate Dep Chains to EMC
         // ====================================================================
+        bool on_chain;
         reorder_buffer_line_t* get_deps();
+
 
 
         void print_dependences();

@@ -104,8 +104,10 @@ class processor_t {
 		void mob_write();
 		void commit();
 		// ====================================================================
-		bool isBusy();
 		void printStructures();
+		// ====================================================================
+		// Bool Functions @return 
+		bool isBusy();
 		// ====================================================================
 		// Structures
 		// ====================================================================
@@ -203,6 +205,10 @@ class processor_t {
 		// ====================================================================
 		// EMC Methods and attr
 		// ====================================================================
-		cache_status_t has_llc_miss;
-		uint64_t halt_execute_chain;
+		cache_status_t has_llc_miss; // have a LLC Miss, verify idf is ROB head
+		uint64_t halt_execute_chain; // WAIT cycles to generate dep chain
+		// verify if operation that results LLC Miss is rob read
+		bool isRobHead(reorder_buffer_line_t* robEntry);//
+		bool start_emc_module;//if must start generate dep chain
+		void make_dependence_chain(reorder_buffer_line_t* rob_line); //generate dep chain
 };

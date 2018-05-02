@@ -162,8 +162,25 @@ Arquivo definindo os parametros do modelo de processador
 #define DESAMBIGUATION_BLOCK_SIZE 4
 
 #define ADDRESS_TO_ADDRESS 1
-#define REGISTER_FORWARD 0
+#define REGISTER_FORWARD 1
 // =====================MEMORY DESAMBIGUATION=======================
+
+// ===================== EMC =======================================
+#define EMC_ACTIVE 0
+#define EMC_DISPATCH_WIDTH 2
+#define EMC_DISPATCH_LATENCY 2
+
+#define EMC_INTEGER_ALU 2
+#define EMC_INTEGER_LATENCY 1
+#define EMC_WAIT_NEXT_INTEGER 1
+
+#define EMC_UNIFIED_RS 8
+// EMC CACHE
+#define EMC_CACHE_SIZE 4*KILO
+#define EMC_CACHE_ASSOCIATIVITY 16
+#define EMC_CACHE_LATENCY 1
+#define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
+// ===================== EMC =======================================
 
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
