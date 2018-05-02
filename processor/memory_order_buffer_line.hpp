@@ -12,9 +12,9 @@ class memory_order_buffer_line_t {
         uint64_t readyAt;        
         package_state_t status;
         memory_operation_t memory_operation;
-        uint64_t born_cicle;
-        uint32_t wait_mem_deps_number;                  /// Must wait BEFORE execution
-        memory_order_buffer_line_t* *mem_deps_ptr_array;     /// Elements to wake-up AFTER execution
+        uint64_t readyToGo;                                 /// Cycles of waiting
+        uint32_t wait_mem_deps_number;                      /// Must wait BEFORE execution
+        memory_order_buffer_line_t* *mem_deps_ptr_array;    /// Elements to wake-up AFTER execution
         // ====================================================================
         /// Methods
         // ====================================================================

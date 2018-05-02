@@ -157,8 +157,8 @@ Arquivo definindo os parametros do modelo de processador
 
 // =====================MEMORY DESAMBIGUATION=======================
 #define DESAMBIGUATION_ENABLED 1
-#define LOAD_HASH_SIZE 512
-#define STORE_HASH_SIZE 512
+#define LOAD_HASH_SIZE 1024
+#define STORE_HASH_SIZE 1024
 #define DESAMBIGUATION_BLOCK_SIZE 4
 
 #define ADDRESS_TO_ADDRESS 1
@@ -168,7 +168,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
 // ==========DEBUGS
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #define FETCH_DEBUG 0

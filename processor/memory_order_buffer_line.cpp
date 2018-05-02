@@ -21,10 +21,10 @@ void memory_order_buffer_line_t::package_clean() {
         this->rob_ptr=NULL;                 /// rob pointer
         this->uop_executed=false;
         this->uop_number = 0;
-        this->readyAt = 0;  
+        this->readyAt = orcs_engine.get_global_cycle();  
         this->status = PACKAGE_STATE_FREE;
         this->memory_operation = MEMORY_OPERATION_FREE;
-        this->born_cicle=orcs_engine.get_global_cycle();
+        this->readyToGo = orcs_engine.get_global_cycle();
         this->wait_mem_deps_number = 0;
 };
 
@@ -63,7 +63,7 @@ int32_t memory_order_buffer_line_t::find_old_request_state_ready(memory_order_bu
         input_array[i].uop_number < old_uop_number &&
         input_array[i].wait_mem_deps_number == 0 &&
         input_array[i].uop_executed == true &&
-        input_array[i].readyAt <= orcs_engine.get_global_cycle()) {
+        input_array[i].readyToGo <= orcs_engine.get_global_cycle()) {
             old_uop_number = input_array[i].uop_number;
             old_pos = i;
         }
@@ -74,41 +74,38 @@ int32_t memory_order_buffer_line_t::find_old_request_state_ready(memory_order_bu
 
 // ============================================================================
 void memory_order_buffer_line_t::print_all_operation_deps(uint64_t &ld_llc_miss,uint64_t &llc_miss_deps,uint64_t &inst_ld_ld) {
-    // ORCS_PRINTF("==============================\n")
-    // ORCS_PRINTF("%s\n",this->rob_ptr->content_to_string().c_str())
     // ORCS_PRINTF("======\n")
     bool hasLoad = false;
-    uint32_t numbOp=0;
+    // uint32_t numbOp=0;
     ld_llc_miss++;
-    if(this->rob_ptr->reg_deps_ptr_array !=NULL){
-        for (uint32_t i = 0; i < ROB_SIZE; i++){
-            if(this->rob_ptr->reg_deps_ptr_array[i]==NULL){
-                break;
-            }
-            numbOp++;
-            if(this->rob_ptr->reg_deps_ptr_array[i]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
+    llc_miss_deps++;
+    inst_ld_ld++;
+    reorder_buffer_line_t *rob_line = this->rob_ptr;
+    container_ptr_reorder_buffer_line_t chain;
+    chain.reserve(ROB_SIZE);
+    chain.push_back(rob_line);
+    for (size_t i = 0; i < chain.size(); i++){  
+        if(chain.size()>160)break;
+        if(chain[i]->wake_up_elements_counter>0){
+            chain.push_back(chain[i]->get_deps());
+            // chain[i]->wake_up_elements_counter=0;
+        }
+    }
+    for (size_t i = 1; i < chain.size(); i++){ 
+        if(chain[i]->uop.opcode_operation == INSTRUCTION_OPERATION_MEM_LOAD){
             hasLoad=true;
-            }
-            // ORCS_PRINTF("%s\n",this->rob_ptr->reg_deps_ptr_array[i]->content_to_string().c_str())
+            break;
         }
     }
     if(hasLoad){
-            ORCS_PRINTF("numero Operacoes deps %u\n",numbOp)
-            llc_miss_deps++;
-            for (uint32_t i = 0; i < ROB_SIZE; i++){
-                if(this->rob_ptr->reg_deps_ptr_array[i]==NULL){
-                    break;
-                }
-                inst_ld_ld++;
-                ORCS_PRINTF("%s\n",this->rob_ptr->reg_deps_ptr_array[i]->content_to_string2().c_str())
-                // if(this->rob_ptr->reg_deps_ptr_array[i]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
-                //     break;
-                // }
-            }
-            hasLoad=false;
+        ORCS_PRINTF("==============================\n")
+        ORCS_PRINTF("MISS %s\n\n",this->rob_ptr->content_to_string().c_str())
+        ORCS_PRINTF("\nChain\n")
+        for (size_t i = 0; i < chain.size(); i++){ 
+            ORCS_PRINTF("%s\n",chain[i]->content_to_string().c_str())
         }
-    // ORCS_PRINTF("==============================\n")
-    // sleep(2);
+        ORCS_PRINTF("\n==============================\n")
+    }
 };
 // ============================================================================
 // Update status package

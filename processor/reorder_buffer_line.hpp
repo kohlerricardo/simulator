@@ -25,8 +25,8 @@ class reorder_buffer_line_t {
         /// Register Dependencies Control
         uint32_t wait_reg_deps_number;                  /// Must wait BEFORE execution
         reorder_buffer_line_t* *reg_deps_ptr_array;     /// Elements to wake-up AFTER execution
-
-        memory_order_buffer_line_t* mob_ptr;                 /// mob pointer to memory request 
+        uint32_t wake_up_elements_counter;              /// Counter of elements to wakeup
+        memory_order_buffer_line_t* mob_ptr;            /// mob pointer to memory request 
         // ====================================================================
         /// Methods
         // ====================================================================
@@ -35,8 +35,13 @@ class reorder_buffer_line_t {
         void package_clean();
         std::string content_to_string();
         std::string content_to_string2();
-
+        
         static std::string print_all(reorder_buffer_line_t *input_array, uint32_t size_array);
-        // static bool check_age(reorder_buffer_line_t *input_array, uint32_t size_array);
+        // ====================================================================
+        /// Generate Dep Chains to EMC
+        // ====================================================================
+        reorder_buffer_line_t* get_deps();
 
+
+        void print_dependences();
 };

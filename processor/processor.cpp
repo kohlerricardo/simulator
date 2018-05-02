@@ -579,6 +579,7 @@ void processor_t::update_registers(reorder_buffer_line_t *new_rob_line){
 				ORCS_PRINTF("register %u, dep %u\n",read_register,j)
 				#endif
                 if (this->register_alias_table[read_register]->reg_deps_ptr_array[j] == NULL) {
+					this->register_alias_table[read_register]->wake_up_elements_counter++;
                     this->register_alias_table[read_register]->reg_deps_ptr_array[j] = new_rob_line;
                     new_rob_line->wait_reg_deps_number++;
                     break;
@@ -867,7 +868,7 @@ void processor_t::rename(){
 			this->reorderBuffer[pos_rob].mob_ptr->memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
 			this->reorderBuffer[pos_rob].mob_ptr->memory_operation = MEMORY_OPERATION_READ;
 			this->reorderBuffer[pos_rob].mob_ptr->status = PACKAGE_STATE_UNTREATED;
-			this->reorderBuffer[pos_rob].mob_ptr->born_cicle = orcs_engine.get_global_cycle();
+			this->reorderBuffer[pos_rob].mob_ptr->readyToGo = orcs_engine.get_global_cycle()+RENAME_LATENCY+DISPATCH_LATENCY+EXECUTE_LATENCY;
 			this->reorderBuffer[pos_rob].mob_ptr->uop_number = this->reorderBuffer[pos_rob].uop.uop_number;
 		}
 		else if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
@@ -880,7 +881,7 @@ void processor_t::rename(){
 			this->reorderBuffer[pos_rob].mob_ptr->memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
 			this->reorderBuffer[pos_rob].mob_ptr->memory_operation = MEMORY_OPERATION_WRITE;
 			this->reorderBuffer[pos_rob].mob_ptr->status = PACKAGE_STATE_UNTREATED;
-			this->reorderBuffer[pos_rob].mob_ptr->born_cicle = orcs_engine.get_global_cycle();
+			this->reorderBuffer[pos_rob].mob_ptr->readyToGo = orcs_engine.get_global_cycle()+RENAME_LATENCY+DISPATCH_LATENCY+EXECUTE_LATENCY;
 			this->reorderBuffer[pos_rob].mob_ptr->uop_number = this->reorderBuffer[pos_rob].uop.uop_number;
 		}
 		//linking rob and mob
@@ -1394,14 +1395,10 @@ void processor_t::mob_read(){
 			mob_line = &this->memory_order_buffer_read[position_mem];
 		}
 		if(mob_line != NULL){
-			#if DESAMBIGUATION_ENABLED
 				uint32_t ttc=0;
 				ttc = orcs_engine.cacheManager->searchData(mob_line,&this->has_llc_miss);
 				mob_line->updatePackageReady(ttc);
 				mob_line->rob_ptr->uop.updatePackageReady(ttc);
-			#else
-				orcs_engine.cacheManager->insertQueueRead(mob_line);
-			#endif
 			this->memory_read_executed--;
 			#if MOB_DEBUG
 				ORCS_PRINTF("On MOB READ Stage\n")
@@ -1427,14 +1424,10 @@ void processor_t::mob_write(){
 			mob_line = &this->memory_order_buffer_write[position_mem];
 		}
 		if(mob_line != NULL){
-			#if DESAMBIGUATION_ENABLED
 				uint32_t ttc=0;
 				ttc = orcs_engine.cacheManager->writeData(mob_line);
 				mob_line->updatePackageReady(ttc);
 				mob_line->rob_ptr->uop.updatePackageReady(ttc);
-			#else
-				orcs_engine.cacheManager->insertQueueWrite(mob_line);
-			#endif
 		this->memory_read_executed--;
 		#if MOB_DEBUG
 				ORCS_PRINTF("On MOB READ Stage\n")
@@ -1569,6 +1562,7 @@ void processor_t::solve_registers_dependency(reorder_buffer_line_t *rob_line) {
     for (uint32_t j = 0; j < ROB_SIZE; j++) {
         /// There is an unsolved dependency
         if (rob_line->reg_deps_ptr_array[j] != NULL) {
+			rob_line->wake_up_elements_counter--;
             rob_line->reg_deps_ptr_array[j]->wait_reg_deps_number--;
             /// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
             if (rob_line->reg_deps_ptr_array[j]->uop.readyAt <= orcs_engine.get_global_cycle()) {
@@ -1649,43 +1643,43 @@ void processor_t::statistics()
 {
 	if(orcs_engine.output_file_name == NULL){
 	utils_t::largestSeparator();
-	ORCS_PRINTF("Total Cicle : %lu",orcs_engine.get_global_cycle())
+	ORCS_PRINTF("Total_Cicle : %lu\n",orcs_engine.get_global_cycle())
 	utils_t::largeSeparator();
-	ORCS_PRINTF("Stage Opcode and Uop Counters\n")
+	ORCS_PRINTF("Stage_Opcode_and_Uop_Counters\n")
 	utils_t::largeSeparator();
-	ORCS_PRINTF("Stage Fetch: %lu\n",this->fetchCounter)
-	ORCS_PRINTF("Stage Decode: %lu\n",this->decodeCounter)
-	ORCS_PRINTF("Stage Rename: %lu\n",this->renameCounter)
-	ORCS_PRINTF("Stage Commit: %lu\n",this->commit_uop_counter)
+	ORCS_PRINTF("Stage_Fetch: %lu\n",this->fetchCounter)
+	ORCS_PRINTF("Stage_Decode: %lu\n",this->decodeCounter)
+	ORCS_PRINTF("Stage_Rename: %lu\n",this->renameCounter)
+	ORCS_PRINTF("Stage_Commit: %lu\n",this->commit_uop_counter)
 	utils_t::largestSeparator();
-	ORCS_PRINTF("=================== MEMORY DESAMBIGUATION =====================\n")
+	ORCS_PRINTF("======================== MEMORY DESAMBIGUATION ===========================\n")
 	utils_t::largestSeparator();
-	ORCS_PRINTF("Read False Positive: %lu\n",this->get_stat_disambiguation_read_false_positive())
-	ORCS_PRINTF("Write False Positive: %lu\n",this->get_stat_disambiguation_write_false_positive())
-	ORCS_PRINTF("Solve Address to Address: %lu\n",this->get_stat_address_to_address())
+	ORCS_PRINTF("Read_False_Positive: %lu\n",this->get_stat_disambiguation_read_false_positive())
+	ORCS_PRINTF("Write_False_Positive: %lu\n",this->get_stat_disambiguation_write_false_positive())
+	ORCS_PRINTF("Solve_Address_to_Address: %lu\n",this->get_stat_address_to_address())
 	utils_t::largestSeparator();
-	ORCS_PRINTF("Instruction Per Cicle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()))
+	ORCS_PRINTF("Instruction_Per_Cicle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()))
 	}
 	else{
 		FILE *output = fopen(orcs_engine.output_file_name,"a+");
 		if(output != NULL){
 			utils_t::largestSeparator(output);
-			fprintf(output,"Total Cicle : %lu\n",orcs_engine.get_global_cycle());
+			fprintf(output,"Total_Cycle_: %lu\n",orcs_engine.get_global_cycle());
 			utils_t::largeSeparator(output);
-			fprintf(output,"Stage Opcode and Uop Counters\n");
+			fprintf(output,"Stage_Opcode_and_Uop_Counters\n");
 			utils_t::largeSeparator(output);
-			fprintf(output,"Stage Fetch: %lu\n",this->fetchCounter);
-			fprintf(output,"Stage Decode: %lu\n",this->decodeCounter);
-			fprintf(output,"Stage Rename: %lu\n",this->renameCounter);
-			fprintf(output,"Stage Commit: %lu\n",this->commit_uop_counter);
+			fprintf(output,"Stage_Fetch: %lu\n",this->fetchCounter);
+			fprintf(output,"Stage_Decode: %lu\n",this->decodeCounter);
+			fprintf(output,"Stage_Rename: %lu\n",this->renameCounter);
+			fprintf(output,"Stage_Commit: %lu\n",this->commit_uop_counter);
 			utils_t::largestSeparator(output);
 			fprintf(output,"======================== MEMORY DESAMBIGUATION ===========================\n");
 			utils_t::largestSeparator(output);
-			fprintf(output,"Read False Positive: %lu\n",this->get_stat_disambiguation_read_false_positive());
-			fprintf(output,"Write False Positive: %lu\n",this->get_stat_disambiguation_write_false_positive());
-			fprintf(output,"Solve Address to Address: %lu\n",this->get_stat_address_to_address());
+			fprintf(output,"Read_False_Positive: %lu\n",this->get_stat_disambiguation_read_false_positive());
+			fprintf(output,"Write_False_Positive: %lu\n",this->get_stat_disambiguation_write_false_positive());
+			fprintf(output,"Solve_Address_to_Address: %lu\n",this->get_stat_address_to_address());
 			utils_t::largestSeparator(output);
-			fprintf(output,"Instruction Per Cicle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()));
+			fprintf(output,"Instruction_Per_Cycle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()));
 		}
 		fclose(output);
 	}

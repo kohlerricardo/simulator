@@ -127,13 +127,8 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_
             #endif
         }else{
             this->add_readMiss();
-            // ====================
-            // Print Operations dependents on a miss
-            // ====================
-            #if CACHE_MANAGER_DEBUG
-            mob_line->print_all_operation_deps(this->inst_load_miss,this->inst_load_deps,this->inst_load_load);
-            #endif
-            *has_llc_miss=MISS;
+
+
             //========================================= 
             this->data_cache[1].add_cacheAccess();
             this->data_cache[1].add_cacheMiss();
@@ -157,7 +152,13 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_
             linha_l1->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_l1;
 
-
+            // ====================
+            // Print Operations dependents on a miss
+            // ====================
+            #if CACHE_MANAGER_DEBUG
+            mob_line->print_all_operation_deps(this->inst_load_miss,this->inst_load_deps,this->inst_load_load);
+            #endif
+            *has_llc_miss=MISS;
         }
     }
     return latency_request;

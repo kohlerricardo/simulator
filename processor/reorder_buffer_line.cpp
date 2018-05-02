@@ -38,6 +38,7 @@ void reorder_buffer_line_t::package_clean() {
     this->stage = PROCESSOR_STAGE_DECODE;
     this->mob_ptr = NULL;
     this->wait_reg_deps_number = 0; 
+    this->wake_up_elements_counter = 0;
 };
 
 // ============================================================================
@@ -54,6 +55,7 @@ std::string reorder_buffer_line_t::content_to_string() {
     content_string = this->uop.content_to_string();
     content_string = content_string + " | Stage:" + get_enum_processor_stage_char(this->stage);
     content_string = content_string + " | Reg.Wait:" + utils_t::uint32_to_string(this->wait_reg_deps_number);
+    content_string = content_string + " | WakeUp:" + utils_t::uint32_to_string(this->wake_up_elements_counter);
     content_string = content_string + " | ReadyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
     if(this->mob_ptr != NULL){
         content_string = content_string + this->mob_ptr->content_to_string();
@@ -73,8 +75,17 @@ std::string reorder_buffer_line_t::content_to_string2() {
     content_string = this->uop.content_to_string();
     content_string = content_string + " | Stage:" + get_enum_processor_stage_char(this->stage);
     content_string = content_string + " Reg.Wait:" + utils_t::uint32_to_string(this->wait_reg_deps_number);
+    content_string = content_string + " | WakeUp:" + utils_t::uint32_to_string(this->wake_up_elements_counter);
     content_string = content_string + "readyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
     return content_string;
+};
+// ============================================================================
+void reorder_buffer_line_t::print_dependences(){
+    for(uint16_t i=0;i<ROB_SIZE;i++){
+        if(this->reg_deps_ptr_array[i]==NULL)break;
+
+        ORCS_PRINTF("%s\n",this->reg_deps_ptr_array[i]->content_to_string().c_str())
+    }
 };
 
 // ============================================================================
@@ -94,4 +105,20 @@ std::string reorder_buffer_line_t::print_all(reorder_buffer_line_t *input_array,
         }
     }
     return final_string;
+};
+
+// ====================================================================
+/// Generate Dep Chains to EMC
+// ====================================================================
+
+reorder_buffer_line_t* reorder_buffer_line_t::get_deps(){
+    reorder_buffer_line_t *deps = NULL;
+    if(this->wake_up_elements_counter>0){
+        deps = new reorder_buffer_line_t[this->wake_up_elements_counter];
+        for (size_t i = 0; i < this->wake_up_elements_counter; i++)
+        {
+            deps[i] = *this->reg_deps_ptr_array[i];
+        }
+    }else{return NULL;}
+    return deps;
 };
