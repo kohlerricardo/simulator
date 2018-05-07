@@ -27,7 +27,8 @@ enum cacheLevel_t{
     INST_CACHE,
     L1,
     L2,
-    LLC
+    LLC,
+    EMC_DATA_CACHE
 };
 //get char operation
 const char* get_enum_cache_level_char(cacheLevel_t type);

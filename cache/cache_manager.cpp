@@ -89,18 +89,19 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     }
     return latency_request;
 };
-uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_status_t *has_llc_miss){
+uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
     uint32_t hit = this->data_cache[0].read(mob_line->memory_address,ttc);
     latency_request+=ttc;
-    //if hit, add Searched instructions. Must be equal inst cache hit 
+    //L1 Hit
     if(hit==HIT){
         //========================================= 
         this->data_cache[0].add_cacheAccess();
         this->data_cache[0].add_cacheHit();
         //========================================= 
     }else{
+        // L1 MISS
         //========================================= 
         this->data_cache[0].add_cacheAccess();
         this->data_cache[0].add_cacheMiss();
@@ -116,6 +117,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_
             // ORCS_PRINTF("L1 MISS LR %u\n",latency_request)
         #endif
         if(hit == HIT){
+            // LLC Hit
             //========================================= 
             this->data_cache[1].add_cacheAccess();
             this->data_cache[1].add_cacheHit();
@@ -126,9 +128,8 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_
                 this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
             #endif
         }else{
+            // LLC MISS
             this->add_readMiss();
-
-
             //========================================= 
             this->data_cache[1].add_cacheAccess();
             this->data_cache[1].add_cacheMiss();
@@ -151,14 +152,17 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line,cache_
             linha_l1 = this->data_cache[0].installLine(mob_line->memory_address);
             linha_l1->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_l1;
+
             // =====================================
             //EMC
             // =====================================
+            #if EMC_ACTIVE
             // linha_t *linha_emc = NULL;
             // linha_emc = orcs_engine.emc->data_cache->installLine(mob_line->memory_address);
             // linha_llc->linha_ptr_emc=linha_emc;
             // linha_emc->linha_ptr_llc=linha_llc;
-            *has_llc_miss=MISS;
+            #endif
+
         }
     }
     return latency_request;

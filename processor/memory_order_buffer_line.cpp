@@ -75,7 +75,6 @@ int32_t memory_order_buffer_line_t::find_old_request_state_ready(memory_order_bu
 // Update status package
 // ============================================================================
 void memory_order_buffer_line_t::updatePackageUntrated(uint32_t stallTime){
-
     this->status = PACKAGE_STATE_UNTREATED;
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
 };

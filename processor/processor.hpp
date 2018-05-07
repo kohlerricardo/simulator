@@ -41,6 +41,11 @@ class processor_t {
 	uint64_t stat_inst_store_completed;
 	uint64_t stat_inst_branch_completed;
 	uint64_t stat_inst_other_completed;
+	// ====================================================================
+	/// EMC Attributes
+	// ====================================================================
+	uint32_t llc_miss_rob_head; //tracks number of times llc miss is rob head
+
     public:
 		
 		// ====================================================================
@@ -205,10 +210,11 @@ class processor_t {
 		// ====================================================================
 		// EMC Methods and attr
 		// ====================================================================
-		cache_status_t has_llc_miss; // have a LLC Miss, verify idf is ROB head
+		bool has_llc_miss; // have a LLC Miss, verify idf is ROB head
 		uint64_t halt_execute_chain; // WAIT cycles to generate dep chain
 		// verify if operation that results LLC Miss is rob read
 		bool isRobHead(reorder_buffer_line_t* robEntry);//
 		bool start_emc_module;//if must start generate dep chain
 		void make_dependence_chain(reorder_buffer_line_t* rob_line); //generate dep chain
+		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head);
 };

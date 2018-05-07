@@ -1043,11 +1043,26 @@ void processor_t::execute(){
 		#if EXECUTE_DEBUG
 			ORCS_PRINTF("Execute Stage\n")
 		#endif   
+
+
+	// ==================================
+	// Caso haja um LLC Miss RobHead,gera dep chain 
+	// ==================================
+	#if EMC_ACTIVE
+		if(this->start_emc_module){
+			this->make_dependence_chain(&this->reorderBuffer[this->robStart]);
+			// if(this->halt_execute_chain >= orcs_engine.get_global_cycle()){
+			// 	break;
+			// }
+			this->start_emc_module=false;
+		}
+	#endif
+
+
 	// ==================================
 	// verificar leituras prontas no ciclo,
 	// remover do MOB e atualizar os registradores, 
 	// ==================================
-	
 	for (i=0 ; i<MOB_READ;i++){
 		if(this->memory_order_buffer_read[i].status == PACKAGE_STATE_READY && 
 			this->memory_order_buffer_read[i].readyAt <=orcs_engine.get_global_cycle()){
@@ -1071,15 +1086,6 @@ void processor_t::execute(){
 	// =====================================	
 	uint32_t uop_total_executed = 0;
 	for (size_t i = 0; i < this->unified_functional_units.size(); i++){
-		#if EMC_ACTIVE
-		if(this->start_emc_module){
-			this->make_dependence_chain(&this->reorderBuffer[this->robStart]);
-			// if(this->halt_execute_chain >= orcs_engine.get_global_cycle()){
-			// 	break;
-			// }
-			this->start_emc_module=false;
-		}
-		#endif
 		reorder_buffer_line_t *rob_line = this->unified_functional_units[i];
 		if(uop_total_executed == EXECUTE_WIDTH){
 			break;
@@ -1161,8 +1167,6 @@ void processor_t::execute(){
 	if(this->memory_read_executed > 0){
 		this->mob_read();
 	}
-
-
 	// ==================================
 	// Executar o MOB Write, com a escrita mais antiga.
 	// depois liberar e tratar as escrita prontas;
@@ -1173,8 +1177,9 @@ void processor_t::execute(){
 	// =====================================
 	for (i=0; i< MOB_WRITE;i++){
 		if(this->memory_order_buffer_write[i].status == PACKAGE_STATE_READY && 
-			this->memory_order_buffer_write[i].uop_executed == true &&
 			this->memory_order_buffer_write[i].readyAt <=orcs_engine.get_global_cycle()){
+			ERROR_ASSERT_PRINTF(this->memory_order_buffer_write[i].uop_executed == true, "Removing memory read before being executed.\n")
+			ERROR_ASSERT_PRINTF(this->memory_order_buffer_write[i].wait_mem_deps_number == 0, "Number of memory dependencies should be zero.\n")
 			// ERROR_ASSERT_PRINTF
 			this->memory_order_buffer_write[i].rob_ptr->stage=PROCESSOR_STAGE_COMMIT;
 			this->memory_order_buffer_write[i].rob_ptr->uop.updatePackageReady(COMMIT_LATENCY);
@@ -1196,12 +1201,12 @@ void processor_t::execute(){
 void processor_t::mob_read(){	
 	
 	int32_t position_mem = POSITION_FAIL;
-	memory_order_buffer_line_t *mob_line = NULL; 
 	#if MOB_DEBUG
 	ORCS_PRINTF("MOB Read")
 	#endif
 	for (size_t i = 0; i < PARALLEL_LOADS; i++)
 	{
+		memory_order_buffer_line_t *mob_line = NULL; 
 		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_read,
 							MOB_READ,PACKAGE_STATE_UNTREATED);
 		if(position_mem != POSITION_FAIL){
@@ -1209,14 +1214,17 @@ void processor_t::mob_read(){
 		}
 		if(mob_line != NULL){
 				uint32_t ttc=0;
-				ttc = orcs_engine.cacheManager->searchData(mob_line,&this->has_llc_miss);
+				ttc = orcs_engine.cacheManager->searchData(mob_line);
 				mob_line->updatePackageReady(ttc);
 				mob_line->rob_ptr->uop.updatePackageReady(ttc);
 				this->memory_read_executed--;
 				#if EMC_ACTIVE
-				if(this->has_llc_miss==MISS){
+				if(ttc >(L1_DATA_LATENCY+LLC_LATENCY)){
+					// this->has_llc_miss=false;
 					if(this->isRobHead(mob_line->rob_ptr)){
-						this->start_emc_module=true;
+						// this->start_emc_module=true;
+						this->add_llc_miss_rob_head();
+						this->make_dependence_chain(mob_line->rob_ptr);
 					}
 				}
 				#endif
@@ -1233,12 +1241,12 @@ void processor_t::mob_read(){
 void processor_t::mob_write(){
 	
 	int32_t position_mem = POSITION_FAIL;
-	memory_order_buffer_line_t *mob_line = NULL; 
 	#if MOB_DEBUG
 	ORCS_PRINTF("MOB Read")
 	#endif
 	for (size_t i = 0; i < PARALLEL_STORES; i++)
 	{
+		memory_order_buffer_line_t *mob_line = NULL; 
 		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_write,
 							MOB_WRITE,PACKAGE_STATE_UNTREATED);
 		if(position_mem != POSITION_FAIL){
@@ -1398,6 +1406,7 @@ void processor_t::solve_registers_dependency(reorder_buffer_line_t *rob_line) {
 };
 // ============================================================================
 bool processor_t::isRobHead(reorder_buffer_line_t *rob_line){
+	// ORCS_PRINTF("rob_line: %p , rob Head: %p\n",rob_line,&this->reorderBuffer[robStart])
 	return (rob_line == &this->reorderBuffer[robStart]);
 };
 // ============================================================================
@@ -1458,7 +1467,61 @@ void processor_t::clock(){
 		}
 	#endif
 };
+
 // =====================================================================
+void processor_t::make_dependence_chain(reorder_buffer_line_t* rob_line){
+	ERROR_ASSERT_PRINTF(rob_line->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD,"Error, making dependences from NON-LOAD operation\n%s\n",rob_line->content_to_string().c_str())
+	container_ptr_reorder_buffer_line_t chain;
+	chain.reserve(ROB_SIZE);
+	chain.push_back(rob_line);
+	chain.back()->on_chain=true;
+	for (size_t i = 0; i < rob_line->wake_up_elements_counter; i++)
+	{
+		chain.push_back(rob_line->reg_deps_ptr_array[i]);
+	}
+	for (size_t i = 0; i < chain.size(); i++)
+	{	
+		if (chain[i]->wake_up_elements_counter>0){
+			if(!chain[i]->on_chain){
+				chain.push_back(chain[i]->get_deps());
+				chain[i]->on_chain=true;
+			}
+		}
+	}
+	for (size_t i = 0; i < chain.size(); i++)
+	{	
+		if (chain[i]->wake_up_elements_counter>0){
+			if(!chain[i]->on_chain){
+				chain.push_back(chain[i]->get_deps());
+				chain[i]->on_chain=true;
+			}
+		}
+	}
+	for (size_t i = 0; i < chain.size(); i++)
+	{	
+		if (chain[i]->wake_up_elements_counter>0){
+			if(!chain[i]->on_chain){
+				chain.push_back(chain[i]->get_deps());
+				chain[i]->on_chain=true;
+			}
+		}
+	}
+	// ORCS_PRINTF("==============ROB HEAD======================\n")
+	// ORCS_PRINTF("Cycle %lu\n",orcs_engine.get_global_cycle())
+	// ORCS_PRINTF("%s\n",this->reorderBuffer[this->robStart].content_to_string().c_str())
+	// ORCS_PRINTF("==============================================\n")
+	// for (size_t i = 1; i < chain.size(); i++)
+	// {
+	// 	// if(chain[i]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
+	// 	// 	this->
+	// 	// }
+	// 	ORCS_PRINTF("%s\n",chain[i]->content_to_string().c_str())
+	// }
+	// ORCS_PRINTF("==============================================\n")
+	// sleep(1);
+};
+
+// ============================================================================
 void processor_t::statistics(){
 	if(orcs_engine.output_file_name == NULL){
 	utils_t::largestSeparator();
@@ -1478,6 +1541,12 @@ void processor_t::statistics(){
 	ORCS_PRINTF("Solve_Address_to_Address: %lu\n",this->get_stat_address_to_address())
 	utils_t::largestSeparator();
 	ORCS_PRINTF("Instruction_Per_Cicle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()))
+	
+	ORCS_PRINTF("\n======================== EMC INFOS ===========================\n")
+	utils_t::largeSeparator();
+	ORCS_PRINTF("times_llc_rob_head: %u\n",this->get_llc_miss_rob_head())
+
+
 	}
 	else{
 		FILE *output = fopen(orcs_engine.output_file_name,"a+");
@@ -1499,31 +1568,13 @@ void processor_t::statistics(){
 			fprintf(output,"Solve_Address_to_Address: %lu\n",this->get_stat_address_to_address());
 			utils_t::largestSeparator(output);
 			fprintf(output,"Instruction_Per_Cycle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()));
+			fprintf(output,"\n======================== EMC INFOS ===========================\n");
+			utils_t::largeSeparator(output);
+			fprintf(output,"times_llc_rob_head: %u\n",this->get_llc_miss_rob_head());
 		}
 		fclose(output);
 	}
 };
-// ============================================================================
-void processor_t::make_dependence_chain(reorder_buffer_line_t* rob_line){
-	ERROR_ASSERT_PRINTF(rob_line->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD,"Error, making dependences from NON-LOAD operation\n%s\n",rob_line->content_to_string().c_str())
-	container_ptr_reorder_buffer_line_t chain;
-	chain.reserve(ROB_SIZE);
-	chain.push_back(rob_line);
-	chain.back()->on_chain=true;
-	for (size_t i = 0; i < rob_line->wake_up_elements_counter; i++)
-	{
-		chain.push_back(rob_line->reg_deps_ptr_array[i]);
-		chain.back()->on_chain=true;
-	}
-	ORCS_PRINTF("==============================================\n")
-	for (size_t i = 0; i < chain.size(); i++)
-	{
-		ORCS_PRINTF("%s\n",chain[i]->content_to_string().c_str())
-	}
-	ORCS_PRINTF("==============================================\n")
-	sleep(1);
-};
-
 // ============================================================================
 void processor_t::printConfiguration(){
 	ORCS_PRINTF("===============Stages Width============\n")

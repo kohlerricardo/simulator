@@ -166,7 +166,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================MEMORY DESAMBIGUATION=======================
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 0
+#define EMC_ACTIVE 1
 #define EMC_DISPATCH_WIDTH 2
 #define EMC_DISPATCH_LATENCY 2
 
@@ -185,7 +185,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
 // ==========DEBUGS
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG
 #define FETCH_DEBUG 0
@@ -195,9 +195,9 @@ Arquivo definindo os parametros do modelo de processador
 #define EXECUTE_DEBUG 0
 #define MOB_DEBUG 0
 #define COMMIT_DEBUG 0
-#define CACHE_MANAGER_DEBUG 1
+#define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
-
+#define EMC_DEBUG 0
 #endif
 
 #define PERIODIC_CHECK 0

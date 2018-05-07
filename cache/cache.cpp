@@ -120,6 +120,7 @@ void cache_t::allocate(cacheLevel_t level){
 			this->set_cacheWriteBack(0);
 			break;
 		}
+		case EMC_DATA_CACHE:{}
 	}
 };
 // ==================
@@ -196,8 +197,6 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 			}				
 		}
 	}
-	// this->add_cacheAccess();
-	// this->add_cacheMiss();
 		if(this->level == INST_CACHE){
 				ttc+=L1_INST_LATENCY;
 			}else if(this->level == L1){
@@ -308,6 +307,11 @@ inline void cache_t::writeBack(linha_t *linha){
 		if(linha->linha_ptr_inf !=NULL){
 			linha->linha_ptr_inf->clean_line();//invalidando linha Lower level
 		}
+		#if EMC_ACTIVE
+		if(linha->linha_ptr_emc !=NULL){
+			linha->linha_ptr_emc->clean_line();
+		}
+		#endif
 		linha->clean_line();
 	}
 };
@@ -411,27 +415,27 @@ void cache_t::shotdown(uint64_t address){
 // ====================
 void cache_t::statistics(){
 	if(orcs_engine.output_file_name == NULL){
-		ORCS_PRINTF("Cache Level: %s\n",get_enum_cache_level_char(this->level))
-		ORCS_PRINTF("Cache Access: %lu\n",this->get_cacheAccess())
-		ORCS_PRINTF("Cache Hits: %lu %.4f\n",this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("Cache Miss: %lu %.4f\n",this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("Cache Read: %lu %.4f\n",this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("Cache Write: %lu %.4f\n",this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()))
+		ORCS_PRINTF("Cache_Level: %s\n",get_enum_cache_level_char(this->level))
+		ORCS_PRINTF("%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess())
+		ORCS_PRINTF("%s_Cache_Hits: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()))
+		ORCS_PRINTF("%s_Cache_Miss: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()))
+		ORCS_PRINTF("%s_Cache_Read: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()))
+		ORCS_PRINTF("%s_Cache_Write: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()))
 		if(this->get_cacheWriteBack()!=0){
-			ORCS_PRINTF("Cache WriteBack: %lu %.4f\n",this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()))
+			ORCS_PRINTF("%s_Cache_WriteBack: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()))
 		}
 	}else{
 		FILE *output = fopen(orcs_engine.output_file_name,"a+");
 		if(output != NULL){
 			utils_t::largeSeparator(output);
-			fprintf(output,"Cache Level: %s\n",get_enum_cache_level_char(this->level));
-			fprintf(output,"Cache Access: %lu\n",this->get_cacheAccess());
-			fprintf(output,"Cache Hits: %lu %.4f\n",this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()));
-			fprintf(output,"Cache Miss: %lu %.4f\n",this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()));
-			fprintf(output,"Cache Read: %lu %.4f\n",this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()));
-			fprintf(output,"Cache Write: %lu %.4f\n",this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()));
+			fprintf(output,"Cache_Level: %s\n",get_enum_cache_level_char(this->level));
+			fprintf(output,"%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess());
+			fprintf(output,"%s_Cache_Hits: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()));
+			fprintf(output,"%s_Cache_Miss: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()));
+			fprintf(output,"%s_Cache_Read: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()));
+			fprintf(output,"%s_Cache_Write: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()));
 			if(this->get_cacheWriteBack()!=0){
-				fprintf(output,"Cache WriteBack: %lu %.4f\n",this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()));
+				fprintf(output,"%s_Cache_WriteBack: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()));
 			}
 			utils_t::largeSeparator(output);
 		}

@@ -13,6 +13,7 @@ class linha_t
         uint64_t readyAt;
         linha_t* linha_ptr_sup;
         linha_t* linha_ptr_inf;
+        linha_t* linha_ptr_emc;
         linha_t(){
             this->clean_line();
         }
@@ -20,9 +21,15 @@ class linha_t
             // deleting pointes
             if(this->linha_ptr_inf) delete this->linha_ptr_inf;
             if(this->linha_ptr_sup) delete this->linha_ptr_sup;
+            #if EMC_ACTIVE
+            if(this->linha_ptr_emc) delete this->linha_ptr_emc;
+            #endif
             // Nulling pointers
             this->linha_ptr_inf = NULL;
             this->linha_ptr_sup = NULL;
+            #if EMC_ACTIVE
+            this->linha_ptr_emc = NULL;
+            #endif
         }
         void clean_line(){
             this->tag = 0;
@@ -33,6 +40,9 @@ class linha_t
             this->readyAt = 0;
             this->linha_ptr_inf = NULL;
             this->linha_ptr_sup = NULL;
+            #if EMC_ACTIVE
+            this->linha_ptr_emc = NULL;
+            #endif
         }
 };
 
