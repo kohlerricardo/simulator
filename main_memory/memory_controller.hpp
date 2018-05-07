@@ -4,30 +4,33 @@
 class memory_controller_t{
 
     private:
-        uint64_t requests_made;
+        uint64_t requests_made; //Data Requests made
+        uint64_t operations_executed; // number of operations executed
+        uint64_t requests_dram; //Data Requests made to DRAM
+        uint64_t requests_llc; //Data Requests made to LLC
+        
     public:
+        // ==========================================================================
+        // Memory Controller Atributes
+        // ==========================================================================
+        emc_t *emc;
+
+
+
+        // ==========================================================================
+        // Memory Controller Methods
+        // ==========================================================================
+        void allocate();    //Aloca recursos do Memory Controller
+        // ==========================================================================
         memory_controller_t();
         ~memory_controller_t();
-        
-        // ==========================================================================
-        // EMC Attr
-        // ==========================================================================
-        
-        uint64_t *unified_fus_emc;
-        cache_t *data_cache; 
-        // ==========================================================================
-        // EMC Methods
-        // ==========================================================================
-        void allocate();    //Aloca recursos do EMC
-        void core_to_emc(); //Get the uops chain from core
-        void dispatch();    //Dispatch uops to ufs 
-        void execute();     //get th uops executed
-        void emc_to_core(); //Send uops executed to core
-        // ==========================================================================
-
         void clock();
         void statistics();
         INSTANTIATE_GET_SET_ADD(uint64_t,requests_made)
+        INSTANTIATE_GET_SET_ADD(uint64_t,operations_executed)
+        INSTANTIATE_GET_SET_ADD(uint64_t,requests_dram)
+        INSTANTIATE_GET_SET_ADD(uint64_t,requests_llc)
+
        
         
 };

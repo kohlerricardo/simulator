@@ -145,7 +145,8 @@ Arquivo definindo os parametros do modelo de processador
 #define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
 // =====================RAM=======================
-
+#define LLC_SIZE 20*MEGA
+#define LLC_ASSOCIATIVITY 20
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
 #define STRIDE_TABLE_SIZE 32    
@@ -177,8 +178,8 @@ Arquivo definindo os parametros do modelo de processador
 #define EMC_UNIFIED_RS 8
 // EMC CACHE
 #define EMC_CACHE_SIZE 4*KILO
-#define EMC_CACHE_ASSOCIATIVITY 16
-#define EMC_CACHE_LATENCY 1
+#define EMC_CACHE_ASSOCIATIVITY 4
+#define EMC_CACHE_LATENCY 2
 #define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
 // ===================== EMC =======================================
 

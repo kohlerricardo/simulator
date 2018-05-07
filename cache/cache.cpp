@@ -35,9 +35,6 @@ void cache_t::allocate(cacheLevel_t level){
 		case INST_CACHE:{
 			this->shiftData = utils_t::get_power_of_two(LINE_SIZE);
 			this->level = level;
-			this->cacheHit=0;
-			this->cacheMiss=0;
-			this->cacheAccess=0;
 			this->nSets = L1_INST_SETS;
 			this->nLines = L1_INST_ASSOCIATIVITY;
 			this->sets = new cacheSet_t[L1_INST_SETS];
@@ -57,9 +54,6 @@ void cache_t::allocate(cacheLevel_t level){
 		case L1:{
 			this->shiftData = utils_t::get_power_of_two(LINE_SIZE);
 			this->level = level;
-			this->cacheHit=0;
-			this->cacheMiss=0;
-			this->cacheAccess=0;
 			this->nSets = L1_DATA_SETS;
 			this->nLines = L1_DATA_ASSOCIATIVITY;
 			this->sets = new cacheSet_t[L1_DATA_SETS];
@@ -79,9 +73,6 @@ void cache_t::allocate(cacheLevel_t level){
 		case L2:{
 			this->shiftData = utils_t::get_power_of_two(LINE_SIZE);
 			this->level = level;
-			this->cacheHit=0;
-			this->cacheMiss=0;
-			this->cacheAccess=0;
 			this->nSets = L2_SETS;
 			this->nLines = L2_ASSOCIATIVITY;
 			this->sets = new cacheSet_t[L2_SETS];
@@ -101,9 +92,6 @@ void cache_t::allocate(cacheLevel_t level){
 		case LLC:{
 			this->shiftData = utils_t::get_power_of_two(LINE_SIZE);
 			this->level = level;
-			this->cacheHit=0;
-			this->cacheMiss=0;
-			this->cacheAccess=0;
 			this->nSets = LLC_SETS;
 			this->nLines = LLC_ASSOCIATIVITY;
 			this->sets = new cacheSet_t[LLC_SETS];
@@ -120,7 +108,25 @@ void cache_t::allocate(cacheLevel_t level){
 			this->set_cacheWriteBack(0);
 			break;
 		}
-		case EMC_DATA_CACHE:{}
+		case EMC_DATA_CACHE:{
+			this->shiftData = utils_t::get_power_of_two(LINE_SIZE);
+			this->level = level;
+			this->nSets = EMC_CACHE_SETS;
+			this->nLines = EMC_CACHE_ASSOCIATIVITY;
+			this->sets = new cacheSet_t[EMC_CACHE_SETS];
+			for (size_t i = 0; i < LLC_SETS; i++)
+			{
+				this->sets[i].linhas = new linha_t[EMC_CACHE_ASSOCIATIVITY];
+
+			}
+			this->set_cacheAccess(0);
+			this->set_cacheHit(0);
+			this->set_cacheMiss(0);
+			this->set_cacheRead(0);
+			this->set_cacheWrite(0);
+			this->set_cacheWriteBack(0);
+			break;
+		}
 	}
 };
 // ==================
@@ -151,7 +157,7 @@ inline uint32_t cache_t::idxSetCalculation(uint64_t address){
 uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 	uint32_t idx = this->idxSetCalculation(address);
 	uint32_t tag = this->tagSetCalculation(address);
-	this->add_cacheRead();
+	// this->add_cacheRead();
 	for (size_t i = 0; i < this->nLines; i++){
 		if(this->sets[idx].linhas[i].tag == tag){
 			// =====================================================

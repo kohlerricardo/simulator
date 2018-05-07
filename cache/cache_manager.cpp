@@ -93,6 +93,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
     uint32_t hit = this->data_cache[0].read(mob_line->memory_address,ttc);
+    this->data_cache[0].add_cacheRead();
     latency_request+=ttc;
     //L1 Hit
     if(hit==HIT){
@@ -107,6 +108,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
         this->data_cache[0].add_cacheMiss();
         //========================================= 
         hit = this->data_cache[1].read(mob_line->memory_address,ttc);
+        this->data_cache[1].add_cacheRead();
         // ==========
         // update inst cache miss, update instruction llc search.
         // Inst cache miss must be equal llc search inst

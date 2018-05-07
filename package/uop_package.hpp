@@ -1,4 +1,3 @@
-#include "../simulator.hpp"
 class uop_package_t{
     
     public:

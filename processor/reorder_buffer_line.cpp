@@ -58,6 +58,7 @@ std::string reorder_buffer_line_t::content_to_string() {
     content_string = content_string + " | Reg.Wait:" + utils_t::uint32_to_string(this->wait_reg_deps_number);
     content_string = content_string + " | WakeUp:" + utils_t::uint32_to_string(this->wake_up_elements_counter);
     content_string = content_string + " | ReadyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
+    content_string = content_string + " | On Dep Chain: " + utils_t::bool_to_string(this->on_chain);
     if(this->mob_ptr != NULL){
         content_string = content_string + this->mob_ptr->content_to_string();
     }
@@ -75,9 +76,10 @@ std::string reorder_buffer_line_t::content_to_string2() {
 
     content_string = this->uop.content_to_string();
     content_string = content_string + " | Stage:" + get_enum_processor_stage_char(this->stage);
-    content_string = content_string + " Reg.Wait:" + utils_t::uint32_to_string(this->wait_reg_deps_number);
+    content_string = content_string + " | Reg.Wait:" + utils_t::uint32_to_string(this->wait_reg_deps_number);
     content_string = content_string + " | WakeUp:" + utils_t::uint32_to_string(this->wake_up_elements_counter);
-    content_string = content_string + "readyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
+    content_string = content_string + " | ReadyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
+    content_string = content_string + " | On Dep Chain: " + utils_t::bool_to_string(this->on_chain);
     return content_string;
 };
 // ============================================================================

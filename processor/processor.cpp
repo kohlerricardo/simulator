@@ -76,6 +76,9 @@ void processor_t::allocate(){
 	// Initializating EMC control variables
 	//======================================================================
 	this->start_emc_module=false;
+	this->inst_load_deps=0;
+	this->all_inst_deps=0;
+	this->num_load_deps=0;
 	//======================================================================
 	// Initializating structures
 	//======================================================================
@@ -588,6 +591,7 @@ void processor_t::update_registers(reorder_buffer_line_t *new_rob_line){
 
     /// Control the Register Dependency - Register WRITE
     for (uint32_t k = 0; k < MAX_REGISTERS; k++) {
+		this->add_registerWrite();
         if (new_rob_line->uop.write_regs[k] < 0) {
             break;
         }
@@ -1050,7 +1054,7 @@ void processor_t::execute(){
 	// ==================================
 	#if EMC_ACTIVE
 		if(this->start_emc_module){
-			this->make_dependence_chain(&this->reorderBuffer[this->robStart]);
+			// this->make_dependence_chain(&this->reorderBuffer[this->robStart]);
 			// if(this->halt_execute_chain >= orcs_engine.get_global_cycle()){
 			// 	break;
 			// }
@@ -1471,6 +1475,7 @@ void processor_t::clock(){
 // =====================================================================
 void processor_t::make_dependence_chain(reorder_buffer_line_t* rob_line){
 	ERROR_ASSERT_PRINTF(rob_line->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD,"Error, making dependences from NON-LOAD operation\n%s\n",rob_line->content_to_string().c_str())
+	// bool has_load=false;
 	container_ptr_reorder_buffer_line_t chain;
 	chain.reserve(ROB_SIZE);
 	chain.push_back(rob_line);
@@ -1479,46 +1484,37 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t* rob_line){
 	{
 		chain.push_back(rob_line->reg_deps_ptr_array[i]);
 	}
-	for (size_t i = 0; i < chain.size(); i++)
+	for (size_t i = 1; i < chain.size(); i++)
 	{	
+		if(chain.size()>=16)break;
 		if (chain[i]->wake_up_elements_counter>0){
 			if(!chain[i]->on_chain){
-				chain.push_back(chain[i]->get_deps());
-				chain[i]->on_chain=true;
+				for (size_t j = 0; j < chain[i]->wake_up_elements_counter; j++){
+					// if(chain[i]->reg_deps_ptr_array[j]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){has_load=true;}
+					chain.push_back(chain[i]->reg_deps_ptr_array[j]);
+				}
 			}
+		chain[i]->on_chain=true;			
 		}
 	}
-	for (size_t i = 0; i < chain.size(); i++)
-	{	
-		if (chain[i]->wake_up_elements_counter>0){
-			if(!chain[i]->on_chain){
-				chain.push_back(chain[i]->get_deps());
-				chain[i]->on_chain=true;
-			}
-		}
-	}
-	for (size_t i = 0; i < chain.size(); i++)
-	{	
-		if (chain[i]->wake_up_elements_counter>0){
-			if(!chain[i]->on_chain){
-				chain.push_back(chain[i]->get_deps());
-				chain[i]->on_chain=true;
-			}
-		}
-	}
+	// if(has_load){
 	// ORCS_PRINTF("==============ROB HEAD======================\n")
 	// ORCS_PRINTF("Cycle %lu\n",orcs_engine.get_global_cycle())
 	// ORCS_PRINTF("%s\n",this->reorderBuffer[this->robStart].content_to_string().c_str())
 	// ORCS_PRINTF("==============================================\n")
-	// for (size_t i = 1; i < chain.size(); i++)
-	// {
-	// 	// if(chain[i]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
-	// 	// 	this->
-	// 	// }
-	// 	ORCS_PRINTF("%s\n",chain[i]->content_to_string().c_str())
-	// }
+	for (size_t i = 1;i < chain.size(); i++){
+		if(chain[i]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
+			this->num_load_deps++;
+			this->all_inst_deps+=this->inst_load_deps;
+			this->inst_load_deps=0;
+		}else{
+			this->inst_load_deps++;
+		}
+		// ORCS_PRINTF("%s\n",chain[i]->content_to_string().c_str())
+	}
 	// ORCS_PRINTF("==============================================\n")
 	// sleep(1);
+	// }
 };
 
 // ============================================================================
@@ -1532,6 +1528,7 @@ void processor_t::statistics(){
 	ORCS_PRINTF("Stage_Fetch: %lu\n",this->fetchCounter)
 	ORCS_PRINTF("Stage_Decode: %lu\n",this->decodeCounter)
 	ORCS_PRINTF("Stage_Rename: %lu\n",this->renameCounter)
+	ORCS_PRINTF("Register_writes: %lu\n",this->get_registerWrite())
 	ORCS_PRINTF("Stage_Commit: %lu\n",this->commit_uop_counter)
 	utils_t::largestSeparator();
 	ORCS_PRINTF("======================== MEMORY DESAMBIGUATION ===========================\n")
@@ -1545,6 +1542,11 @@ void processor_t::statistics(){
 	ORCS_PRINTF("\n======================== EMC INFOS ===========================\n")
 	utils_t::largeSeparator();
 	ORCS_PRINTF("times_llc_rob_head: %u\n",this->get_llc_miss_rob_head())
+	ORCS_PRINTF("num_load_deps: %u\n",this->num_load_deps)
+	ORCS_PRINTF("all_inst_deps: %u\n",this->all_inst_deps)
+	ORCS_PRINTF("load_deps_ratio: %.4f\n",float(this->all_inst_deps)/float(this->num_load_deps))
+	
+	utils_t::largeSeparator();
 
 
 	}
@@ -1559,6 +1561,7 @@ void processor_t::statistics(){
 			fprintf(output,"Stage_Fetch: %lu\n",this->fetchCounter);
 			fprintf(output,"Stage_Decode: %lu\n",this->decodeCounter);
 			fprintf(output,"Stage_Rename: %lu\n",this->renameCounter);
+			fprintf(output,"Register_writes: %lu\n",this->get_registerWrite());
 			fprintf(output,"Stage_Commit: %lu\n",this->commit_uop_counter);
 			utils_t::largestSeparator(output);
 			fprintf(output,"======================== MEMORY DESAMBIGUATION ===========================\n");
@@ -1571,6 +1574,11 @@ void processor_t::statistics(){
 			fprintf(output,"\n======================== EMC INFOS ===========================\n");
 			utils_t::largeSeparator(output);
 			fprintf(output,"times_llc_rob_head: %u\n",this->get_llc_miss_rob_head());
+			fprintf(output,"num_load_deps: %u\n",this->num_load_deps);
+			fprintf(output,"all_inst_deps: %u\n",this->all_inst_deps);
+			fprintf(output,"load_deps_ratio: %.4f\n",float(this->all_inst_deps)/float(this->num_load_deps));
+
+
 		}
 		fclose(output);
 	}

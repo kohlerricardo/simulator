@@ -14,6 +14,7 @@ class processor_t {
 	//=============
 	//Statistics Rename
 	//=============
+	uint64_t registerWrite;
 	uint64_t stall_full_MOB_Read;
 	uint64_t stall_full_MOB_Write;
 	uint64_t stall_full_ROB;
@@ -180,6 +181,8 @@ class processor_t {
 		// ====================================================================
 		// Statistics
 		// ====================================================================
+		INSTANTIATE_GET_SET_ADD(uint64_t,registerWrite);
+		/////
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_FetchBuffer);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_wrong_branch);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_DecodeBuffer);
@@ -212,6 +215,9 @@ class processor_t {
 		// ====================================================================
 		bool has_llc_miss; // have a LLC Miss, verify idf is ROB head
 		uint64_t halt_execute_chain; // WAIT cycles to generate dep chain
+		uint32_t inst_load_deps;
+		uint32_t all_inst_deps;
+		uint32_t num_load_deps;
 		// verify if operation that results LLC Miss is rob read
 		bool isRobHead(reorder_buffer_line_t* robEntry);//
 		bool start_emc_module;//if must start generate dep chain
