@@ -196,8 +196,6 @@ class processor_t {
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================
-		
-
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_branch_completed);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_alu_completed);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_fp_completed);
@@ -213,14 +211,27 @@ class processor_t {
 		// ====================================================================
 		// EMC Methods and attr
 		// ====================================================================
-		bool has_llc_miss; // have a LLC Miss, verify idf is ROB head
+		bool has_llc_miss; // have a LLC Miss, verify if is ROB head to add ROB Head on buffer
+		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
+		bool start_emc_module;//if must start generate dep chain
+		container_ptr_reorder_buffer_line_t rob_buffer; // Wait list to propagate registers;
+		uint32_t broadcast_cdb(int32_t position_rob,int32_t write_register);//broadcast destiny registers on ROB to pseudo wake up operations.
+		// this function add the operatin in rob buffer only. 
+
+		//Register remapping table declaration
+		register_remapping_table_t *rrt;
+		emc_opcode_package_t rename_rrt(reorder_buffer_line_t *rob_line); // function to rename registers so EMC
+		//pega a posicao do rob que representa a operacao a ser feito o bcast dos regs.
+		int32_t get_position_rob_bcast(reorder_buffer_line_t *rob_ready);
+		// ====================================================================
+
+
+
 		uint64_t halt_execute_chain; // WAIT cycles to generate dep chain
 		uint32_t inst_load_deps;
 		uint32_t all_inst_deps;
 		uint32_t num_load_deps;
 		// verify if operation that results LLC Miss is rob read
-		bool isRobHead(reorder_buffer_line_t* robEntry);//
-		bool start_emc_module;//if must start generate dep chain
 		void make_dependence_chain(reorder_buffer_line_t* rob_line); //generate dep chain
 		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head);
 };

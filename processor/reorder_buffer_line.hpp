@@ -41,6 +41,7 @@ class reorder_buffer_line_t {
         /// Generate Dep Chains to EMC
         // ====================================================================
         bool on_chain;
+        bool is_poisoned;
         reorder_buffer_line_t* get_deps();
 
 

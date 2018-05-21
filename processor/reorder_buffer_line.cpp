@@ -40,6 +40,7 @@ void reorder_buffer_line_t::package_clean() {
     this->wait_reg_deps_number = 0; 
     this->wake_up_elements_counter = 0;
     this->on_chain=false;
+    this->is_poisoned=false;
 };
 
 // ============================================================================

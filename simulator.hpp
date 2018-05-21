@@ -81,6 +81,7 @@ class memory_controller_t;
 //  =========================================//
 class emc_t;
 class emc_opcode_package_t;
+class register_remapping_table_t;
 // ====================================
 // DATA Types
 // ====================================
@@ -119,8 +120,8 @@ extern orcs_engine_t orcs_engine;
 // ============================================================================
 /// Base Includes
 // ============================================================================
-// #include "./model_skylake.hpp"
-#include "./model_sandyBridge.hpp"
+#include "./model_skylake.hpp"
+// #include "./model_sandyBridge.hpp"
 #include "./simulator.hpp"
 #include "./orcs_engine.hpp"
 #include "./trace_reader.hpp"
@@ -173,7 +174,7 @@ extern orcs_engine_t orcs_engine;
 // // EMC Includes
 #include "./main_memory/emc/emc_opcode_package.hpp"
 #include "./main_memory/emc/emc.hpp"
-
+#include "./processor/register_remapping_table.hpp"
 
 //  =========================================//
 #endif  // _ORCS_ORCS_HPP_

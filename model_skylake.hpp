@@ -142,7 +142,7 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 1*MEGA
+#define LLC_SIZE 4*MEGA
 #define LLC_ASSOCIATIVITY 16
 #define LLC_LATENCY 32
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
@@ -150,10 +150,9 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 
 // =====================RAM=======================
-#define RAM_LATENCY 170
+#define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
 // =====================RAM=======================
-
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
 #define STRIDE_TABLE_SIZE 32    
@@ -173,6 +172,24 @@ Arquivo definindo os parametros do modelo de processador
 #define REGISTER_FORWARD 0
 // =====================MEMORY DESAMBIGUATION=======================
 
+// ===================== EMC =======================================
+#define EMC_ACTIVE 1
+
+#define EMC_DISPATCH_WIDTH 2
+#define EMC_DISPATCH_LATENCY 1
+#define EMC_INTEGER_ALU 2
+#define EMC_INTEGER_LATENCY 1
+#define EMC_WAIT_NEXT_INTEGER 1
+
+#define EMC_UNIFIED_RS 8
+#define EMC_UOP_BUFFER 16
+#define EMC_REGISTERS 16
+// EMC CACHE
+#define EMC_CACHE_SIZE 4*KILO
+#define EMC_CACHE_ASSOCIATIVITY 4
+#define EMC_CACHE_LATENCY 2
+#define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
+// ===================== EMC =======================================
 // =====================CHECKS=======================
 #define SANITY_CHECK 1
 // ==========DEBUGS
