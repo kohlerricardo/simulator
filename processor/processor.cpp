@@ -1100,10 +1100,11 @@ void processor_t::execute(){
 		#if EMC_ACTIVE
 			if(this->start_emc_module){
 				int32_t position_rob;
-				ORCS_PRINTF("Iniciado EMC - Cycle %lu\n",orcs_engine.get_global_cycle())
-				sleep(1);
+				// ORCS_PRINTF("Iniciado EMC - Cycle %lu\n",orcs_engine.get_global_cycle())
+				// sleep(1);
 				//insert rob head on wait buffer
 				if(this->has_llc_miss){
+					// utils_t::largestSeparator();
 					this->rob_buffer.push_back(&this->reorderBuffer[this->robStart]);
 					this->has_llc_miss=false;
 				}
@@ -1122,10 +1123,10 @@ void processor_t::execute(){
 						break;
 					}
 					position_rob = this->get_position_rob_bcast(rob_ready);
-					// ORCS_PRINTF("position Rob %d\n",position_rob)
 					if(position_rob == POSITION_FAIL){
 						break;
 					}
+					// ORCS_PRINTF("ROB %s\n",rob_ready->content_to_string().c_str())
 					// propagate write registers to pseudo wakeup operations
 					for (uint16_t j = 0; j < MAX_REGISTERS; j++){
 						if(rob_ready->uop.write_regs[j]>=0){
@@ -1137,22 +1138,30 @@ void processor_t::execute(){
 						}
 					}
 					rob_ready->on_chain=true;
+					rob_ready=NULL;
 				}
 			}
 				if(!this->start_emc_module){
-					ORCS_PRINTF("Size Chain %lu\n",this->rob_buffer.size())
+					// ORCS_PRINTF("Size Chain %lu\n",this->rob_buffer.size())
+					this->inst_load_deps=0;
 					for (uint16_t j = 0; j < this->rob_buffer.size(); j++){
-						ORCS_PRINTF("%s",this->rob_buffer[j]->content_to_string().c_str())
-						// this->rob_buffer.erase(this->rob_buffer.begin());
-						// j--;
-					}
+						// ORCS_PRINTF("%s\n",this->rob_buffer[j]->content_to_string().c_str())
+						if(this->rob_buffer[j]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
+							this->num_load_deps++;
+							this->all_inst_deps+=this->inst_load_deps;
+							this->inst_load_deps=0;
+						}else{
+							this->inst_load_deps++;
+							}
+						}
+						// sleep(1);
+					// }
 					for (uint16_t j = 0; j < this->rob_buffer.size(); j++){
 						// ORCS_PRINTF("%s",this->rob_buffer[j]->content_to_string().c_str())
 						this->rob_buffer.erase(this->rob_buffer.begin()+j);
 						j--;
 					}
 					this->start_emc_module=false;
-					sleep(2);
 				}
 			
 		#endif
@@ -1593,13 +1602,13 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t* rob_line){
 };
 uint32_t processor_t::broadcast_cdb(int32_t position_rob,int32_t write_register){
 	uint32_t collect=0;
+	// ORCS_PRINTF("Register broadcas_CDB %d\n",write_register)
 	for(int32_t i = (position_rob+1);; i++){
-		// ORCS_PRINTF("i from broadcas_CDB %d\n",i)
 		if(i>=ROB_SIZE) i=0;
-		// if(i>this->robEnd)break;
+		// if(i > this->robEnd)break;
 		if(i == position_rob)break;
 		if(this->reorderBuffer[i].is_poisoned) continue;
-		if(this->reorderBuffer[i].wait_reg_deps_number < 2 ){
+		if(this->reorderBuffer[i].wait_reg_deps_number == 1 ){
 			for(size_t k = 0; k < MAX_REGISTERS; k++){
 				if(this->reorderBuffer[i].uop.read_regs[k]==POSITION_FAIL)break;
 					if(this->reorderBuffer[i].uop.read_regs[k]==write_register){
