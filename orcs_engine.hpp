@@ -27,7 +27,7 @@ class orcs_engine_t {
         //cache Manager and cache
         cache_manager_t *cacheManager;
         //Memory Controller and EMC
-        memory_controller_t *emc;
+        memory_controller_t *memory_controller;
         // ====================================================================
 		/// Methods
 		// ====================================================================

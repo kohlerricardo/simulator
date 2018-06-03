@@ -215,14 +215,13 @@ class processor_t {
 		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
 		bool start_emc_module;//if must start generate dep chain
 		container_ptr_reorder_buffer_line_t rob_buffer; // Wait list to propagate registers;
-		uint32_t broadcast_cdb(int32_t position_rob,int32_t write_register);//broadcast destiny registers on ROB to pseudo wake up operations.
+		uint32_t broadcast_cdb(uint32_t position_rob,int32_t write_register);//broadcast destiny registers on ROB to pseudo wake up operations.
 		// this function add the operatin in rob buffer only. 
-
+		uint32_t get_position_rob_bcast(reorder_buffer_line_t *rob_ready);
 		//Register remapping table declaration
 		register_remapping_table_t *rrt;
-		emc_opcode_package_t rename_rrt(reorder_buffer_line_t *rob_line); // function to rename registers so EMC
-		//pega a posicao do rob que representa a operacao a ser feito o bcast dos regs.
-		int32_t get_position_rob_bcast(reorder_buffer_line_t *rob_ready);
+		//Renaming entry to EMC
+		void renameEMC(reorder_buffer_line_t *rob_line);
 		// ====================================================================
 
 

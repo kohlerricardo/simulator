@@ -1072,7 +1072,7 @@ void processor_t::execute(){
 	// verificar leituras prontas no ciclo,
 	// remover do MOB e atualizar os registradores, 
 	// ==================================
-	for (i=0 ; i<MOB_READ;i++){
+	for (i=0 ;i<MOB_READ;i++){
 		if(this->memory_order_buffer_read[i].status == PACKAGE_STATE_READY && 
 			this->memory_order_buffer_read[i].readyAt <=orcs_engine.get_global_cycle()){
 			ERROR_ASSERT_PRINTF(this->memory_order_buffer_read[i].uop_executed == true, "Removing memory read before being executed.\n")
@@ -1100,69 +1100,33 @@ void processor_t::execute(){
 		#if EMC_ACTIVE
 			if(this->start_emc_module){
 				int32_t position_rob;
-				// ORCS_PRINTF("Iniciado EMC - Cycle %lu\n",orcs_engine.get_global_cycle())
-				// sleep(1);
-				//insert rob head on wait buffer
-				if(this->has_llc_miss){
-					// utils_t::largestSeparator();
-					this->rob_buffer.push_back(&this->reorderBuffer[this->robStart]);
-					this->has_llc_miss=false;
-				}
+				// ORCS_PRINTF("Iniciado EMC - Cycle %lu\n",orcs_engine.get_global_cycle())'
 				if(this->rob_buffer.size() > 0){
+					// if(this->rob_buffer.size()>=16)break;
 					//get the front uop, to probe for instructions which will be ready to execute.
 					reorder_buffer_line_t *rob_ready = NULL;
-					for(size_t j = 0; j < this->rob_buffer.size(); j++)
-					{
-						if(!this->rob_buffer[j]->on_chain){
-							rob_ready = this->rob_buffer[j];
-							break;
-						}
-					}
-					if(rob_ready == NULL){
-						this->start_emc_module = false;
-						break;
-					}
+					rob_ready = this->rob_buffer[0];
+					//get position fo initialize bcast of registers	
 					position_rob = this->get_position_rob_bcast(rob_ready);
-					if(position_rob == POSITION_FAIL){
-						break;
-					}
+					
+					ERROR_ASSERT_PRINTF(position_rob != POSITION_FAIL,"Erro, RobEntry nao encontrada")
 					// ORCS_PRINTF("ROB %s\n",rob_ready->content_to_string().c_str())
+					// renaming to EMC
+					this->renameEMC(rob_ready);
 					// propagate write registers to pseudo wakeup operations
 					for (uint16_t j = 0; j < MAX_REGISTERS; j++){
-						if(rob_ready->uop.write_regs[j]>=0){
-							//broadcast
-							// ORCS_PRINTF("Broadcasting reg %d\n",rob_ready->uop.write_regs[j])
-							// sleep(1);
-							uint16_t uops_wakeup = this->broadcast_cdb(position_rob,rob_ready->uop.write_regs[j]); 
-							uop_total_executed+=uops_wakeup;
-						}
+						if(rob_ready->uop.write_regs[j]==POSITION_FAIL)break;
+						//broadcast
+						uint16_t uops_wakeup = this->broadcast_cdb(position_rob,rob_ready->uop.write_regs[j]); 
+						uop_total_executed+=uops_wakeup;
 					}
 					rob_ready->on_chain=true;
-					rob_ready=NULL;
+					this->rob_buffer.erase(this->rob_buffer.begin());
 				}
-			}
-				if(!this->start_emc_module){
-					// ORCS_PRINTF("Size Chain %lu\n",this->rob_buffer.size())
-					this->inst_load_deps=0;
-					for (uint16_t j = 0; j < this->rob_buffer.size(); j++){
-						// ORCS_PRINTF("%s\n",this->rob_buffer[j]->content_to_string().c_str())
-						if(this->rob_buffer[j]->uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD){
-							this->num_load_deps++;
-							this->all_inst_deps+=this->inst_load_deps;
-							this->inst_load_deps=0;
-						}else{
-							this->inst_load_deps++;
-							}
-						}
-						// sleep(1);
-					// }
-					for (uint16_t j = 0; j < this->rob_buffer.size(); j++){
-						// ORCS_PRINTF("%s",this->rob_buffer[j]->content_to_string().c_str())
-						this->rob_buffer.erase(this->rob_buffer.begin()+j);
-						j--;
+				else{
+					this->start_emc_module = false;
 					}
-					this->start_emc_module=false;
-				}
+			}
 			
 		#endif
 		// =====================================	
@@ -1305,7 +1269,8 @@ void processor_t::mob_read(){
 					// this->has_llc_miss=false;
 					if(this->isRobHead(mob_line->rob_ptr)){
 						this->start_emc_module=true;
-						this->has_llc_miss=true;
+						// this->has_llc_miss=true;
+						this->rob_buffer.push_back(mob_line->rob_ptr);
 						this->add_llc_miss_rob_head();
 					}
 				}
@@ -1600,43 +1565,50 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t* rob_line){
 		sleep(1);
 	}
 };
-uint32_t processor_t::broadcast_cdb(int32_t position_rob,int32_t write_register){
+uint32_t processor_t::broadcast_cdb(uint32_t position_rob,int32_t write_register){
 	uint32_t collect=0;
 	// ORCS_PRINTF("Register broadcas_CDB %d\n",write_register)
-	for(int32_t i = (position_rob+1);; i++){
-		if(i>=ROB_SIZE) i=0;
-		// if(i > this->robEnd)break;
-		if(i == position_rob)break;
-		if(this->reorderBuffer[i].is_poisoned) continue;
-		if(this->reorderBuffer[i].wait_reg_deps_number == 1 ){
+	for(uint32_t i = (position_rob+1);; i++){
+		if(i>=ROB_SIZE) i=0; // reinicia a "fila" do rob para busca 
+		if(i > this->robEnd)break; // evita passar do fim do rob
+		if(i == position_rob)break; // posicao head, de onde comecou o broadcast
+		if(this->reorderBuffer[i].is_poisoned) continue; //poisoned, ja encontra-se na chain
+		if(this->reorderBuffer[i].wait_reg_deps_number <=1 ){
 			for(size_t k = 0; k < MAX_REGISTERS; k++){
 				if(this->reorderBuffer[i].uop.read_regs[k]==POSITION_FAIL)break;
-					if(this->reorderBuffer[i].uop.read_regs[k]==write_register){
-					this->rob_buffer.push_back(&this->reorderBuffer[i]);
-					this->reorderBuffer[i].is_poisoned=true;
-					// ORCS_PRINTF("add Chain %s\n",this->reorderBuffer[i].content_to_string().c_str())
-					// sleep(1);
-					collect++;
-					break;
-					}			
+				if(this->reorderBuffer[i].uop.read_regs[k]==write_register){
+				this->rob_buffer.push_back(&this->reorderBuffer[i]);
+				this->reorderBuffer[i].is_poisoned=true;
+				// ORCS_PRINTF("add Chain %s\n",this->reorderBuffer[i].content_to_string().c_str())
+				// sleep(1);
+				collect++;
+				break;
+				}				
 			}
 				
 		}
 	}
 	return collect;
 };
-int32_t processor_t::get_position_rob_bcast(reorder_buffer_line_t *rob_ready){
+uint32_t processor_t::get_position_rob_bcast(reorder_buffer_line_t *rob_ready){
 	uint32_t position = POSITION_FAIL;
-	for(size_t i = (this->robStart+1);; i++){
+	for(uint32_t i = (this->robStart+1);; i++){
 		if(i>=ROB_SIZE) i=0;
 		if(&this->reorderBuffer[i] == rob_ready){
 			position = i;
-			break;
+			return position;
 		};
 		if(i == this->robStart)break;
 	}
 	return position;
 };
+// =============================================================================
+void processor_t::renameEMC(reorder_buffer_line_t *rob_line){
+
+
+};
+
+
 // ============================================================================
 void processor_t::statistics(){
 	if(orcs_engine.output_file_name == NULL){

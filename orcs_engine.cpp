@@ -11,5 +11,6 @@ void orcs_engine_t::allocate() {
 	this->processor = new processor_t;
 	this->branchPredictor = new branch_predictor_t;
 	this->cacheManager = new cache_manager_t;
+	this->memory_controller = new memory_controller_t;
 };
 

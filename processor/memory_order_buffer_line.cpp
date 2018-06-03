@@ -26,6 +26,9 @@ void memory_order_buffer_line_t::package_clean() {
         this->memory_operation = MEMORY_OPERATION_FREE;
         this->readyToGo = orcs_engine.get_global_cycle();
         this->wait_mem_deps_number = 0;
+        #if EMC_ACTIVE
+        this->emc_opcode_ptr=NULL;
+        #endif
 };
 
 // ============================================================================

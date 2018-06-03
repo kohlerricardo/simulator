@@ -5,7 +5,9 @@ class memory_order_buffer_line_t {
         uint32_t memory_size;
          
         reorder_buffer_line_t* rob_ptr;                 /// rob pointer
-
+        #if EMC_ACTIVE
+        emc_opcode_package_t* emc_opcode_ptr;  //emc opcode pointer
+        #endif
         /// Memory Dependencies Control
         bool uop_executed;
         uint64_t uop_number;

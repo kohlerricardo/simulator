@@ -184,10 +184,11 @@ Arquivo definindo os parametros do modelo de processador
 #define EMC_UNIFIED_RS 8
 #define EMC_UOP_BUFFER 16
 #define EMC_REGISTERS 16
+#define EMC_LSQ_SIZE 16
 // EMC CACHE
 #define EMC_CACHE_SIZE 4*KILO
 #define EMC_CACHE_ASSOCIATIVITY 4
-#define EMC_CACHE_LATENCY 2
+#define EMC_CACHE_LATENCY 1
 #define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
 // ===================== EMC =======================================
 // =====================CHECKS=======================
