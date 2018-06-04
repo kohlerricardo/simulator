@@ -1,4 +1,4 @@
-#include "../simulator.hpp"
+#include "./../simulator.hpp"
 
 // =====================================================================
 processor_t::processor_t(){
@@ -168,10 +168,13 @@ void processor_t::allocate(){
 	#if EMC_ACTIVE
 		this->rob_buffer.reserve(ROB_SIZE);
 		this->rrt = new register_remapping_table_t[EMC_REGISTERS];
-		for (uint32_t i = 0; i < EMC_REGISTERS; i++){
-		this->rrt[i].entry = new emc_opcode_package_t;
+		for(uint32_t i = 0; i < EMC_REGISTERS;i++){
+			this->rrt[i].package_clean();
+			ORCS_PRINTF("%u -> ",i)
+			this->rrt[i].print_rrt_entry();
+
 		}
-		
+
 	#endif
 	// =====================================================================
 };
@@ -1111,6 +1114,14 @@ void processor_t::execute(){
 					
 					ERROR_ASSERT_PRINTF(position_rob != POSITION_FAIL,"Erro, RobEntry nao encontrada")
 					// ORCS_PRINTF("ROB %s\n",rob_ready->content_to_string().c_str())
+					// verify if has a register spill
+					if(rob_ready->uop.opcode_operation == INSTRUCTION_OPERATION_MEM_STORE){
+						bool spill = this->verify_spill_register(rob_ready);
+						if(!spill) {
+							this->rob_buffer.erase(this->rob_buffer.begin());
+							continue;
+							}
+					}
 					// renaming to EMC
 					this->renameEMC(rob_ready);
 					// propagate write registers to pseudo wakeup operations
@@ -1120,11 +1131,11 @@ void processor_t::execute(){
 						uint16_t uops_wakeup = this->broadcast_cdb(position_rob,rob_ready->uop.write_regs[j]); 
 						uop_total_executed+=uops_wakeup;
 					}
-					rob_ready->on_chain=true;
 					this->rob_buffer.erase(this->rob_buffer.begin());
 				}
 				else{
 					this->start_emc_module = false;
+					orcs_engine.memory_controller->emc->ready_to_execute=true;
 					}
 			}
 			
@@ -1604,11 +1615,112 @@ uint32_t processor_t::get_position_rob_bcast(reorder_buffer_line_t *rob_ready){
 };
 // =============================================================================
 void processor_t::renameEMC(reorder_buffer_line_t *rob_line){
+	// ===========================================================
+	//  Transform rob line in EMC Package
+	uint32_t pos_emc =  orcs_engine.memory_controller->emc->get_position_uop_buffer();
+	emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc->uop_buffer[pos_emc];
+	emc_package->uop = rob_line->uop;
+	emc_package->rob_ptr = rob_line;
+	// ===========================================================
+	// getting position on emc lsq.
+	memory_order_buffer_line_t *lsq;
+	uint32_t pos_lsq = memory_order_buffer_line_t::find_free(orcs_engine.memory_controller->emc->unified_lsq,EMC_LSQ_SIZE);
+	if(rob_line->mob_ptr != NULL){
+		orcs_engine.memory_controller->emc->unified_lsq[pos_lsq] = *(rob_line->mob_ptr);
+		lsq = &orcs_engine.memory_controller->emc->unified_lsq[pos_lsq];
+		//linking emc entry to emc lsq 
+		emc_package->mob_ptr = lsq;
+		lsq->emc_opcode_ptr  = emc_package;
+	}
+	// ===========================================================
+   /// Control the Register Dependency - Register READ
+    for (uint32_t k = 0; k < MAX_REGISTERS; k++) {
+        if (emc_package->uop.read_regs[k] < 0) {
+            break;
+        }
+        int32_t read_register = this->search_register(rob_line->uop.read_regs[k]);
+		// ORCS_PRINTF("Read register %d - %d\n",rob_line->uop.read_regs[k],read_register)
+        if(read_register == POSITION_FAIL) continue;
+        /// If there is a dependency
+        if (this->rrt[read_register].entry != NULL) {
+            for (uint32_t j = 0; j < ROB_SIZE; j++) {
+                if (this->rrt[read_register].entry->reg_deps_ptr_array[j] == NULL) {
+					this->rrt[read_register].entry->wake_up_elements_counter++;
+                    this->rrt[read_register].entry->reg_deps_ptr_array[j] = emc_package;
+                    emc_package->wait_reg_deps_number++;
+                    break;
+                }
+            }
+        }
+    }
 
+    /// Control the Register Dependency - Register WRITE
+    for (uint32_t k = 0; k < MAX_REGISTERS; k++) {
+		// this->add_registerWrite();
+        if (rob_line->uop.write_regs[k] < 0) {
+            break;
+        }
+        int32_t write_register = this->search_register(rob_line->uop.write_regs[k]);
+	
+		if(write_register == POSITION_FAIL){
+			ORCS_PRINTF("Write register Fail %d - %d\n",rob_line->uop.write_regs[k],write_register)
+			write_register = this->allocate_new_register(rob_line->uop.write_regs[k]);
+		}
+		ORCS_PRINTF("Write register %d - %d\n",rob_line->uop.write_regs[k],write_register)
+        this->rrt[write_register].entry = emc_package;
+    }
 
 };
-
-
+// =======================================================================
+ /*
+ @1 write register to be searched in rrt
+ @return position of register in rrt
+ */
+int32_t processor_t::search_register(int32_t write_register){
+    int32_t reg_pos = POSITION_FAIL;
+    for(int32_t i = 0;i<EMC_REGISTERS;i++){
+        if(this->rrt[i].register_core == write_register){
+            reg_pos = i;
+            return reg_pos;
+        }
+    }
+    return reg_pos;
+};
+// =======================================================================
+ /*
+ @1 write register to be allocated in rrt
+ @return position of register allocated in rrt
+ */
+int32_t processor_t::allocate_new_register(int32_t write_register){
+    int32_t reg_pos = POSITION_FAIL;
+    for(int32_t i = 0;i<EMC_REGISTERS;i++){
+        // ORCS_PRINTF("Register_Core %d\n",this->rrt[i].register_core)
+        if(this->rrt[i].register_core == POSITION_FAIL){
+            reg_pos = i;
+            this->rrt[i].register_core = write_register;
+            break;
+        }
+    }
+    return reg_pos;
+};
+// ============================================================================
+void processor_t::clean_rrt(){
+	for(size_t i = 0; i < EMC_REGISTERS; i++)
+	{
+		this->rrt[i].package_clean();
+	}
+};
+// ============================================================================
+bool processor_t::verify_spill_register(reorder_buffer_line_t *rob_line){
+	bool spill = false;
+	for(size_t i = 0; i < MOB_READ; i++){
+		if(!(this->memory_order_buffer_read[i].memory_address^rob_line->mob_ptr->memory_address)){
+			spill=true;
+			break;
+		}
+	}
+	return spill;
+};
 // ============================================================================
 void processor_t::statistics(){
 	if(orcs_engine.output_file_name == NULL){

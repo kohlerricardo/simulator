@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../simulator.hpp"
+#include "./../simulator.hpp"
 #include <string>
 
 // ============================================================================= NEW

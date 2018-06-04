@@ -114,7 +114,7 @@ void cache_t::allocate(cacheLevel_t level){
 			this->nSets = EMC_CACHE_SETS;
 			this->nLines = EMC_CACHE_ASSOCIATIVITY;
 			this->sets = new cacheSet_t[EMC_CACHE_SETS];
-			for (size_t i = 0; i < LLC_SETS; i++)
+			for (size_t i = 0; i < EMC_CACHE_SETS; i++)
 			{
 				this->sets[i].linhas = new linha_t[EMC_CACHE_ASSOCIATIVITY];
 

@@ -220,6 +220,11 @@ class processor_t {
 		uint32_t get_position_rob_bcast(reorder_buffer_line_t *rob_ready);
 		//Register remapping table declaration
 		register_remapping_table_t *rrt;
+		int32_t search_register(int32_t write_register);
+    	int32_t allocate_new_register(int32_t write_register);
+		void clean_rrt();
+		// Verifying register spill to include store ops on chain
+		bool verify_spill_register(reorder_buffer_line_t* rob_line);
 		//Renaming entry to EMC
 		void renameEMC(reorder_buffer_line_t *rob_line);
 		// ====================================================================

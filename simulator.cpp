@@ -86,16 +86,18 @@ int main(int argc, char **argv) {
     //==================
     orcs_engine.cacheManager->allocate();
     //==================
-    //Enhaced Memory Controller
+    //Memory Controller
     //==================
-
+    orcs_engine.memory_controller->allocate();
     //initializate simulator
     orcs_engine.simulator_alive = true;
 
 
     /// Start CLOCK for all the components
     while (orcs_engine.simulator_alive) {
+        orcs_engine.memory_controller->clock();
         orcs_engine.processor->clock();
+        
         orcs_engine.global_cycle++;
     }
     // to be prinf
@@ -104,10 +106,12 @@ int main(int argc, char **argv) {
     orcs_engine.processor->statistics();
     orcs_engine.branchPredictor->statistics();
     orcs_engine.cacheManager->statistics();
+    orcs_engine.memory_controller->statistics();
 
     delete orcs_engine.processor;
     delete orcs_engine.branchPredictor;
     delete orcs_engine.cacheManager;
+    delete orcs_engine.memory_controller;
     
     return(EXIT_SUCCESS);
 };

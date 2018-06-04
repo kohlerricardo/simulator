@@ -1,7 +1,11 @@
 #include "./../simulator.hpp"
 #include <string>
 // ============================================================================
-memory_controller_t::memory_controller_t(){};
+memory_controller_t::memory_controller_t(){
+    #if EMC_ACTIVE
+    this->emc = NULL;
+    #endif
+};
 // ============================================================================
 memory_controller_t::~memory_controller_t(){
     #if EMC_ACTIVE
@@ -34,5 +38,10 @@ void memory_controller_t::statistics(){
     }
 };
 // ============================================================================
-void memory_controller_t::clock(){};
+void memory_controller_t::clock(){
+    #if EMC_ACTIVE
+       this->emc->clock();
+    #endif
+
+};
 // ============================================================================

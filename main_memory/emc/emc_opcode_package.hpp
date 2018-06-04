@@ -1,3 +1,5 @@
+#ifndef EMC_OPCODE_PACKAGE_H
+#define EMC_OPCODE_PACKAGE_H
 class emc_opcode_package_t{
     public:
         uop_package_t uop;                          /// opcode to be executed
@@ -15,3 +17,4 @@ class emc_opcode_package_t{
         // ============================================================================
 
 };
+#endif // !EMC_OPCODE_PACKAGE_H

@@ -1,4 +1,4 @@
-#include "../../simulator.hpp"
+#include "./../../simulator.hpp"
 #include <string>
 emc_opcode_package_t::emc_opcode_package_t(){
     this->package_clean();

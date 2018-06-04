@@ -31,7 +31,8 @@ SRC_TRACE_READER = 	trace_reader.cpp
 
 SRC_PROCESSOR =		$(FD_PROCESSOR)/processor.cpp\
 					$(FD_PROCESSOR)/reorder_buffer_line.cpp\
-					$(FD_PROCESSOR)/memory_order_buffer_line.cpp
+					$(FD_PROCESSOR)/memory_order_buffer_line.cpp\
+					$(FD_PROCESSOR)/register_remapping_table.cpp
 SRC_BRANCH_PREDICTOR =	$(FD_BRANCH_PREDICTOR)/branch_predictor.cpp\
 						$(FD_BRANCH_PREDICTOR)/piecewise.cpp
 						#$(FD_BRANCH_PREDICTOR)/twoBit.cpp

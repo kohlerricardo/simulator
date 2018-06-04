@@ -8,6 +8,8 @@ emc_t::emc_t(){
 	this->fu_int_alu = NULL;
 	this->fu_mem_load = NULL;
 	this->fu_mem_store = NULL;
+	// Data Cache
+	this->data_cache=NULL;
 };
 emc_t::~emc_t(){
     if(this->data_cache !=NULL) delete this->data_cache;
@@ -17,24 +19,33 @@ emc_t::~emc_t(){
 };
 // ============================================================================
 // @allocate objects to EMC
-void emc_t::allocate(){
-    // Unified FUs
+void emc_t::allocate(){ 
+    // ======================= Unified FUs =======================
     this->unified_fus.reserve(EMC_UOP_BUFFER);
-    // Unified RS
+    //=======================  Unified RS ======================= 
     this->unified_rs.reserve(EMC_UOP_BUFFER);
-    // data cache
+    // ======================= data cache ======================= 
+	this->data_cache = new cache_t;
     this->data_cache->allocate(EMC_DATA_CACHE);
-    //alocate uop buffer
-    this->uop_buffer = new emc_opcode_package_t[EMC_UOP_BUFFER];
-    //allocate lsq 
-    this->unified_lsq = new memory_order_buffer_line_t[EMC_LSQ_SIZE];
-	//allocate structures to fus
+    // ======================= alocate uop buffer ======================= 
+	this->uop_buffer_end = 0;
+	this->uop_buffer_start = 0;
+	this->uop_buffer_used = 0;
+    this->uop_buffer = utils_t::template_allocate_array<emc_opcode_package_t>(EMC_UOP_BUFFER);
+	for(size_t i = 0; i < EMC_UOP_BUFFER; i++){
+		this->uop_buffer[i].reg_deps_ptr_array = utils_t::template_allocate_initialize_array<emc_opcode_package_t*>(ROB_SIZE, NULL);
+	}
+    // ======================= allocate lsq ======================= 
+    this->unified_lsq = utils_t::template_allocate_array<memory_order_buffer_line_t>(EMC_LSQ_SIZE);
+	// ======================= allocate structures to fus ======================= 
 	this->fu_int_alu = utils_t::template_allocate_initialize_array<uint64_t>(EMC_INTEGER_ALU,0);
 	this->fu_mem_load = utils_t::template_allocate_initialize_array<uint64_t>(LOAD_UNIT, 0);
 	this->fu_mem_store = utils_t::template_allocate_initialize_array<uint64_t>(STORE_UNIT, 0);
-	// Memory Ops executed
+	// ======================= Memory Ops executed ======================= 
 	this->memory_read_executed = 0;
 	this->memory_write_executed = 0;
+	// ======================= ready to execute control ======================= 
+	this->ready_to_execute = false;
 };
 // ============================================================================
 void emc_t::statistics(){
@@ -193,7 +204,7 @@ void emc_t::execute(){
 			ORCS_PRINTF("Solving %s\n",this->unified_lsq[entry].rob_ptr->content_to_string().c_str())
 			#endif
 			// solving register dependence !!!!!!!!!!!!
-			// this->solve_registers_dependency(this->unified_lsq[i].rob_ptr);
+			// this->solve_registers_dependency(this->unified_lsq[i].emc_opcode_ptr);
 			this->unified_lsq[i].package_clean();
 		}//end if
 	}//end for lsq
@@ -280,45 +291,57 @@ void emc_t::execute(){
 // ============================================================================
 void emc_t::emc_to_core(){};
 // ============================================================================
-void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
-    /// Remove pointers from Register Alias Table (RAT)
-    for (uint32_t j = 0; j < MAX_REGISTERS; j++) {
-        if (emc_opcode->uop.write_regs[j] < 0) {
-            break;
-        }
-        uint32_t write_register = emc_opcode->uop.write_regs[j];
-        ERROR_ASSERT_PRINTF(write_register <RAT_SIZE, "Read Register (%d) > Register Alias Table Size (%d)\n",
-                                                                            write_register, RAT_SIZE);
-		if (this->register_alias_table[write_register] != NULL &&
-        this->register_alias_table[write_register]->uop.uop_number == emc_opcode->uop.uop_number) {
-            this->register_alias_table[write_register] = NULL;
-	#if EXECUTE_DEBUG
-			ORCS_PRINTF("register_%u\n",write_register)
-	#endif
-        }//end if
-    }//end for
+// void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
+//     /// Remove pointers from Register Alias Table (RAT)
+//     for (uint32_t j = 0; j < MAX_REGISTERS; j++) {
+//         if (emc_opcode->uop.write_regs[j] < 0) {
+//             break;
+//         }
+//         uint32_t write_register = emc_opcode->uop.write_regs[j];
+//         ERROR_ASSERT_PRINTF(write_register <RAT_SIZE, "Read Register (%d) > Register Alias Table Size (%d)\n",
+//                                                                             write_register, RAT_SIZE);
+// 		if (this->register_alias_table[write_register] != NULL &&
+//         this->register_alias_table[write_register]->uop.uop_number == emc_opcode->uop.uop_number) {
+//             this->register_alias_table[write_register] = NULL;
+// 	#if EXECUTE_DEBUG
+// 			ORCS_PRINTF("register_%u\n",write_register)
+// 	#endif
+//         }//end if
+//     }//end for
 
-  	// =========================================================================
-    // SOLVE REGISTER DEPENDENCIES - RAT
-    // =========================================================================
-    for (uint32_t j = 0; j < ROB_SIZE; j++) {
-        /// There is an unsolved dependency
-        if (emc_opcode->reg_deps_ptr_array[j] != NULL) {
-			emc_opcode->wake_up_elements_counter--;
-            emc_opcode->reg_deps_ptr_array[j]->wait_reg_deps_number--;
-            /// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
-            if (emc_opcode->reg_deps_ptr_array[j]->uop.readyAt <= orcs_engine.get_global_cycle()) {
-                emc_opcode->reg_deps_ptr_array[j]->uop.readyAt = orcs_engine.get_global_cycle();
-            }
-            emc_opcode->reg_deps_ptr_array[j] = NULL;
-        }
-        /// All the dependencies are solved
-        else {
-            break;
-        }
-	}
-};
+//   	// =========================================================================
+//     // SOLVE REGISTER DEPENDENCIES - RAT
+//     // =========================================================================
+//     for (uint32_t j = 0; j < ROB_SIZE; j++) {
+//         /// There is an unsolved dependency
+//         if (emc_opcode->reg_deps_ptr_array[j] != NULL) {
+// 			emc_opcode->wake_up_elements_counter--;
+//             emc_opcode->reg_deps_ptr_array[j]->wait_reg_deps_number--;
+//             /// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
+//             if (emc_opcode->reg_deps_ptr_array[j]->uop.readyAt <= orcs_engine.get_global_cycle()) {
+//                 emc_opcode->reg_deps_ptr_array[j]->uop.readyAt = orcs_engine.get_global_cycle();
+//             }
+//             emc_opcode->reg_deps_ptr_array[j] = NULL;
+//         }
+//         /// All the dependencies are solved
+//         else {
+//             break;
+//         }
+// 	}
+// };
 // ============================================================================
 void emc_t::clock(){
-
+	if(this->uop_buffer_used>0){
+		if(this->ready_to_execute){
+			ORCS_PRINTF("========================================\n")
+			for(uint32_t i=this->uop_buffer_start;i<this->uop_buffer_end;i++){
+				ORCS_PRINTF("%u - %s\n",i,this->uop_buffer[i].content_to_string().c_str())
+				sleep(1);
+				this->uop_buffer[i].package_clean();
+				// this->remove_front_uop_buffer();
+			}
+			ORCS_PRINTF("========================================\n")
+		}
+		this->ready_to_execute=false;
+	}
 }
