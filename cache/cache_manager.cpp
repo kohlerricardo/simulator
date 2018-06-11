@@ -28,9 +28,6 @@ void cache_manager_t::allocate(){
     this->prefetcher = new prefetcher_t;
     this->prefetcher->allocate();
     #endif
-    this->inst_load_miss=0;
-    this->inst_load_load=0;
-    this->inst_load_deps=0;
 };
 uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     uint32_t ttc = 0;
@@ -159,10 +156,10 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             //EMC
             // =====================================
             #if EMC_ACTIVE
-            // linha_t *linha_emc = NULL;
-            // linha_emc = orcs_engine.emc->data_cache->installLine(mob_line->memory_address);
-            // linha_llc->linha_ptr_emc=linha_emc;
-            // linha_emc->linha_ptr_llc=linha_llc;
+            linha_t *linha_emc = NULL;
+            linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(mob_line->memory_address);
+            linha_llc->linha_ptr_emc=linha_emc;
+            linha_emc->linha_ptr_inf=linha_llc;
             #endif
 
         }
@@ -257,6 +254,54 @@ void cache_manager_t::insertQueueWrite(memory_order_buffer_line_t* mob_line){
 void cache_manager_t::clock(){
    
 }
+uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
+    uint32_t ttc = 0;
+    uint32_t latency_request = 0;
+    uint32_t hit = orcs_engine.memory_controller->emc->data_cache->read(mob_line->memory_address,ttc);
+    orcs_engine.memory_controller->emc->data_cache->add_cacheRead();
+    latency_request+=ttc;
+    //L1 Hit
+    if(hit==HIT){
+        //========================================= 
+        orcs_engine.memory_controller->emc->data_cache->add_cacheAccess();
+        orcs_engine.memory_controller->emc->data_cache->add_cacheHit();
+        //========================================= 
+    }else{
+        // EMC CACHE MISS
+        //========================================= 
+        orcs_engine.memory_controller->emc->data_cache->add_cacheAccess();
+        orcs_engine.memory_controller->emc->data_cache->add_cacheMiss();
+        //========================================= 
+        hit = this->data_cache[1].read(mob_line->memory_address,ttc);
+        this->data_cache[1].add_cacheRead();
+        // ==========
+        // update inst cache miss, update inistruction llc search.
+        // Inst cache miss must be equal llc search inst
+        // ==========
+        latency_request+=ttc;
+        #if CACHE_MANAGER_DEBUG
+            // ORCS_PRINTF("L1 MISS TTC %u\n",ttc)
+            // ORCS_PRINTF("L1 MISS LR %u\n",latency_request)
+        #endif
+        if(hit == HIT){
+            // marcando access llc emc
+            orcs_engine.memory_controller->emc->add_access_LLC();
+            orcs_engine.memory_controller->emc->add_access_LLC_Hit();
+        }else{
+            orcs_engine.memory_controller->emc->add_access_LLC();
+            orcs_engine.memory_controller->emc->add_access_LLC_Miss();
+
+            linha_t *linha_llc = this->data_cache[1].installLine(mob_line->memory_address);
+            linha_t *linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(mob_line->memory_address);
+            // linking emc and llc
+            linha_llc->linha_ptr_emc = linha_emc;
+            linha_emc->linha_ptr_inf = linha_llc;
+            latency_request = RAM_LATENCY;
+
+        }
+    }
+    return latency_request;
+};
 void cache_manager_t::statistics(){
 
     if(orcs_engine.output_file_name == NULL){
@@ -281,5 +326,4 @@ void cache_manager_t::statistics(){
     #if PREFETCHER_ACTIVE
     this->prefetcher->statistics();
     #endif
-    ORCS_PRINTF("Media inst entre Loads deps %.3f\n",(float(this->inst_load_load)/float(this->inst_load_deps)))
 };

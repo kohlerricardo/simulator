@@ -271,6 +271,13 @@ linha_t* cache_t::installLine(uint64_t address){
 		this->writeBack(&this->sets[idx].linhas[line]);
 		this->add_cacheWriteBack();
 		}
+	#if EMC_ACTIVE
+		if(this->sets[idx].linhas[line].linha_ptr_emc != NULL){
+			//invalida linha emc, mantendo a coerencia
+			this->sets[idx].linhas[line].linha_ptr_emc->clean_line();
+			this->sets[idx].linhas[line].linha_ptr_emc = NULL;
+		}
+	#endif
 	this->sets[idx].linhas[line].tag = tag;
 	this->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle()+RAM_LATENCY;
 	this->sets[idx].linhas[line].valid = 1;	
@@ -315,7 +322,7 @@ inline void cache_t::writeBack(linha_t *linha){
 		}
 		#if EMC_ACTIVE
 		if(linha->linha_ptr_emc !=NULL){
-			linha->linha_ptr_emc->clean_line();
+			linha->linha_ptr_emc->clean_line();//limpando linha de cache do emc, mantem coerencia
 		}
 		#endif
 		linha->clean_line();

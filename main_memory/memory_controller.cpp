@@ -34,6 +34,7 @@ void memory_controller_t::statistics(){
         utils_t::largestSeparator(output);
         fprintf(output,"Memory Controller");
         utils_t::largestSeparator(output);
+        this->emc->statistics();
         }
     }
 };

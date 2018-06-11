@@ -41,9 +41,9 @@ class cache_manager_t{
         // ==========================================
         // EMC Data Collect
         // ==========================================
-        uint64_t inst_load_miss;
-        uint64_t inst_load_load;
-        uint64_t inst_load_deps;
+        #if EMC_ACTIVE
+        uint32_t search_EMC_Data(memory_order_buffer_line_t *mob_line);
+        #endif
 };  
 
 #endif // !CACHE_MANAGER_H

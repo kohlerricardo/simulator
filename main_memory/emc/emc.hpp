@@ -1,7 +1,10 @@
 #ifndef EMC_H
 #define EMC_H
 class emc_t{
-    
+    private:
+        uint64_t access_LLC;
+        uint64_t access_LLC_Hit;
+        uint64_t access_LLC_Miss;
     public:
 
         // ==========================================================================
@@ -13,8 +16,7 @@ class emc_t{
         container_ptr_emc_opcode_package_t unified_rs;
         container_ptr_emc_opcode_package_t unified_fus;
         // ==========================================================================
-        uint32_t memory_read_executed;
-        uint32_t memory_write_executed;
+        uint32_t memory_op_executed;
         // ==========================================================================
         // Attr uop Buffer
         uint32_t uop_buffer_start;
@@ -47,7 +49,12 @@ class emc_t{
         void execute();     //get th uops executed
         void emc_to_core(); //Send uops executed to core
         // ==========================================================================
+        // EMC memory interact
+        void lsq_read();
         
+        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC);
+        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Hit);
+        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Miss);
 };
 
 #endif // !EMC_H

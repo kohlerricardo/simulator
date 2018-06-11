@@ -42,8 +42,7 @@ void emc_t::allocate(){
 	this->fu_mem_load = utils_t::template_allocate_initialize_array<uint64_t>(LOAD_UNIT, 0);
 	this->fu_mem_store = utils_t::template_allocate_initialize_array<uint64_t>(STORE_UNIT, 0);
 	// ======================= Memory Ops executed ======================= 
-	this->memory_read_executed = 0;
-	this->memory_write_executed = 0;
+	this->memory_op_executed = 0;
 	// ======================= ready to execute control ======================= 
 	this->ready_to_execute = false;
 };
@@ -204,7 +203,7 @@ void emc_t::execute(){
 			ORCS_PRINTF("Solving %s\n",this->unified_lsq[entry].rob_ptr->content_to_string().c_str())
 			#endif
 			// solving register dependence !!!!!!!!!!!!
-			// this->solve_registers_dependency(this->unified_lsq[i].emc_opcode_ptr);
+			this->solve_emc_dependencies(this->unified_lsq[i].emc_opcode_ptr);
 			this->unified_lsq[i].package_clean();
 		}//end if
 	}//end for lsq
@@ -233,7 +232,7 @@ void emc_t::execute(){
 				{
                     // emc_opcode->stage = PROCESSOR_STAGE_COMMIT;
                     // emc_opcode->uop.updatePackageReady(EXECUTE_LATENCY+COMMIT_LATENCY);
-                    // this->solve_registers_dependency(emc_opcode);
+                    this->solve_emc_dependencies(emc_package);
                     uop_total_executed++;
                     /// Remove from the Functional Units
                     this->unified_fus.erase(this->unified_fus.begin() + i);
@@ -244,7 +243,7 @@ void emc_t::execute(){
                 case INSTRUCTION_OPERATION_MEM_LOAD:
                 {
                     ERROR_ASSERT_PRINTF(emc_package->mob_ptr != NULL, "Read with a NULL pointer to MOB")
-                    this->memory_read_executed++;
+                    this->memory_op_executed++;
 					emc_package->mob_ptr->uop_executed = true;
                     emc_package->uop.updatePackageReady(EXECUTE_LATENCY);
                     uop_total_executed++;
@@ -256,7 +255,7 @@ void emc_t::execute(){
                 case INSTRUCTION_OPERATION_MEM_STORE:
                 {
                     ERROR_ASSERT_PRINTF(emc_package->mob_ptr != NULL, "Write with a NULL pointer to MOB")
-                    this->memory_write_executed++;
+                    this->memory_op_executed++;
 					emc_package->mob_ptr->uop_executed = true;
                     /// Waits for the cache to receive the package
                     emc_package->uop.updatePackageReady(EXECUTE_LATENCY);
@@ -281,54 +280,54 @@ void emc_t::execute(){
 			}//end switch
 		} //end if ready package
 	}//end for 
-	if(this->memory_read_executed>0){
-		//alterar cache logic
-	}
-	if(this->memory_write_executed>0){
+	if(this->memory_op_executed>0){
 		//alterar cache logic
 	}
 };
 // ============================================================================
-void emc_t::emc_to_core(){};
-// ============================================================================
-// void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
-//     /// Remove pointers from Register Alias Table (RAT)
-//     for (uint32_t j = 0; j < MAX_REGISTERS; j++) {
-//         if (emc_opcode->uop.write_regs[j] < 0) {
-//             break;
-//         }
-//         uint32_t write_register = emc_opcode->uop.write_regs[j];
-//         ERROR_ASSERT_PRINTF(write_register <RAT_SIZE, "Read Register (%d) > Register Alias Table Size (%d)\n",
-//                                                                             write_register, RAT_SIZE);
-// 		if (this->register_alias_table[write_register] != NULL &&
-//         this->register_alias_table[write_register]->uop.uop_number == emc_opcode->uop.uop_number) {
-//             this->register_alias_table[write_register] = NULL;
-// 	#if EXECUTE_DEBUG
-// 			ORCS_PRINTF("register_%u\n",write_register)
-// 	#endif
-//         }//end if
-//     }//end for
+void emc_t::emc_to_core(){
+	if
 
-//   	// =========================================================================
-//     // SOLVE REGISTER DEPENDENCIES - RAT
-//     // =========================================================================
-//     for (uint32_t j = 0; j < ROB_SIZE; j++) {
-//         /// There is an unsolved dependency
-//         if (emc_opcode->reg_deps_ptr_array[j] != NULL) {
-// 			emc_opcode->wake_up_elements_counter--;
-//             emc_opcode->reg_deps_ptr_array[j]->wait_reg_deps_number--;
-//             /// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
-//             if (emc_opcode->reg_deps_ptr_array[j]->uop.readyAt <= orcs_engine.get_global_cycle()) {
-//                 emc_opcode->reg_deps_ptr_array[j]->uop.readyAt = orcs_engine.get_global_cycle();
-//             }
-//             emc_opcode->reg_deps_ptr_array[j] = NULL;
-//         }
-//         /// All the dependencies are solved
-//         else {
-//             break;
-//         }
-// 	}
-// };
+};
+// ============================================================================
+void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
+    /// Remove pointers from Register Alias Table (RAT)
+    // for (uint32_t j = 0; j < MAX_REGISTERS; j++) {
+    //     if (emc_opcode->uop.write_regs[j] < 0) {
+    //         break;
+    //     }
+    //     uint32_t write_register = emc_opcode->uop.write_regs[j];
+    //     ERROR_ASSERT_PRINTF(write_register <RAT_SIZE, "Read Register (%d) > Register Alias Table Size (%d)\n",
+    //                                                                         write_register, RAT_SIZE);
+	// 	if (this->register_alias_table[write_register] != NULL &&
+    //     this->register_alias_table[write_register]->uop.uop_number == emc_opcode->uop.uop_number) {
+    //         this->register_alias_table[write_register] = NULL;
+	// #if EXECUTE_DEBUG
+	// 		ORCS_PRINTF("register_%u\n",write_register)
+	// #endif
+    //     }//end if
+    // }//end for
+
+  	// =========================================================================
+    // SOLVE REGISTER DEPENDENCIES - RAT
+    // =========================================================================
+    for (uint32_t j = 0; j < ROB_SIZE; j++) {
+        /// There is an unsolved dependency
+        if (emc_opcode->reg_deps_ptr_array[j] != NULL) {
+			emc_opcode->wake_up_elements_counter--;
+            emc_opcode->reg_deps_ptr_array[j]->wait_reg_deps_number--;
+            /// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
+            if (emc_opcode->reg_deps_ptr_array[j]->uop.readyAt <= orcs_engine.get_global_cycle()) {
+                emc_opcode->reg_deps_ptr_array[j]->uop.readyAt = orcs_engine.get_global_cycle();
+            }
+            emc_opcode->reg_deps_ptr_array[j] = NULL;
+        }
+        /// All the dependencies are solved
+        else {
+            break;
+        }
+	}
+};
 // ============================================================================
 void emc_t::clock(){
 	if(this->uop_buffer_used>0){
@@ -345,3 +344,64 @@ void emc_t::clock(){
 		this->ready_to_execute=false;
 	}
 }
+// ============================================================================
+void emc_t::lsq_read(){	
+	
+	int32_t position_mem = POSITION_FAIL;
+	#if MOB_DEBUG
+	ORCS_PRINTF("MOB Read")
+	#endif
+	memory_order_buffer_line_t *mob_line = NULL; 
+	for (size_t i = 0; i < PARALLEL_LOADS; i++)
+	{
+
+		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->unified_lsq,EMC_LSQ_SIZE,PACKAGE_STATE_UNTREATED);
+		if(position_mem != POSITION_FAIL){
+			mob_line = &this->unified_lsq[position_mem];
+		}
+		if(mob_line != NULL){
+			if(mob_line->memory_operation == MEMORY_OPERATION_READ){
+				uint32_t ttc=0;
+				ttc = orcs_engine.cacheManager->search_EMC_Data(mob_line);//enviar que é do emc
+				mob_line->updatePackageReady(ttc);
+				mob_line->rob_ptr->uop.updatePackageReady(ttc);
+				this->memory_op_executed--;
+				//enviar de volta ao core para notificar ops;
+			}else{
+				uint32_t ttc=1;
+				// grava no lsq
+				mob_line->updatePackageReady(ttc);
+				mob_line->rob_ptr->uop.updatePackageReady(ttc);
+				//enviar de volta ao core para notificar ops;
+				this->memory_op_executed--;
+				// send address ring back
+			}
+		}//end if mob_line null
+	}//end for
+}; //end method
+
+void emc_t::statistics(){
+	if(orcs_engine.output_file_name == NULL){
+        ORCS_PRINTF("##############  EMC ##################\n")
+        ORCS_PRINTF("EMC_Access_LLC: %lu\n",this->get_access_LLC())
+        ORCS_PRINTF("EMC_Access_LLC_HIT: %lu\n",this->get_access_LLC_Hit())
+        ORCS_PRINTF("EMC_Access_LLC_MISS: %lu\n",this->get_access_LLC_Miss())
+        ORCS_PRINTF("##############  EMC_Data_Cache ##################\n")
+		this->data_cache->statistics();
+
+    }
+    else{
+        FILE *output = fopen(orcs_engine.output_file_name,"a+");
+			if(output != NULL){
+                utils_t::largestSeparator(output);  
+				fprintf(output,"##############  EMC ##################\n");
+				fprintf(output,"EMC_Access_LLC: %lu\n",this->get_access_LLC());
+				fprintf(output,"EMC_Access_LLC_HIT: %lu\n",this->get_access_LLC_Hit());
+				fprintf(output,"EMC_Access_LLC_MISS: %lu\n",this->get_access_LLC_Miss());
+				fprintf(output,"##############  EMC_Data_Cache ##################\n");
+				this->data_cache->statistics();
+                utils_t::largestSeparator(output);  
+            }
+            fclose(output);
+        }    
+};
