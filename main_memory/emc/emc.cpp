@@ -12,10 +12,18 @@ emc_t::emc_t(){
 	this->data_cache=NULL;
 };
 emc_t::~emc_t(){
+	//deletting data cache
     if(this->data_cache !=NULL) delete this->data_cache;
+	// deleting fus
 	utils_t::template_delete_array<uint64_t>(this->fu_int_alu);
 	utils_t::template_delete_array<uint64_t>(this->fu_mem_load);
 	utils_t::template_delete_array<uint64_t>(this->fu_mem_store);
+	// deleting deps array
+	for(size_t i = 0; i < EMC_UOP_BUFFER; i++){
+		utils_t::template_delete_array<emc_opcode_package_t>(this->uop_buffer[i].reg_deps_ptr_array[0]);
+	}
+	// deleting emc_opcode uop buffer
+	utils_t::template_delete_array<emc_opcode_package_t>(this->uop_buffer);
 };
 // ============================================================================
 // @allocate objects to EMC
@@ -43,23 +51,9 @@ void emc_t::allocate(){
 	this->fu_mem_store = utils_t::template_allocate_initialize_array<uint64_t>(STORE_UNIT, 0);
 	// ======================= Memory Ops executed ======================= 
 	this->memory_op_executed = 0;
-	// ======================= ready to execute control ======================= 
+	// ======================= execute control ======================= 
 	this->ready_to_execute = false;
-};
-// ============================================================================
-void emc_t::statistics(){
-    if(orcs_engine.output_file_name == NULL){
-        utils_t::largestSeparator();
-        ORCS_PRINTF("EMC - Enhaced Memory Controller")
-        utils_t::largestSeparator();
-    }else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
-        utils_t::largestSeparator(output);
-        fprintf(output,"EMC - Enhaced Memory Controller");
-        utils_t::largestSeparator(output);
-        }
-    }
+	this->executed = false;
 };
 // ============================================================================
 int32_t emc_t::get_position_uop_buffer(){
@@ -103,6 +97,11 @@ void emc_t::dispatch(){
         if(uop_dispatched == EMC_DISPATCH_WIDTH){
             break;
         }
+		#if EMC_DISPATCH_DEBUG
+			ORCS_PRINTF("Clock %lu\n",orcs_engine.get_global_cycle())
+			ORCS_PRINTF("EMC Trying dispatch %s\n",emc_opcode->content_to_string().c_str())
+			sleep(1);
+		#endif
         if((emc_opcode->uop.readyAt <= orcs_engine.get_global_cycle())&&
 			(emc_opcode->wait_reg_deps_number == 0)){
             bool dispatched=false;
@@ -203,22 +202,25 @@ void emc_t::execute(){
 			ORCS_PRINTF("Solving %s\n",this->unified_lsq[entry].rob_ptr->content_to_string().c_str())
 			#endif
 			// solving register dependence !!!!!!!!!!!!
+#if EMC_ACTIVE			
 			this->solve_emc_dependencies(this->unified_lsq[i].emc_opcode_ptr);
+#endif			
 			this->unified_lsq[i].package_clean();
 		}//end if
 	}//end for lsq
     uint32_t uop_total_executed = 0;
 	for (size_t i = 0; i < this->unified_fus.size(); i++){
         emc_opcode_package_t *emc_package = this->unified_fus[i];
-		if(uop_total_executed == EXECUTE_WIDTH){
+		if(uop_total_executed == EMC_EXECUTE_WIDTH){
 			break;
 		}
 		if(emc_package == NULL){
 			break;
 		}
 		if(emc_package->uop.readyAt<=orcs_engine.get_global_cycle()){
-			#if EXECUTE_DEBUG
-				ORCS_PRINTF("Trying Execute %s\n",emc_opcode->content_to_string().c_str())
+			#if EMC_EXECUTE_DEBUG
+				ORCS_PRINTF("EMC Trying Execute %s\n",emc_package->content_to_string().c_str())
+				sleep(1);
 			#endif
 			ERROR_ASSERT_PRINTF(emc_package->uop.status == PACKAGE_STATE_READY,"FU with Package not in ready state")
 			switch(emc_package->uop.uop_operation){
@@ -281,12 +283,18 @@ void emc_t::execute(){
 		} //end if ready package
 	}//end for 
 	if(this->memory_op_executed>0){
-		//alterar cache logic
+		this->lsq_read();
 	}
 };
 // ============================================================================
 void emc_t::emc_to_core(){
-	if
+	if(this->unified_fus.size()<=0 && this->unified_rs.size()<=0){
+		this->executed = true;
+		//flag to core receive uops
+		orcs_engine.processor->receive_emc_ops =  true;
+	}else{
+
+	}
 
 };
 // ============================================================================
@@ -297,8 +305,7 @@ void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
     //         break;
     //     }
     //     uint32_t write_register = emc_opcode->uop.write_regs[j];
-    //     ERROR_ASSERT_PRINTF(write_register <RAT_SIZE, "Read Register (%d) > Register Alias Table Size (%d)\n",
-    //                                                                         write_register, RAT_SIZE);
+    //    	write_register = orcs_engine.processor->search_register(write_register);
 	// 	if (this->register_alias_table[write_register] != NULL &&
     //     this->register_alias_table[write_register]->uop.uop_number == emc_opcode->uop.uop_number) {
     //         this->register_alias_table[write_register] = NULL;
@@ -330,19 +337,18 @@ void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
 };
 // ============================================================================
 void emc_t::clock(){
-	if(this->uop_buffer_used>0){
 		if(this->ready_to_execute){
-			ORCS_PRINTF("========================================\n")
-			for(uint32_t i=this->uop_buffer_start;i<this->uop_buffer_end;i++){
-				ORCS_PRINTF("%u - %s\n",i,this->uop_buffer[i].content_to_string().c_str())
-				sleep(1);
-				this->uop_buffer[i].package_clean();
-				// this->remove_front_uop_buffer();
+			if(this->uop_buffer_used>0){
+				for (size_t i = this->uop_buffer_start; i < this->uop_buffer_end; i++)
+				{
+					if(i>EMC_UOP_BUFFER)i=0;
+					ORCS_PRINTF("%s\n",this->uop_buffer[i].content_to_string().c_str())
+				}
 			}
-			ORCS_PRINTF("========================================\n")
+			// this->emc_to_core();
+			// this->execute();
+			// this->dispatch();
 		}
-		this->ready_to_execute=false;
-	}
 }
 // ============================================================================
 void emc_t::lsq_read(){	
@@ -360,44 +366,54 @@ void emc_t::lsq_read(){
 			mob_line = &this->unified_lsq[position_mem];
 		}
 		if(mob_line != NULL){
+#if EMC_ACTIVE
 			if(mob_line->memory_operation == MEMORY_OPERATION_READ){
 				uint32_t ttc=0;
 				ttc = orcs_engine.cacheManager->search_EMC_Data(mob_line);//enviar que é do emc
 				mob_line->updatePackageReady(ttc);
-				mob_line->rob_ptr->uop.updatePackageReady(ttc);
+				mob_line->emc_opcode_ptr->uop.updatePackageReady(ttc);
 				this->memory_op_executed--;
-				//enviar de volta ao core para notificar ops;
+				// copy values to mob core
+				mob_line->emc_opcode_ptr->rob_ptr->mob_ptr->readyAt = mob_line->readyAt;
+				
 			}else{
 				uint32_t ttc=1;
 				// grava no lsq
 				mob_line->updatePackageReady(ttc);
-				mob_line->rob_ptr->uop.updatePackageReady(ttc);
+				mob_line->emc_opcode_ptr->uop.updatePackageReady(ttc);
 				//enviar de volta ao core para notificar ops;
 				this->memory_op_executed--;
 				// send address ring back
 			}
+#endif
 		}//end if mob_line null
 	}//end for
 }; //end method
-
+// ============================================================================
 void emc_t::statistics(){
 	if(orcs_engine.output_file_name == NULL){
-        ORCS_PRINTF("##############  EMC ##################\n")
+		utils_t::largestSeparator();
+        ORCS_PRINTF("EMC - Enhaced Memory Controller")
+        utils_t::largestSeparator();
         ORCS_PRINTF("EMC_Access_LLC: %lu\n",this->get_access_LLC())
         ORCS_PRINTF("EMC_Access_LLC_HIT: %lu\n",this->get_access_LLC_Hit())
         ORCS_PRINTF("EMC_Access_LLC_MISS: %lu\n",this->get_access_LLC_Miss())
+        utils_t::largestSeparator();
         ORCS_PRINTF("##############  EMC_Data_Cache ##################\n")
 		this->data_cache->statistics();
+        utils_t::largestSeparator();
 
     }
     else{
         FILE *output = fopen(orcs_engine.output_file_name,"a+");
 			if(output != NULL){
-                utils_t::largestSeparator(output);  
-				fprintf(output,"##############  EMC ##################\n");
+                utils_t::largestSeparator(output);
+				fprintf(output,"EMC - Enhaced Memory Controller");
+				utils_t::largestSeparator(output);
 				fprintf(output,"EMC_Access_LLC: %lu\n",this->get_access_LLC());
 				fprintf(output,"EMC_Access_LLC_HIT: %lu\n",this->get_access_LLC_Hit());
 				fprintf(output,"EMC_Access_LLC_MISS: %lu\n",this->get_access_LLC_Miss());
+				utils_t::largestSeparator(output);
 				fprintf(output,"##############  EMC_Data_Cache ##################\n");
 				this->data_cache->statistics();
                 utils_t::largestSeparator(output);  
@@ -405,3 +421,4 @@ void emc_t::statistics(){
             fclose(output);
         }    
 };
+// ============================================================================

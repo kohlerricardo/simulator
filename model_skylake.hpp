@@ -152,6 +152,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================RAM=======================
 #define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
+#define MAX_PARALLEL_REQUESTS 10
 // =====================RAM=======================
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
@@ -169,14 +170,15 @@ Arquivo definindo os parametros do modelo de processador
 #define DESAMBIGUATION_BLOCK_SIZE 4
 
 #define ADDRESS_TO_ADDRESS 1
-#define REGISTER_FORWARD 0
+#define REGISTER_FORWARD 1
 // =====================MEMORY DESAMBIGUATION=======================
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 1
+#define EMC_ACTIVE 0
 
 #define EMC_DISPATCH_WIDTH 2
 #define EMC_DISPATCH_LATENCY 1
+#define EMC_EXECUTE_WIDTH 2
 #define EMC_INTEGER_ALU 2
 #define EMC_INTEGER_LATENCY 1
 #define EMC_WAIT_NEXT_INTEGER 1
@@ -192,19 +194,22 @@ Arquivo definindo os parametros do modelo de processador
 #define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
 // ===================== EMC =======================================
 // =====================CHECKS=======================
-#define SANITY_CHECK 1
+#define SANITY_CHECK 0
 // ==========DEBUGS
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #define FETCH_DEBUG 0
 #define DECODE_DEBUG 0
-#define RENAME_DEBUG 1
+#define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 0
 #define MOB_DEBUG 0
 #define COMMIT_DEBUG 0
 #define CACHE_MANAGER_DEBUG 0
+
+#define EMC_DISPATCH_DEBUG 1
+#define EMC_EXECUTE_DEBUG 1
 
 #endif
 

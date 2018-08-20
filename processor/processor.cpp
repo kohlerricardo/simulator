@@ -86,13 +86,7 @@ void processor_t::allocate(){
 	this->set_stall_wrong_branch(0);
 	this->memory_read_executed=0;
 	this->memory_write_executed=0;
-	//======================================================================
-	// Initializating EMC control variables
-	//======================================================================
-	this->start_emc_module=false;
-	this->inst_load_deps=0;
-	this->all_inst_deps=0;
-	this->num_load_deps=0;
+
 	//======================================================================
 	// Initializating structures
 	//======================================================================
@@ -145,7 +139,8 @@ void processor_t::allocate(){
     this->disambiguation_store_hash_bits_shift <<= utils_t::get_power_of_two(DESAMBIGUATION_BLOCK_SIZE);
     this->disambiguation_store_hash_bits_mask <<= this->disambiguation_store_hash_bits_shift;
     this->disambiguation_store_hash = utils_t::template_allocate_initialize_array<memory_order_buffer_line_t*>(STORE_HASH_SIZE, NULL);
-
+	// parallel requests
+	this->parallel_requests = 0;
 	// =========================================================================================
 	//allocating fus int
 	this->fu_int_alu = utils_t::template_allocate_initialize_array<uint64_t>(INTEGER_ALU, 0);
@@ -174,8 +169,15 @@ void processor_t::allocate(){
 			this->rrt[i].print_rrt_entry();
 
 		}
-
 	#endif
+	//======================================================================
+	// Initializating EMC control variables
+	//======================================================================
+	this->start_emc_module=false;
+	this->inst_load_deps=0;
+	this->all_inst_deps=0;
+	this->num_load_deps=0;
+	this->receive_emc_ops = false;
 	// =====================================================================
 };
 // =====================================================================
@@ -891,6 +893,7 @@ void processor_t::dispatch(){
 		if (total_dispatched>=PROCESSOR_STAGE_DISPATCH){
 			break;
 		}
+		if(rob_line->is_poisoned == true)continue;
 		if((rob_line->uop.readyAt <= orcs_engine.get_global_cycle())&&
 			(rob_line->wait_reg_deps_number == 0)){
 			ERROR_ASSERT_PRINTF(rob_line->uop.status == PACKAGE_STATE_READY,"Error, uop not ready being dispatched")
@@ -1092,6 +1095,10 @@ void processor_t::execute(){
 			#if DESAMBIGUATION_ENABLED
 			this->solve_memory_dependency(&this->memory_order_buffer_read[i]);
 			#endif
+			if(this->memory_order_buffer_read[i].waiting_dram){
+				ERROR_ASSERT_PRINTF(this->parallel_requests<=0,"Error, parallel request must be not under 0")
+				this->parallel_requests--;
+			}
 			this->memory_order_buffer_read[i].package_clean();
 		}
 	}
@@ -1103,6 +1110,11 @@ void processor_t::execute(){
 		#if EMC_ACTIVE
 			if(this->start_emc_module){
 				int32_t position_rob;
+				if(orcs_engine.memory_controller->emc->uop_buffer_used>=16){
+					this->start_emc_module=false;
+					orcs_engine.memory_controller->emc->ready_to_execute=true; //execute emc
+					break;
+				}
 				// ORCS_PRINTF("Iniciado EMC - Cycle %lu\n",orcs_engine.get_global_cycle())'
 				if(this->rob_buffer.size() > 0){
 					// if(this->rob_buffer.size()>=16)break;
@@ -1134,14 +1146,39 @@ void processor_t::execute(){
 					this->rob_buffer.erase(this->rob_buffer.begin());
 				}
 				else{
-					this->start_emc_module = false;
-					orcs_engine.memory_controller->emc->ready_to_execute=true;
+					this->start_emc_module = false;//disable emc module
+					orcs_engine.memory_controller->emc->ready_to_execute=true; //execute emc
 					}
 			}
-			
+			// =====================================	
+			// get the uops from emc
+			// if(this->receive_emc_ops){
+			// 	if(orcs_engine.memory_controller->emc->uop_buffer_used >0){
+			// 		emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc->uop_buffer[orcs_engine.memory_controller->emc->uop_buffer_start];
+			// 		// copying status from uop executes at emc to core
+			// 		emc_package->rob_ptr->is_poisoned = false;
+			// 		emc_package->rob_ptr->stage = PROCESSOR_STAGE_COMMIT;
+			// 		emc_package->rob_ptr->wait_reg_deps_number =  0;
+			// 		this->solve_registers_dependency(emc_package->rob_ptr);//resolve uop deps 
+			// 		// ================================================
+			// 		// solve memory writes
+			// 		if(emc_package->uop.opcode_operation == INSTRUCTION_OPERATION_MEM_STORE){
+			// 			//copy values 
+			// 			emc_package->rob_ptr->mob_ptr->uop_executed = emc_package->mob_ptr->uop_executed; 
+			// 			emc_package->rob_ptr->mob_ptr->status = emc_package->mob_ptr->status; 
+			// 			emc_package->rob_ptr->mob_ptr->readyAt = emc_package->mob_ptr->readyAt; 
+			// 		}
+			// 		// ================================================
+			// 		//remove from emc uop buffer
+			// 		orcs_engine.memory_controller->emc->remove_front_uop_buffer();
+			// 	}else{
+			// 		this->receive_emc_ops=false;
+			// 		this->clean_rrt();
+			// 	}
+			// }	
 		#endif
 		// =====================================	
-
+		
 		reorder_buffer_line_t *rob_line = this->unified_functional_units[i];
 		if(uop_total_executed == EXECUTE_WIDTH){
 			break;
@@ -1249,6 +1286,10 @@ void processor_t::execute(){
 			#if DESAMBIGUATION_ENABLED
 			this->solve_memory_dependency(&this->memory_order_buffer_write[i]);
 			#endif
+			if(this->memory_order_buffer_write[i].waiting_dram){
+				ERROR_ASSERT_PRINTF(this->parallel_requests<=0,"Error, parallel request must be not under 0")
+				this->parallel_requests--;
+			}
 			this->memory_order_buffer_write[i].package_clean();
 		}
 	}
@@ -1263,7 +1304,9 @@ void processor_t::mob_read(){
 	memory_order_buffer_line_t *mob_line = NULL; 
 	for (size_t i = 0; i < PARALLEL_LOADS; i++)
 	{
-
+		if(this->parallel_requests>=MAX_PARALLEL_REQUESTS){
+			break;
+		}
 		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_read,
 							MOB_READ,PACKAGE_STATE_UNTREATED);
 		if(position_mem != POSITION_FAIL){
@@ -1305,6 +1348,9 @@ void processor_t::mob_write(){
 	memory_order_buffer_line_t *mob_line = NULL; 
 	for (size_t i = 0; i < PARALLEL_STORES; i++)
 	{
+		if(this->parallel_requests>=MAX_PARALLEL_REQUESTS){
+			break;
+		}
 		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_write,
 							MOB_WRITE,PACKAGE_STATE_UNTREATED);
 		if(position_mem != POSITION_FAIL){
@@ -1585,9 +1631,17 @@ uint32_t processor_t::broadcast_cdb(uint32_t position_rob,int32_t write_register
 		if(i == position_rob)break; // posicao head, de onde comecou o broadcast
 		if(this->reorderBuffer[i].is_poisoned) continue; //poisoned, ja encontra-se na chain
 		if(this->reorderBuffer[i].wait_reg_deps_number <=1 ){
+			//getting only uops supported operations
+			if(this->reorderBuffer[i].uop.uop_operation != INSTRUCTION_OPERATION_BRANCH ||
+			this->reorderBuffer[i].uop.uop_operation != INSTRUCTION_OPERATION_INT_ALU ||
+			this->reorderBuffer[i].uop.uop_operation != INSTRUCTION_OPERATION_MEM_LOAD ||
+			this->reorderBuffer[i].uop.uop_operation != INSTRUCTION_OPERATION_MEM_STORE ||
+			this->reorderBuffer[i].uop.uop_operation != INSTRUCTION_OPERATION_OTHER ||
+			this->reorderBuffer[i].uop.uop_operation != INSTRUCTION_OPERATION_NOP)break;
 			for(size_t k = 0; k < MAX_REGISTERS; k++){
 				if(this->reorderBuffer[i].uop.read_regs[k]==POSITION_FAIL)break;
 				if(this->reorderBuffer[i].uop.read_regs[k]==write_register){
+				
 				this->rob_buffer.push_back(&this->reorderBuffer[i]);
 				this->reorderBuffer[i].is_poisoned=true;
 				// ORCS_PRINTF("add Chain %s\n",this->reorderBuffer[i].content_to_string().c_str())
@@ -1614,11 +1668,15 @@ uint32_t processor_t::get_position_rob_bcast(reorder_buffer_line_t *rob_ready){
 	return position;
 };
 // =============================================================================
+#if EMC_ACTIVE
 void processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 	// ===========================================================
 	//  Transform rob line in EMC Package
 	uint32_t pos_emc =  orcs_engine.memory_controller->emc->get_position_uop_buffer();
 	emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc->uop_buffer[pos_emc];
+	// adding at RS EMC
+	orcs_engine.memory_controller->emc->unified_rs.push_back(emc_package);
+	// 
 	emc_package->uop = rob_line->uop;
 	emc_package->rob_ptr = rob_line;
 	// ===========================================================
@@ -1671,6 +1729,7 @@ void processor_t::renameEMC(reorder_buffer_line_t *rob_line){
     }
 
 };
+#endif
 // =======================================================================
  /*
  @1 write register to be searched in rrt

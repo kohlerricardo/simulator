@@ -69,7 +69,10 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
             this->data_cache[1].add_cacheMiss();
             //========================================= 
             //llc inst miss
-            latency_request+=RAM_LATENCY;
+            //request to Memory Controller
+            ttc = orcs_engine.memory_controller->requestDRAM();
+            orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
+            latency_request+=ttc;
             #if CACHE_MANAGER_DEBUG
                 // ORCS_PRINTF("Latency LLC MISS %u\n",latency_request)
             #endif
@@ -140,8 +143,11 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             #endif
             //========================================= 
             //llc inst miss
-            latency_request+=RAM_LATENCY;
-
+            //request to Memory Controller
+            ttc = orcs_engine.memory_controller->requestDRAM();
+            orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
+            latency_request +=ttc;
+            mob_line->waiting_dram=true;
             // ====================
             // Install cache lines
             // ====================
@@ -222,13 +228,10 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
             //========================================= 
             
             //llc inst miss
-            latency_request+=RAM_LATENCY;
-            // ====================
-            // add mem controller, to install lines
-            // algo no estilo 
-            // ttc = orcs_engine.memory_controller->request(dataAddress);
-            // ====================
-
+            ttc = orcs_engine.memory_controller->requestDRAM();
+            orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
+            latency_request +=ttc;
+            mob_line->waiting_dram=true;
             // ====================
             // Install cache lines
             // ====================
@@ -254,6 +257,7 @@ void cache_manager_t::insertQueueWrite(memory_order_buffer_line_t* mob_line){
 void cache_manager_t::clock(){
    
 }
+#if EMC_ACTIVE
 uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
@@ -296,12 +300,14 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             // linking emc and llc
             linha_llc->linha_ptr_emc = linha_emc;
             linha_emc->linha_ptr_inf = linha_llc;
+            orcs_engine.memory_controller->add_requests_emc();
             latency_request = RAM_LATENCY;
 
         }
     }
     return latency_request;
 };
+#endif
 void cache_manager_t::statistics(){
 
     if(orcs_engine.output_file_name == NULL){

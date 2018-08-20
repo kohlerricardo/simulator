@@ -146,8 +146,7 @@ class processor_t {
 		// std::list<memory_order_buffer_line_t> memory_order_buffer_read; 
 		memory_order_buffer_line_t* *disambiguation_load_hash;
 		uint32_t disambiguation_load_hash_bits_mask;
-		uint32_t disambiguation_load_hash_bits_shift;
-		
+		uint32_t disambiguation_load_hash_bits_shift;		
 		//WRITE
 		memory_order_buffer_line_t *memory_order_buffer_write;
 		// uint32_t memory_order_buffer_write_start;
@@ -157,6 +156,10 @@ class processor_t {
 		memory_order_buffer_line_t* *disambiguation_store_hash;
 		uint32_t disambiguation_store_hash_bits_shift;
 		uint32_t disambiguation_store_hash_bits_mask;
+		// ======================
+		// Parallel requests to DRAM 
+		int32_t parallel_requests;
+
 		// ======================
 		//Reservation Station 
 		container_ptr_reorder_buffer_line_t unified_reservation_station;
@@ -214,6 +217,8 @@ class processor_t {
 		bool has_llc_miss; // have a LLC Miss, verify if is ROB head to add ROB Head on buffer
 		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
 		bool start_emc_module;//if must start generate dep chain
+		//flag to receive uops ready
+		bool receive_emc_ops;
 		container_ptr_reorder_buffer_line_t rob_buffer; // Wait list to propagate registers;
 		uint32_t broadcast_cdb(uint32_t position_rob,int32_t write_register);//broadcast destiny registers on ROB to pseudo wake up operations.
 		// this function add the operatin in rob buffer only. 
