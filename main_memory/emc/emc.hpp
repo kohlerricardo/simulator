@@ -46,13 +46,15 @@ class emc_t{
         // ==========================================================================
         void solve_emc_dependencies(emc_opcode_package_t *emc_opcode);
         // ==========================================================================
-        void dispatch();    //Dispatch uops to ufs 
-        void execute();     //get th uops executed
-        void emc_to_core(); //Send uops executed to core
+        void emc_dispatch();    //Dispatch uops to ufs 
+        void emc_execute();     //get th uops executed
+        void emc_commit();      //Send uops executed to core
         // ==========================================================================
         // EMC memory interact
         void lsq_read();
-        
+        // ==========================================================================
+        //EMC Core Interact
+        void emc_send_back_core(emc_opcode_package_t *emc_opcode);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Hit);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Miss);

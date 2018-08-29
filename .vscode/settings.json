@@ -32,6 +32,7 @@
         "deque": "cpp",
         "list": "cpp",
         "vector": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "unordered_map": "cpp"
     }
 }

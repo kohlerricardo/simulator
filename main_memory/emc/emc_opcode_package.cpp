@@ -13,6 +13,7 @@ void emc_opcode_package_t::package_clean(){
         this->wait_reg_deps_number=0;
         this->wake_up_elements_counter=0;
         this->rob_ptr = NULL; 
+        this->stage = PROCESSOR_STAGE_RENAME;
 };
 std::string emc_opcode_package_t::content_to_string(){
     std::string content_string;

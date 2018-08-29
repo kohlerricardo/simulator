@@ -158,7 +158,7 @@ Arquivo definindo os parametros do modelo de processador
 #define PREFETCHER_ACTIVE 1
 #define STRIDE_TABLE_SIZE 32    
 #define DEGREE 1
-#define DISTANCE 8
+#define DISTANCE 4
 // active prefetchers
 #define STRIDE 1
 // =====================PREFETCHER=======================
@@ -175,14 +175,18 @@ Arquivo definindo os parametros do modelo de processador
 
 // ===================== EMC =======================================
 #define EMC_ACTIVE 0
-
+//WIDHTs
 #define EMC_DISPATCH_WIDTH 2
-#define EMC_DISPATCH_LATENCY 1
 #define EMC_EXECUTE_WIDTH 2
-#define EMC_INTEGER_ALU 2
+#define EMC_COMMIT_WIDTH 2
+// Latencies
+#define EMC_DISPATCH_LATENCY 1
 #define EMC_INTEGER_LATENCY 1
+#define EMC_COMMIT_LATENCY 1
+//pipelines
 #define EMC_WAIT_NEXT_INTEGER 1
-
+//Sizes
+#define EMC_INTEGER_ALU 2
 #define EMC_UNIFIED_RS 8
 #define EMC_UOP_BUFFER 16
 #define EMC_REGISTERS 16
@@ -196,7 +200,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
 // ==========DEBUGS
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG
 #define FETCH_DEBUG 0
@@ -205,16 +209,17 @@ Arquivo definindo os parametros do modelo de processador
 #define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 0
 #define MOB_DEBUG 0
-#define COMMIT_DEBUG 0
+#define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 
-#define EMC_DISPATCH_DEBUG 1
-#define EMC_EXECUTE_DEBUG 1
+#define EMC_DISPATCH_DEBUG 0
+#define EMC_EXECUTE_DEBUG 0
+#define EMC_COMMIT_DEBUG 0
 
 #endif
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 1000000
-#define WAIT_CYCLE 2400
+#define WAIT_CYCLE 500000
 // **************** END DEFINES ******************
 #endif //_SKYLAKE_HPP_

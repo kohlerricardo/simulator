@@ -21,6 +21,7 @@
 #include <vector>
 #include <list>
 #include <queue>
+#include <algorithm>
 
 
 // ============================================================================
@@ -107,6 +108,11 @@ extern orcs_engine_t orcs_engine;
 #define MAX_UOP_DECODED 5
 #define MAX_REGISTERS 6         /// opcode_package_t uop_package_t  (Max number of register (read or write) for one opcode/uop)
 #define MAX_ASSEMBLY_SIZE 32    /// In general 20 is enough
+// ========================
+// Model simulator
+// ========================
+#define SKYLAKE 0
+// ========================
 // ==============================================================================
 /// Enumerations
 // ==============================================================================
@@ -120,8 +126,11 @@ extern orcs_engine_t orcs_engine;
 // ============================================================================
 /// Base Includes
 // ============================================================================
+#if SKYLAKE
 #include "./model_skylake.hpp"
-// #include "./model_sandyBridge.hpp"
+#else
+#include "./model_sandyBridge.hpp"
+#endif
 #include "./simulator.hpp"
 #include "./orcs_engine.hpp"
 #include "./trace_reader.hpp"

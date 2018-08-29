@@ -8,6 +8,7 @@ class emc_opcode_package_t{
         emc_opcode_package_t* *reg_deps_ptr_array;  /// Elements to wake-up AFTER execution
         uint32_t wake_up_elements_counter;          /// Counter of elements to Wake Up
         reorder_buffer_line_t *rob_ptr;             /// Pointer to ROB entry for accelerate return to core
+        processor_stage_t stage;                    /// Stage of the uOP
         
         // ============================================================================
         emc_opcode_package_t();

@@ -163,12 +163,6 @@ void processor_t::allocate(){
 	#if EMC_ACTIVE
 		this->rob_buffer.reserve(ROB_SIZE);
 		this->rrt = new register_remapping_table_t[EMC_REGISTERS];
-		for(uint32_t i = 0; i < EMC_REGISTERS;i++){
-			this->rrt[i].package_clean();
-			ORCS_PRINTF("%u -> ",i)
-			this->rrt[i].print_rrt_entry();
-
-		}
 	#endif
 	//======================================================================
 	// Initializating EMC control variables
@@ -890,16 +884,15 @@ void processor_t::dispatch(){
 			ORCS_PRINTF("cycle %lu\n",orcs_engine.get_global_cycle())
 			ORCS_PRINTF("Trying Dispatch %s\n",rob_line->content_to_string().c_str())
 		#endif
-		if (total_dispatched>=PROCESSOR_STAGE_DISPATCH){
+		if (total_dispatched>=DISPATCH_WIDTH){
 			break;
 		}
-		if(rob_line->is_poisoned == true)continue;
+		
 		if((rob_line->uop.readyAt <= orcs_engine.get_global_cycle())&&
-			(rob_line->wait_reg_deps_number == 0)){
-			ERROR_ASSERT_PRINTF(rob_line->uop.status == PACKAGE_STATE_READY,"Error, uop not ready being dispatched")
-			ERROR_ASSERT_PRINTF(rob_line->stage == PROCESSOR_STAGE_RENAME,"Error, uop not in Rename to rename stage")
-			// ERROR_ASSERT_PRINTF(rob_line->wait_reg_deps_number == 0,"Error, uop with dependences not 0")
-
+			(rob_line->wait_reg_deps_number == 0) &&
+			(rob_line->is_poisoned == false)){
+			ERROR_ASSERT_PRINTF(rob_line->uop.status == PACKAGE_STATE_READY,"Error, uop not ready being dispatched\n")
+			ERROR_ASSERT_PRINTF(rob_line->stage == PROCESSOR_STAGE_RENAME,"Error, uop not in Rename to rename stage\n")
 			//if dispatched
 			bool dispatched = false;
 			switch (rob_line->uop.uop_operation){	
@@ -1070,7 +1063,7 @@ void processor_t::dispatch(){
 } //end method
 // ============================================================================
 void processor_t::execute(){
-	uint32_t i =0;
+	uint32_t i=0;
 		#if EXECUTE_DEBUG
 			ORCS_PRINTF("Execute Stage\n")
 		#endif   
@@ -1114,68 +1107,45 @@ void processor_t::execute(){
 					this->start_emc_module=false;
 					orcs_engine.memory_controller->emc->ready_to_execute=true; //execute emc
 					break;
-				}
-				// ORCS_PRINTF("Iniciado EMC - Cycle %lu\n",orcs_engine.get_global_cycle())'
-				if(this->rob_buffer.size() > 0){
-					// if(this->rob_buffer.size()>=16)break;
-					//get the front uop, to probe for instructions which will be ready to execute.
-					reorder_buffer_line_t *rob_ready = NULL;
-					rob_ready = this->rob_buffer[0];
-					//get position fo initialize bcast of registers	
-					position_rob = this->get_position_rob_bcast(rob_ready);
-					
-					ERROR_ASSERT_PRINTF(position_rob != POSITION_FAIL,"Erro, RobEntry nao encontrada")
-					// ORCS_PRINTF("ROB %s\n",rob_ready->content_to_string().c_str())
-					// verify if has a register spill
-					if(rob_ready->uop.opcode_operation == INSTRUCTION_OPERATION_MEM_STORE){
-						bool spill = this->verify_spill_register(rob_ready);
-						if(!spill) {
-							this->rob_buffer.erase(this->rob_buffer.begin());
-							continue;
-							}
-					}
-					// renaming to EMC
-					this->renameEMC(rob_ready);
-					// propagate write registers to pseudo wakeup operations
-					for (uint16_t j = 0; j < MAX_REGISTERS; j++){
-						if(rob_ready->uop.write_regs[j]==POSITION_FAIL)break;
-						//broadcast
-						uint16_t uops_wakeup = this->broadcast_cdb(position_rob,rob_ready->uop.write_regs[j]); 
-						uop_total_executed+=uops_wakeup;
-					}
-					this->rob_buffer.erase(this->rob_buffer.begin());
-				}
-				else{
-					this->start_emc_module = false;//disable emc module
-					orcs_engine.memory_controller->emc->ready_to_execute=true; //execute emc
-					}
+				}else{
+					// ORCS_PRINTF("Iniciado EMC - Cycle %lu\n",orcs_engine.get_global_cycle())'
+					if(this->rob_buffer.size() > 0){
+						//get the front uop, to probe for instructions which will be ready to execute.
+						reorder_buffer_line_t *rob_ready = NULL;
+						rob_ready = this->rob_buffer[0];
+						//get position fo initialize bcast of registers	
+						position_rob = this->get_position_rob_bcast(rob_ready);
+						ERROR_ASSERT_PRINTF(position_rob != POSITION_FAIL,"Erro, RobEntry nao encontrada")
+						// ORCS_PRINTF("ROB %s\n",rob_ready->content_to_string().c_str())
+						// verify if has a register spill
+						if(rob_ready->uop.opcode_operation == INSTRUCTION_OPERATION_MEM_STORE){
+							bool spill = this->verify_spill_register(rob_ready);
+							if(!spill) {
+								this->rob_buffer.erase(this->rob_buffer.begin());
+								continue;
+								}
+						}//end if register spill
+						// renaming to EMC
+						this->renameEMC(rob_ready);
+						rob_ready->is_poisoned=true;// setting poisoned uop to evict dispatch
+						// propagate write registers to pseudo wakeup operations
+						for (uint16_t j = 0; j < MAX_REGISTERS; j++){
+							if(rob_ready->uop.write_regs[j]==POSITION_FAIL)break;
+							//broadcast
+							uint16_t uops_wakeup = this->broadcast_cdb(position_rob,rob_ready->uop.write_regs[j]); 
+							uop_total_executed+=uops_wakeup;
+						}//end if propaga registers
+						this->rob_buffer.erase(this->rob_buffer.begin());
+					}//fim se ha elementos a serem renomeados
+					else{
+						this->start_emc_module = false;//disable emc module
+						orcs_engine.memory_controller->emc->ready_to_execute=true; //execute emc
+						this->clean_rrt();
+						}
+
+					}//end uop buffer size >=16
+				
 			}
-			// =====================================	
-			// get the uops from emc
-			// if(this->receive_emc_ops){
-			// 	if(orcs_engine.memory_controller->emc->uop_buffer_used >0){
-			// 		emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc->uop_buffer[orcs_engine.memory_controller->emc->uop_buffer_start];
-			// 		// copying status from uop executes at emc to core
-			// 		emc_package->rob_ptr->is_poisoned = false;
-			// 		emc_package->rob_ptr->stage = PROCESSOR_STAGE_COMMIT;
-			// 		emc_package->rob_ptr->wait_reg_deps_number =  0;
-			// 		this->solve_registers_dependency(emc_package->rob_ptr);//resolve uop deps 
-			// 		// ================================================
-			// 		// solve memory writes
-			// 		if(emc_package->uop.opcode_operation == INSTRUCTION_OPERATION_MEM_STORE){
-			// 			//copy values 
-			// 			emc_package->rob_ptr->mob_ptr->uop_executed = emc_package->mob_ptr->uop_executed; 
-			// 			emc_package->rob_ptr->mob_ptr->status = emc_package->mob_ptr->status; 
-			// 			emc_package->rob_ptr->mob_ptr->readyAt = emc_package->mob_ptr->readyAt; 
-			// 		}
-			// 		// ================================================
-			// 		//remove from emc uop buffer
-			// 		orcs_engine.memory_controller->emc->remove_front_uop_buffer();
-			// 	}else{
-			// 		this->receive_emc_ops=false;
-			// 		this->clean_rrt();
-			// 	}
-			// }	
 		#endif
 		// =====================================	
 		
@@ -1456,7 +1426,7 @@ void processor_t::commit(){
 		    #if COMMIT_DEBUG
 				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 				ORCS_PRINTF("Commited Instruction\n%s\n",this->reorderBuffer[this->robStart].content_to_string().c_str())
-				}
+				}	
 			// sleep(1);
 			#endif
 			this->removeFrontROB();	
@@ -1672,11 +1642,13 @@ uint32_t processor_t::get_position_rob_bcast(reorder_buffer_line_t *rob_ready){
 void processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 	// ===========================================================
 	//  Transform rob line in EMC Package
-	uint32_t pos_emc =  orcs_engine.memory_controller->emc->get_position_uop_buffer();
+	int32_t pos_emc =  orcs_engine.memory_controller->emc->get_position_uop_buffer();
+	ERROR_ASSERT_PRINTF(pos_emc != POSITION_FAIL,"Error, position on EMC not found ")
 	emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc->uop_buffer[pos_emc];
 	// adding at RS EMC
 	orcs_engine.memory_controller->emc->unified_rs.push_back(emc_package);
 	// 
+	emc_package->package_clean();
 	emc_package->uop = rob_line->uop;
 	emc_package->rob_ptr = rob_line;
 	// ===========================================================
@@ -1721,10 +1693,10 @@ void processor_t::renameEMC(reorder_buffer_line_t *rob_line){
         int32_t write_register = this->search_register(rob_line->uop.write_regs[k]);
 	
 		if(write_register == POSITION_FAIL){
-			ORCS_PRINTF("Write register Fail %d - %d\n",rob_line->uop.write_regs[k],write_register)
+			// ORCS_PRINTF("Write register Fail %d - %d\n",rob_line->uop.write_regs[k],write_register)
 			write_register = this->allocate_new_register(rob_line->uop.write_regs[k]);
 		}
-		ORCS_PRINTF("Write register %d - %d\n",rob_line->uop.write_regs[k],write_register)
+		// ORCS_PRINTF("Write register %d - %d\n",rob_line->uop.write_regs[k],write_register)
         this->rrt[write_register].entry = emc_package;
     }
 
@@ -1817,7 +1789,7 @@ void processor_t::statistics(){
 		FILE *output = fopen(orcs_engine.output_file_name,"a+");
 		if(output != NULL){
 			utils_t::largestSeparator(output);
-			fprintf(output,"Total_Cycle_: %lu\n",orcs_engine.get_global_cycle());
+			fprintf(output,"Total_Cycle: %lu\n",orcs_engine.get_global_cycle());
 			utils_t::largeSeparator(output);
 			fprintf(output,"Stage_Opcode_and_Uop_Counters\n");
 			utils_t::largeSeparator(output);

@@ -144,20 +144,21 @@ Arquivo definindo os parametros do modelo de processador
 // =====================RAM=======================
 #define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
+#define MAX_PARALLEL_REQUESTS 8
 // =====================RAM=======================
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
 #define STRIDE_TABLE_SIZE 32    
 #define DEGREE 1
-#define DISTANCE 8
+#define DISTANCE 4
 // active prefetchers
 #define STRIDE 1
 // =====================PREFETCHER=======================
 
 // =====================MEMORY DESAMBIGUATION=======================
 #define DESAMBIGUATION_ENABLED 1
-#define LOAD_HASH_SIZE 1024
-#define STORE_HASH_SIZE 1024
+#define LOAD_HASH_SIZE 512
+#define STORE_HASH_SIZE 512
 #define DESAMBIGUATION_BLOCK_SIZE 4
 
 #define ADDRESS_TO_ADDRESS 1
@@ -165,24 +166,29 @@ Arquivo definindo os parametros do modelo de processador
 // =====================MEMORY DESAMBIGUATION=======================
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 1
-
+#define EMC_ACTIVE 0
+//WIDHTs
 #define EMC_DISPATCH_WIDTH 2
+#define EMC_EXECUTE_WIDTH 2
+#define EMC_COMMIT_WIDTH 2
+// Latencies
 #define EMC_DISPATCH_LATENCY 1
-#define EMC_INTEGER_ALU 2
 #define EMC_INTEGER_LATENCY 1
+#define EMC_COMMIT_LATENCY 1
+//pipelines
 #define EMC_WAIT_NEXT_INTEGER 1
-
+//Sizes
+#define EMC_INTEGER_ALU 2
 #define EMC_UNIFIED_RS 8
 #define EMC_UOP_BUFFER 16
 #define EMC_REGISTERS 16
+#define EMC_LSQ_SIZE 16
 // EMC CACHE
 #define EMC_CACHE_SIZE 4*KILO
 #define EMC_CACHE_ASSOCIATIVITY 4
-#define EMC_CACHE_LATENCY 2
+#define EMC_CACHE_LATENCY 1
 #define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
 // ===================== EMC =======================================
-
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
 // ==========DEBUGS

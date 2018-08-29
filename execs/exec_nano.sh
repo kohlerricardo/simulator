@@ -11,6 +11,6 @@ NANO_D="nano.d"
 mkdir ${NANO_D}
 for i in ${LIST_BENCHS[@]}
 do  
-    echo ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} "-f" ${NANO_D}'/'${i}.txt
+    ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} "-f" ${NANO_D}'/'${i}.txt &
     # sleep 5
 done
