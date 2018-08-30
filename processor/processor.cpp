@@ -1093,6 +1093,7 @@ void processor_t::execute(){
 				this->parallel_requests--;
 			}
 			this->memory_order_buffer_read[i].package_clean();
+			break;
 		}
 	}
 	uint32_t uop_total_executed = 0;

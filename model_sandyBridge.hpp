@@ -136,7 +136,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LLC     =====================
 #define LLC_SIZE 20*MEGA
 #define LLC_ASSOCIATIVITY 20
-#define LLC_LATENCY 6
+#define LLC_LATENCY 56
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
