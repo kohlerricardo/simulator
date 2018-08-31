@@ -138,7 +138,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LLC     =====================
 #define LLC_SIZE 20*MEGA
 #define LLC_ASSOCIATIVITY 20
-#define LLC_LATENCY 43
+#define LLC_LATENCY 18
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
@@ -146,8 +146,8 @@ Arquivo definindo os parametros do modelo de processador
 // =====================RAM=======================
 #define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
-#define PARALLEL_LIM_ACTIVE 1
-#define MAX_PARALLEL_REQUESTS 10
+#define PARALLEL_LIM_ACTIVE 0
+#define MAX_PARALLEL_REQUESTS 12
 // =====================RAM=======================
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
@@ -194,6 +194,8 @@ Arquivo definindo os parametros do modelo de processador
 // ===================== EMC =======================================
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
+#define HEARTBEAT 1
+#define HEARTBEAT_CLOCKS 10000000
 // ==========DEBUGS
 #define DEBUG 0
 

@@ -1554,6 +1554,17 @@ void processor_t::clock(){
 			// ORCS_PRINTF("Opcodes Processed %lu",orcs_engine.trace_reader->get_fetch_instructions())
 		}
 	#endif
+	#if HEARTBEAT
+	if(orcs_engine.get_global_cycle()%HEARTBEAT_CLOCKS==0){
+		uint64_t total_opcodes = orcs_engine.trace_reader->get_trace_opcode_max();
+		uint64_t fetched_opcodes = orcs_engine.trace_reader->get_fetch_instructions();
+		double percentage_complete = 100.0 * (static_cast<double>(fetched_opcodes) / static_cast<double>(total_opcodes));
+		ORCS_PRINTF("Actual Cycle %lu \n",orcs_engine.get_global_cycle())
+		ORCS_PRINTF("Total Progress %f: %lu of %lu \n",percentage_complete	,fetched_opcodes,total_opcodes)
+		
+
+	}
+	#endif
 };
 
 // =====================================================================
@@ -1858,6 +1869,7 @@ void processor_t::printConfiguration(){
 // ============================================================================
 void processor_t::printStructures(){
 	ORCS_PRINTF("Periodic Check -  Structures at %lu\n",orcs_engine.get_global_cycle())
+	ORCS_PRINTF("Fetched Opcodes %lu of %lu\n",orcs_engine.trace_reader->get_fetch_instructions(),orcs_engine.trace_reader->get_trace_opcode_max())
 	utils_t::largestSeparator();
 	ORCS_PRINTF("Front end Buffers\n")
 	utils_t::largeSeparator();

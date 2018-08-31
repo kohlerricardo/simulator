@@ -2,7 +2,9 @@
 
 // =====================================================================
 trace_reader_t::trace_reader_t() {
-
+    this->line_static = NULL;
+    this->line_dynamic = NULL;
+    this->line_memory = NULL;
 };
 
 // =====================================================================
@@ -10,6 +12,10 @@ trace_reader_t::~trace_reader_t() {
     gzclose(gzStaticTraceFile);
     gzclose(gzDynamicTraceFile);
     gzclose(gzMemoryTraceFile);
+        /// De-Allocate memory to prevent memory leak
+    utils_t::template_delete_array<char>(line_static);
+    utils_t::template_delete_matrix<char>(line_dynamic, TRACE_LINE_SIZE);
+    utils_t::template_delete_matrix<char>(line_memory, TRACE_LINE_SIZE);
 };
 
 // =====================================================================
@@ -45,13 +51,14 @@ void trace_reader_t::allocate(char *trace_file) {
     ERROR_ASSERT_PRINTF(this->gzMemoryTraceFile != NULL, "Could not open the memory file.\n%s\n", file_name);
     DEBUG_PRINTF("Memory File = %s => READY !\n", file_name);
 
+
     /// Set the trace_reader controls
     this->is_inside_bbl = false;
     this->currect_bbl = 0;
     this->currect_opcode = 0;
 
-
-
+ 
+    
 	/// Obtain the number of BBLs
 	this->get_total_bbls();
 
@@ -75,6 +82,45 @@ void trace_reader_t::allocate(char *trace_file) {
 	}
 
 	this->generate_binary_dict();
+
+    // ====================================================================
+    /// Setting structures to count number of opcodes
+    // ====================================================================
+    this->line_static = utils_t::template_allocate_array<char>(TRACE_LINE_SIZE);
+    this->line_dynamic = utils_t::template_allocate_matrix<char>(1, TRACE_LINE_SIZE);
+    this->line_memory = utils_t::template_allocate_matrix<char>(1, TRACE_LINE_SIZE);
+    // ====================================================================  
+    ///total number of opcodes
+    this->trace_opcode_max=0;
+    this->trace_opcode_max=this->get_trace_size();
+    // ====================================================================
+
+};
+/// Get the total number of opcodes
+uint64_t trace_reader_t::get_trace_size() {
+   bool file_eof = false;
+    uint32_t BBL = 0;
+    uint64_t trace_size = 0;
+
+    gzclearerr(this->gzDynamicTraceFile);
+    gzseek(this->gzDynamicTraceFile, 0, SEEK_SET);   /// Go to the Begin of the File
+    file_eof = gzeof(this->gzDynamicTraceFile);      /// Check is file not EOF
+    ERROR_ASSERT_PRINTF(!file_eof, "Dynamic File Unexpected EOF.\n")
+
+    while (!file_eof) {
+        gzgets(this->gzDynamicTraceFile, this->line_dynamic[0], TRACE_LINE_SIZE);
+        file_eof = gzeof(this->gzDynamicTraceFile);
+
+        if (this->line_dynamic[0][0] != '\0' && this->line_dynamic[0][0] != '#' && this->line_dynamic[0][0] != '$') {
+            BBL = (uint32_t)strtoul(this->line_dynamic[0], NULL, 10);
+            trace_size += this->binary_bbl_size[BBL];
+        }
+    }
+
+    gzclearerr(this->gzDynamicTraceFile);            /// Go to the Begin of the File
+    gzseek(this->gzDynamicTraceFile, 0, SEEK_SET);
+
+    return(trace_size);
 };
 
 // =====================================================================

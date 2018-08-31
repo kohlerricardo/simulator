@@ -22,12 +22,12 @@ Arquivo definindo os parametros do modelo de processador
 #define COMMIT_WIDTH 8
 // =============================
 // PROCESSOR LATENCIES STAGES
-#define FETCH_LATENCY 1
-#define DECODE_LATENCY 1
-#define RENAME_LATENCY 1
+#define FETCH_LATENCY 2
+#define DECODE_LATENCY 3
+#define RENAME_LATENCY 3
 #define DISPATCH_LATENCY 1
 #define EXECUTE_LATENCY 0
-#define COMMIT_LATENCY 1
+#define COMMIT_LATENCY 2
 // ========= FUNCTIONAL UNITS RELATED=========
 
 // INTEGER ALU
@@ -102,7 +102,7 @@ Arquivo definindo os parametros do modelo de processador
 
 
 #define BTB_MISS_PENALITY 5
-#define MISSPREDICTION_PENALITY 10
+#define MISSPREDICTION_PENALITY 12
 #define N 128
 #define M 128
 #define H 43
@@ -124,6 +124,8 @@ Arquivo definindo os parametros do modelo de processador
 #define INSTRUCTION_ENABLED 1
 #define OFFSET_SIZE 6
 // ==================== LEVEL 1 =====================
+//https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-optimization-manual.pdf
+//Valores retirados do manual de otimização
 // D$
 #define L1_DATA_SIZE 32*KILO
 #define L1_DATA_ASSOCIATIVITY 8
@@ -138,7 +140,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LEVEL 2 =====================
 #define L2_SIZE 256*KILO
 #define L2_ASSOCIATIVITY 4
-#define L2_LATENCY 8
+#define L2_LATENCY 12
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
@@ -156,7 +158,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================RAM=======================
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
-#define STRIDE_TABLE_SIZE 32    
+#define STRIDE_TABLE_SIZE 16   
 #define DEGREE 1
 #define DISTANCE 4
 // active prefetchers
@@ -199,6 +201,8 @@ Arquivo definindo os parametros do modelo de processador
 // ===================== EMC =======================================
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
+#define HEARTBEAT 1
+#define HEARTBEAT_CLOCKS 5000000
 // ==========DEBUGS
 #define DEBUG 0
 
