@@ -68,7 +68,6 @@ class processor_t {
 		uint64_t uopCounter;
 		uint64_t commit_uop_counter;
 		uint32_t memory_read_executed;
-		uint32_t memory_read_received;
 		uint32_t memory_write_executed;
 		
 		// ====================================================================

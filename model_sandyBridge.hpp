@@ -94,7 +94,7 @@ Arquivo definindo os parametros do modelo de processador
 
 
 #define BTB_MISS_PENALITY 5
-#define MISSPREDICTION_PENALITY 16
+#define MISSPREDICTION_PENALITY 12
 #define N 128
 #define M 128
 #define H 43
@@ -121,12 +121,12 @@ Arquivo definindo os parametros do modelo de processador
 // D$
 #define L1_DATA_SIZE 32*KILO
 #define L1_DATA_ASSOCIATIVITY 8
-#define L1_DATA_LATENCY 5
+#define L1_DATA_LATENCY 4
 #define L1_DATA_SETS (L1_DATA_SIZE/LINE_SIZE)/L1_DATA_ASSOCIATIVITY
 // I$
 #define L1_INST_SIZE 32*KILO
 #define L1_INST_ASSOCIATIVITY 8
-#define L1_INST_LATENCY 5
+#define L1_INST_LATENCY 4
 #define L1_INST_SETS (L1_INST_SIZE/LINE_SIZE)/L1_INST_ASSOCIATIVITY
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
@@ -146,11 +146,12 @@ Arquivo definindo os parametros do modelo de processador
 // =====================RAM=======================
 #define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
-#define MAX_PARALLEL_REQUESTS 8
+#define PARALLEL_LIM_ACTIVE 1
+#define MAX_PARALLEL_REQUESTS 10
 // =====================RAM=======================
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
-#define STRIDE_TABLE_SIZE 32    
+#define STRIDE_TABLE_SIZE 16   
 #define DEGREE 1
 #define DISTANCE 4
 // active prefetchers
