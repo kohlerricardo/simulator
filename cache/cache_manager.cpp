@@ -90,6 +90,11 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
     return latency_request;
 };
 uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
+    #if CACHE_MANAGER_DEBUG
+        ORCS_PRINTF("===================================\n")
+        ORCS_PRINTF("Global_Cycle %lu\n",orcs_engine.get_global_cycle())
+
+    #endif
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
     uint32_t hit = this->data_cache[0].read(mob_line->memory_address,ttc);
@@ -97,11 +102,15 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
     latency_request+=ttc;
     //L1 Hit
     if(hit==HIT){
+            #if CACHE_MANAGER_DEBUG
+                ORCS_PRINTF("L1 TTC %u\n",ttc)
+            #endif
         //========================================= 
         this->data_cache[0].add_cacheAccess();
         this->data_cache[0].add_cacheHit();
         //========================================= 
-    }else{
+    }
+    else{
         // L1 MISS
         //========================================= 
         this->data_cache[0].add_cacheAccess();
@@ -115,8 +124,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
         // ==========
         latency_request+=ttc;
         #if CACHE_MANAGER_DEBUG
-            // ORCS_PRINTF("L1 MISS TTC %u\n",ttc)
-            // ORCS_PRINTF("L1 MISS LR %u\n",latency_request)
+            ORCS_PRINTF("LLC TTC %u\n",ttc)
         #endif
         if(hit == HIT){
             // LLC Hit
@@ -167,9 +175,16 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             linha_llc->linha_ptr_emc=linha_emc;
             linha_emc->linha_ptr_inf=linha_llc;
             #endif
-
+            #if CACHE_MANAGER_DEBUG
+                ORCS_PRINTF("DRAM TTC %u\n",ttc)
+             #endif
         }
     }
+    #if CACHE_MANAGER_DEBUG
+        ORCS_PRINTF("Total TTC %u\n",latency_request)
+        ORCS_PRINTF("===================================\n")
+        sleep(1);
+    #endif
     return latency_request;
 };
 uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){

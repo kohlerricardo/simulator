@@ -94,7 +94,7 @@ Arquivo definindo os parametros do modelo de processador
 
 
 #define BTB_MISS_PENALITY 5
-#define MISSPREDICTION_PENALITY 10
+#define MISSPREDICTION_PENALITY 16
 #define N 128
 #define M 128
 #define H 43
@@ -116,27 +116,29 @@ Arquivo definindo os parametros do modelo de processador
 #define INSTRUCTION_ENABLED 1
 #define OFFSET_SIZE 6
 // ==================== LEVEL 1 =====================
+//https://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-optimization-manual.pdf
+//Valores retirados do manual de otimização
 // D$
 #define L1_DATA_SIZE 32*KILO
 #define L1_DATA_ASSOCIATIVITY 8
-#define L1_DATA_LATENCY 2
+#define L1_DATA_LATENCY 5
 #define L1_DATA_SETS (L1_DATA_SIZE/LINE_SIZE)/L1_DATA_ASSOCIATIVITY
 // I$
 #define L1_INST_SIZE 32*KILO
 #define L1_INST_ASSOCIATIVITY 8
-#define L1_INST_LATENCY 2
+#define L1_INST_LATENCY 5
 #define L1_INST_SETS (L1_INST_SIZE/LINE_SIZE)/L1_INST_ASSOCIATIVITY
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
 #define L2_SIZE 256*KILO
 #define L2_ASSOCIATIVITY 4
-#define L2_LATENCY 8
+#define L2_LATENCY 12
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
 #define LLC_SIZE 20*MEGA
 #define LLC_ASSOCIATIVITY 20
-#define LLC_LATENCY 56
+#define LLC_LATENCY 43
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================

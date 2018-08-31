@@ -1774,16 +1774,15 @@ void processor_t::statistics(){
 	ORCS_PRINTF("Solve_Address_to_Address: %lu\n",this->get_stat_address_to_address())
 	utils_t::largestSeparator();
 	ORCS_PRINTF("Instruction_Per_Cicle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()))
-	
+	#if EMC_ACTIVE
 	ORCS_PRINTF("\n======================== EMC INFOS ===========================\n")
 	utils_t::largeSeparator();
 	ORCS_PRINTF("times_llc_rob_head: %u\n",this->get_llc_miss_rob_head())
 	ORCS_PRINTF("num_load_deps: %u\n",this->num_load_deps)
 	ORCS_PRINTF("all_inst_deps: %u\n",this->all_inst_deps)
 	ORCS_PRINTF("load_deps_ratio: %.4f\n",float(this->all_inst_deps)/float(this->num_load_deps))
-	
 	utils_t::largeSeparator();
-
+	#endif
 
 	}
 	else{
@@ -1807,13 +1806,14 @@ void processor_t::statistics(){
 			fprintf(output,"Solve_Address_to_Address: %lu\n",this->get_stat_address_to_address());
 			utils_t::largestSeparator(output);
 			fprintf(output,"Instruction_Per_Cycle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()));
+			#if EMC_ACTIVE
 			fprintf(output,"\n======================== EMC INFOS ===========================\n");
 			utils_t::largeSeparator(output);
 			fprintf(output,"times_llc_rob_head: %u\n",this->get_llc_miss_rob_head());
 			fprintf(output,"num_load_deps: %u\n",this->num_load_deps);
 			fprintf(output,"all_inst_deps: %u\n",this->all_inst_deps);
 			fprintf(output,"load_deps_ratio: %.4f\n",float(this->all_inst_deps)/float(this->num_load_deps));
-
+			#endif
 
 		}
 		fclose(output);

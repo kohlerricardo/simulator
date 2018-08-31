@@ -177,8 +177,14 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 					ttc+=L1_INST_LATENCY;
 				}else if(this->level == L1){
 					ttc+=L1_DATA_LATENCY;
+					#if CACHE_MANAGER_DEBUG
+						ORCS_PRINTF("L1 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+					#endif
 				}else if(this->level == LLC){
 					ttc+=LLC_LATENCY;
+					#if CACHE_MANAGER_DEBUG
+						ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+					#endif
 				}
 				return HIT;
 			}
@@ -202,7 +208,7 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 				return HIT;
 			}				
 		}
-	}
+	}//end search, se nao encontrou nada, retorna latencia do miss
 		if(this->level == INST_CACHE){
 				ttc+=L1_INST_LATENCY;
 			}else if(this->level == L1){
