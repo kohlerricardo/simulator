@@ -64,7 +64,40 @@ static void process_argv(int argc, char **argv) {
     }
 
 };
+std::string get_status_execution(){
+    std::string final_report;
+    char report[TRACE_LINE_SIZE];
+    //Benchmark name
+    sprintf(report,"Benchmark %s \n",orcs_engine.arg_trace_file_name);
+    final_report+=report;
+    // get actual cicle
+    sprintf(report,"Actual Cycle %lu \n",orcs_engine.get_global_cycle());
+    final_report+=report;
 
+    // Get  status opcodes total, executed -> calculate percent 
+    uint64_t total_opcodes = orcs_engine.trace_reader->get_trace_opcode_max();
+    uint64_t fetched_opcodes = orcs_engine.trace_reader->get_fetch_instructions();
+    double percentage_complete = 100.0 * (static_cast<double>(fetched_opcodes) / static_cast<double>(total_opcodes));
+    //    
+    sprintf(report,"Total Progress %8.4lf%%: %lu of %lu \n",percentage_complete	,fetched_opcodes,total_opcodes);
+    final_report+=report;
+    // IPC parcial
+    sprintf(report, " IPC(%5.3lf) \t", static_cast<double>(fetched_opcodes) / static_cast<double>(orcs_engine.get_global_cycle()));
+    final_report+=report;
+    //get time of execution
+    gettimeofday(&orcs_engine.stat_timer_end, NULL);
+    double seconds_spent = orcs_engine.stat_timer_end.tv_sec - orcs_engine.stat_timer_start.tv_sec;
+    
+    double seconds_remaining = (100*(seconds_spent / percentage_complete)) - seconds_spent;
+        sprintf(report, "ETC(%02.0f:%02.0f:%02.0f)\n",
+                                                floor(seconds_remaining / 3600.0),
+                                                floor(fmod(seconds_remaining, 3600.0) / 60.0),
+                                                fmod(seconds_remaining, 60.0));
+
+    final_report+=report;
+
+    return final_report;
+}
 
 // =============================================================================
 int main(int argc, char **argv) {
@@ -95,6 +128,11 @@ int main(int argc, char **argv) {
 
     /// Start CLOCK for all the components
     while (orcs_engine.simulator_alive) {
+        #if HEARTBEAT
+            if(orcs_engine.get_global_cycle()%HEARTBEAT_CLOCKS==0){
+                ORCS_PRINTF("%s",get_status_execution().c_str())
+            }
+        #endif
         orcs_engine.memory_controller->clock();
         orcs_engine.processor->clock();
         

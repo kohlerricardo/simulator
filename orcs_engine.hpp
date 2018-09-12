@@ -28,6 +28,12 @@ class orcs_engine_t {
         cache_manager_t *cacheManager;
         //Memory Controller and EMC
         memory_controller_t *memory_controller;
+
+        // ====================================================================
+        /// Statistics related
+        // ====================================================================
+        /// Time statistics
+        struct timeval stat_timer_start, stat_timer_end;
         // ====================================================================
 		/// Methods
 		// ====================================================================

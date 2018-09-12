@@ -1267,10 +1267,12 @@ void processor_t::execute(){
 		}
 	}
 } //end method
+/*
+//Methods for access memory system v1
 // ============================================================================
 void processor_t::mob_read(){	
 	
-	int32_t position_mem = POSITION_FAIL;
+	int32_t position_mem;
 	#if MOB_DEBUG
 	ORCS_PRINTF("MOB Read")
 	#endif
@@ -1279,9 +1281,11 @@ void processor_t::mob_read(){
 	{
 		#if PARALLEL_LIM_ACTIVE
 		if(this->parallel_requests>=MAX_PARALLEL_REQUESTS){
+			// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
 			break;
 		}
 		#endif
+		position_mem = POSITION_FAIL;
 		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_read,
 							MOB_READ,PACKAGE_STATE_UNTREATED);
 		if(position_mem != POSITION_FAIL){
@@ -1328,6 +1332,7 @@ void processor_t::mob_write(){
 	{
 		#if PARALLEL_LIM_ACTIVE
 			if(this->parallel_requests>=MAX_PARALLEL_REQUESTS){
+				// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
 				break;
 			}
 		#endif
@@ -1356,6 +1361,97 @@ void processor_t::mob_write(){
 	
 };
 // ============================================================================
+*/
+//Methods for access memory system v1
+// ============================================================================
+uint32_t processor_t::mob_read(){	
+	
+	int32_t position_mem;
+	#if MOB_DEBUG
+	ORCS_PRINTF("MOB Read")
+	#endif
+	memory_order_buffer_line_t *mob_line = NULL;
+		#if PARALLEL_LIM_ACTIVE
+			if(this->parallel_requests>=MAX_PARALLEL_REQUESTS){
+				// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
+				this->add_times_reach_parallel_requests_read();
+				return FAIL;
+			}
+		#endif
+		position_mem = POSITION_FAIL;
+		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_read,
+							MOB_READ,PACKAGE_STATE_UNTREATED);
+		if(position_mem != POSITION_FAIL){
+			mob_line = &this->memory_order_buffer_read[position_mem];
+		}
+		if(mob_line != NULL){
+				uint32_t ttc=0;
+				ttc = orcs_engine.cacheManager->searchData(mob_line);
+				mob_line->updatePackageReady(ttc);
+				mob_line->rob_ptr->uop.updatePackageReady(ttc);
+				this->memory_read_executed--;
+				#if PARALLEL_LIM_ACTIVE
+				this->parallel_requests++;//numero de req paralelas, add+1
+				#endif
+				#if EMC_ACTIVE
+					if(ttc >(L1_DATA_LATENCY+LLC_LATENCY)){
+						// this->has_llc_miss=false;
+						if(this->isRobHead(mob_line->rob_ptr)){
+							this->start_emc_module=true;
+							// this->has_llc_miss=true;
+							this->rob_buffer.push_back(mob_line->rob_ptr);
+							this->add_llc_miss_rob_head();
+						}
+					}
+				#endif
+			#if MOB_DEBUG
+				ORCS_PRINTF("On MOB READ Stage\n")
+				ORCS_PRINTF("Time to complete READ %u\n",ttc)
+				ORCS_PRINTF("MOB Line After EXECUTE %s\n",mob_line->content_to_string().c_str())
+			#endif
+		}//end if mob_line null	
+		return OK;
+}; //end method
+// ============================================================================
+uint32_t processor_t::mob_write(){
+	
+	int32_t position_mem = POSITION_FAIL;
+	#if MOB_DEBUG
+		ORCS_PRINTF("MOB Write")
+	#endif
+	memory_order_buffer_line_t *mob_line = NULL; 
+	#if PARALLEL_LIM_ACTIVE
+		if(this->parallel_requests>=MAX_PARALLEL_REQUESTS){
+			// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
+			this->add_times_reach_parallel_requests_write();
+			return FAIL;
+		}
+	#endif
+	position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_write,
+						MOB_WRITE,PACKAGE_STATE_UNTREATED);
+	if(position_mem != POSITION_FAIL){
+		mob_line = &this->memory_order_buffer_write[position_mem];
+	}
+	if(mob_line != NULL){
+		// ORCS_PRINTF("iterations on mob Write %hhu \n",i)
+		uint32_t ttc=0;
+		ttc = orcs_engine.cacheManager->writeData(mob_line);
+		mob_line->updatePackageReady(ttc);
+		mob_line->rob_ptr->uop.updatePackageReady(ttc);
+		this->memory_read_executed--; //numero de writes executados
+		#if PARALLEL_LIM_ACTIVE
+			this->parallel_requests++;//numero de req paralelas, add+1
+		#endif
+	#if MOB_DEBUG
+			ORCS_PRINTF("On MOB READ Stage\n")
+			ORCS_PRINTF("Time to complete READ %u\n",ttc)
+			ORCS_PRINTF("MOB Line After EXECUTE %s\n",mob_line->content_to_string().c_str())
+	#endif
+	}//end if mob_line null
+	return OK;	
+};
+// ============================================================================
+
 void processor_t::commit(){
 		#if COMMIT_DEBUG
 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
@@ -1554,17 +1650,7 @@ void processor_t::clock(){
 			// ORCS_PRINTF("Opcodes Processed %lu",orcs_engine.trace_reader->get_fetch_instructions())
 		}
 	#endif
-	#if HEARTBEAT
-	if(orcs_engine.get_global_cycle()%HEARTBEAT_CLOCKS==0){
-		uint64_t total_opcodes = orcs_engine.trace_reader->get_trace_opcode_max();
-		uint64_t fetched_opcodes = orcs_engine.trace_reader->get_fetch_instructions();
-		double percentage_complete = 100.0 * (static_cast<double>(fetched_opcodes) / static_cast<double>(total_opcodes));
-		ORCS_PRINTF("Actual Cycle %lu \n",orcs_engine.get_global_cycle())
-		ORCS_PRINTF("Total Progress %f: %lu of %lu \n",percentage_complete	,fetched_opcodes,total_opcodes)
-		
 
-	}
-	#endif
 };
 
 // =====================================================================
@@ -1796,6 +1882,10 @@ void processor_t::statistics(){
 	ORCS_PRINTF("Read_False_Positive: %lu\n",this->get_stat_disambiguation_read_false_positive())
 	ORCS_PRINTF("Write_False_Positive: %lu\n",this->get_stat_disambiguation_write_false_positive())
 	ORCS_PRINTF("Solve_Address_to_Address: %lu\n",this->get_stat_address_to_address())
+	#if MAX_PARALLEL_REQUESTS
+	ORCS_PRINTF("Times Reach MAX_PARALLEL_REQUESTS READ: %lu\n",this->get_times_reach_parallel_requests_read())
+	ORCS_PRINTF("Times Reach MAX_PARALLEL_REQUESTS WRITE: %lu\n",this->get_times_reach_parallel_requests_write())
+	#endif
 	utils_t::largestSeparator();
 	ORCS_PRINTF("Instruction_Per_Cicle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()))
 	#if EMC_ACTIVE
@@ -1828,6 +1918,11 @@ void processor_t::statistics(){
 			fprintf(output,"Read_False_Positive: %lu\n",this->get_stat_disambiguation_read_false_positive());
 			fprintf(output,"Write_False_Positive: %lu\n",this->get_stat_disambiguation_write_false_positive());
 			fprintf(output,"Solve_Address_to_Address: %lu\n",this->get_stat_address_to_address());
+
+			#if MAX_PARALLEL_REQUESTS
+				fprintf(output,"Times Reach MAX_PARALLEL_REQUESTS READ: %lu\n",this->get_times_reach_parallel_requests_read());
+				fprintf(output,"Times Reach MAX_PARALLEL_REQUESTS WRITE: %lu\n",this->get_times_reach_parallel_requests_write());
+			#endif
 			utils_t::largestSeparator(output);
 			fprintf(output,"Instruction_Per_Cycle: %.4f\n",float(this->fetchCounter)/float(orcs_engine.get_global_cycle()));
 			#if EMC_ACTIVE

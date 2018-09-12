@@ -9,10 +9,12 @@
 #include <inttypes.h>   /* for uint32_t */
 #include <zlib.h>
 #include <assert.h> //asserts
+ #include <sys/time.h> //get time of day
 /// C++ Includes
 //facilities
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 //original
 #include <cstdio>
 #include <cstdlib>

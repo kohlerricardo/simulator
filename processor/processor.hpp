@@ -28,6 +28,8 @@ class processor_t {
 	uint64_t stat_disambiguation_read_false_positive;
 	uint64_t stat_disambiguation_write_false_positive;
 	uint64_t stat_address_to_address;
+	uint64_t times_reach_parallel_requests_read;
+	uint64_t times_reach_parallel_requests_write;
 	//=============
 	//Statistics Commit
 	//=============
@@ -105,8 +107,12 @@ class processor_t {
 		void rename();
 		void dispatch();
 		void execute();
+/*
 		void mob_read();
 		void mob_write();
+*/
+		uint32_t mob_read();
+		uint32_t mob_write();
 		void commit();
 		// ====================================================================
 		void printStructures();
@@ -195,6 +201,8 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_read_false_positive);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_write_false_positive);
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_address_to_address);
+		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_read);
+		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_write);
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================
