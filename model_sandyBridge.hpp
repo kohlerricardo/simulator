@@ -136,9 +136,9 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 20*MEGA
-#define LLC_ASSOCIATIVITY 20
-#define LLC_LATENCY 40
+#define LLC_SIZE 1*MEGA
+#define LLC_ASSOCIATIVITY 16
+#define LLC_LATENCY 12
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
@@ -147,7 +147,7 @@ Arquivo definindo os parametros do modelo de processador
 #define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
-#define MAX_PARALLEL_REQUESTS 16
+#define MAX_PARALLEL_REQUESTS 4
 // =====================RAM=======================
 // =====================PREFETCHER=======================
 #define PREFETCHER_ACTIVE 1
@@ -213,7 +213,7 @@ Arquivo definindo os parametros do modelo de processador
 #endif
 
 #define PERIODIC_CHECK 0
-#define CLOCKS_TO_CHECK 1000000
-#define WAIT_CYCLE 5500
+#define CLOCKS_TO_CHECK 10
+#define WAIT_CYCLE 880
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP

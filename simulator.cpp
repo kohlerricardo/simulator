@@ -68,6 +68,8 @@ std::string get_status_execution(){
     std::string final_report;
     char report[TRACE_LINE_SIZE];
     //Benchmark name
+    sprintf(report,"%s","==========================================================================\n");
+    final_report+=report;
     sprintf(report,"Benchmark %s \n",orcs_engine.arg_trace_file_name);
     final_report+=report;
     // get actual cicle
@@ -95,7 +97,8 @@ std::string get_status_execution(){
                                                 fmod(seconds_remaining, 60.0));
 
     final_report+=report;
-
+    sprintf(report,"%s","==========================================================================\n");
+    final_report+=report;
     return final_report;
 }
 
@@ -140,6 +143,7 @@ int main(int argc, char **argv) {
     }
     // to be prinf
 	ORCS_PRINTF("End of Simulation\n")
+    orcs_engine.processor->printConfiguration();
 	orcs_engine.trace_reader->statistics();
     orcs_engine.processor->statistics();
     orcs_engine.branchPredictor->statistics();

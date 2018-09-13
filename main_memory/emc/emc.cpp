@@ -364,15 +364,15 @@ void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
 void emc_t::clock(){
 	if (this->ready_to_execute)
 	{
-		if (this->uop_buffer_used > 0)
-		{
-			for (size_t i = this->uop_buffer_start; i < this->uop_buffer_end; i++)
-			{
-				if (i > EMC_UOP_BUFFER)
-					i = 0;
-				ORCS_PRINTF("%s\n", this->uop_buffer[i].content_to_string().c_str())
-			}
-		}
+		// if (this->uop_buffer_used > 0)
+		// {
+		// 	for (size_t i = this->uop_buffer_start; i < this->uop_buffer_end; i++)
+		// 	{
+		// 		if (i > EMC_UOP_BUFFER)
+		// 			i = 0;
+		// 		ORCS_PRINTF("%s\n", this->uop_buffer[i].content_to_string().c_str())
+		// 	}
+		// }
 		this->emc_commit();
 		this->emc_execute();
 		this->emc_dispatch();
