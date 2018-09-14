@@ -42,6 +42,8 @@ class reorder_buffer_line_t {
         // ====================================================================
         bool on_chain;
         bool is_poisoned;
+        bool original_miss;
+        bool emc_executed;
         reorder_buffer_line_t* get_deps();
 
 

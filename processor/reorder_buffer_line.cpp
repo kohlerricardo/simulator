@@ -41,7 +41,9 @@ void reorder_buffer_line_t::package_clean() {
     this->wake_up_elements_counter = 0;
     this->on_chain=false;
     this->is_poisoned=false;
-};
+    this->original_miss = false;
+    this->emc_executed=false;
+    };
 
 // ============================================================================
 std::string reorder_buffer_line_t::content_to_string() {
@@ -60,6 +62,7 @@ std::string reorder_buffer_line_t::content_to_string() {
     content_string = content_string + " | WakeUp:" + utils_t::uint32_to_string(this->wake_up_elements_counter);
     content_string = content_string + " | ReadyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
     content_string = content_string + " | On Dep Chain: " + utils_t::bool_to_string(this->on_chain);
+    content_string = content_string + " | Poisoned: " + utils_t::bool_to_string(this->is_poisoned);
     if(this->mob_ptr != NULL){
         content_string = content_string + this->mob_ptr->content_to_string();
     }

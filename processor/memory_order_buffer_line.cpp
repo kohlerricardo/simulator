@@ -42,7 +42,9 @@ std::string memory_order_buffer_line_t::content_to_string() {
     content_string = content_string + " |Mem. Operation:" +  get_enum_memory_operation_char(this->memory_operation);
     content_string = content_string + " |Mem. Address:" +  utils_t::uint64_to_string(this->memory_address);
     content_string = content_string + " |Status:" +  get_enum_package_state_char(this->status);
+    content_string = content_string + " |Mem Deps:" + utils_t::uint32_to_string(this->wait_mem_deps_number);
     content_string = content_string + " |Ready At:" +  utils_t::uint64_to_string(this->readyAt);
+    content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo);
     return content_string;
 };
 

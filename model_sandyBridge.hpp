@@ -136,7 +136,7 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 1*MEGA
+#define LLC_SIZE 4*MEGA
 #define LLC_ASSOCIATIVITY 16
 #define LLC_LATENCY 12
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
@@ -169,7 +169,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================MEMORY DESAMBIGUATION=======================
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 0
+#define EMC_ACTIVE 1
 //WIDHTs
 #define EMC_DISPATCH_WIDTH 2
 #define EMC_EXECUTE_WIDTH 2
@@ -206,14 +206,19 @@ Arquivo definindo os parametros do modelo de processador
 #define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 0
 #define MOB_DEBUG 0
-#define COMMIT_DEBUG 0
+#define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
-#define EMC_DEBUG 0
+// EMC Debugs
+#define EMC_DISPATCH_DEBUG 0
+#define EMC_EXECUTE_DEBUG 0
+#define EMC_LSQ_DEBUG 0
+#define EMC_COMMIT_DEBUG 0
+
 #endif
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 10
-#define WAIT_CYCLE 880
+#define WAIT_CYCLE 447 
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP
