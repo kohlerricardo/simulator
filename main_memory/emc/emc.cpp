@@ -28,6 +28,8 @@ emc_t::~emc_t()
 	}
 	// deleting emc_opcode uop buffer
 	utils_t::template_delete_array<emc_opcode_package_t>(this->uop_buffer);
+	// delete load store queue
+	utils_t::template_delete_array<memory_order_buffer_line_t>(this->unified_lsq);
 };
 // ============================================================================
 // @allocate objects to EMC
@@ -104,14 +106,15 @@ void emc_t::emc_dispatch()
 	{
 		emc_opcode_package_t *emc_opcode = this->unified_rs[i];
 
-		if (emc_opcode->rob_ptr->original_miss == true)
-		{
-			this->unified_rs.erase(this->unified_rs.begin() + i);
-			i--;
-		}
+		
 		if (uop_dispatched >= EMC_DISPATCH_WIDTH)
 		{
 			break;
+		}
+		if ((emc_opcode->rob_ptr !=NULL)&&(emc_opcode->rob_ptr->original_miss == true))
+		{
+			this->unified_rs.erase(this->unified_rs.begin() + i);
+			i--;
 		}
 
 #if EMC_DISPATCH_DEBUG
@@ -281,7 +284,6 @@ void emc_t::emc_execute()
 				////////////////////////////////////////////////
 				emc_package->rob_ptr->uop.updatePackageReady(EXECUTE_LATENCY + COMMIT_LATENCY);
 				// this->emc_send_back_core(emc_package);
-				// orcs_engine.processor->solve_registers_dependency(emc_package->rob_ptr);
 				emc_package->rob_ptr->emc_executed = true;
 				////////////////////////////////////////////////
 			}
@@ -391,25 +393,27 @@ void emc_t::clock()
 {
 	if (this->ready_to_execute)
 	{
-// if(this->executed){
-// 	this->executed = false;
-// 	for (uint32_t i = this->uop_buffer_start;; i++)
-// 	{
-// 		if(i>=EMC_UOP_BUFFER)i=0;
-// 		if(i==this->uop_buffer_end)break;
-// 		ORCS_PRINTF("%s\n",this->uop_buffer[i].content_to_string().c_str())
-// 	}
+if(this->executed){
+	this->executed = false;
+	for (uint32_t i = this->uop_buffer_start;; i++)
+	{
+		if(i>=EMC_UOP_BUFFER)i=0;
+		if(i==this->uop_buffer_end)break;
+		ORCS_PRINTF("%s\n",this->uop_buffer[i].content_to_string().c_str())
+	}
 
-// }
+}
 #if EMC_COMMIT_DEBUG
 		ORCS_PRINTF("===============================================\n")
 		ORCS_PRINTF("Cycle %lu\n", orcs_engine.get_global_cycle())
 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){sleep(1);}
 
 #endif
-		this->emc_commit();
-		this->emc_execute();
-		this->emc_dispatch();
+		if(this->uop_buffer_used>0){
+			this->emc_commit();
+			this->emc_execute();
+			this->emc_dispatch();
+		}
 #if EMC_COMMIT_DEBUG
 		ORCS_PRINTF("===============================================\n")
 #endif
@@ -428,8 +432,8 @@ void emc_t::lsq_read()
 	}
 	
 	if (emc_mob_line != NULL){
-		#if EMC_COMMIT_DEBUG
-	ORCS_PRINTF("Mem Op %s\n", emc_mob_line->content_to_string().c_str())
+	#if EMC_COMMIT_DEBUG
+		ORCS_PRINTF("Mem Op %s\n", emc_mob_line->content_to_string().c_str())
 	#endif
 		if (emc_mob_line->memory_operation == MEMORY_OPERATION_READ){
 			uint32_t ttc = 0;
@@ -500,11 +504,6 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode)
 	rob_line->uop = emc_opcode->uop;
 	rob_line->emc_executed = true;
 	orcs_engine.processor->solve_registers_dependency(rob_line);
-	if (rob_line->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD && 
-		rob_line->original_miss == false)
-	{
-		orcs_engine.processor->solve_memory_dependency(rob_line->mob_ptr);
-	}
 	//Remove from reservation station
 	// 	auto itr = std::find_if(orcs_engine.processor->unified_reservation_station.begin(), orcs_engine.processor->unified_reservation_station.end(),
 	// 	[rob_line](reorder_buffer_line_t* v) {return rob_line==v;});
@@ -513,4 +512,8 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode)
 	// 		std::cout << "Distance: "<<distance << "\n";
 	// 		orcs_engine.processor->unified_reservation_station.erase(itr);
 	// }
+}
+void emc_t::print_structures(){
+	ORCS_PRINTF("UopBuffer used %d\n",this->uop_buffer_used)
+	memory_order_buffer_line_t::printAll(this->unified_lsq,EMC_LSQ_SIZE);
 }

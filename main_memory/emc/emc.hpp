@@ -58,6 +58,10 @@ class emc_t{
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Hit);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Miss);
+        // ==========================================================================
+        // EMC Debug Methods
+        // ==========================================================================
+        void print_structures();
 };
 
 #endif // !EMC_H

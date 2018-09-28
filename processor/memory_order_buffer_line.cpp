@@ -36,7 +36,9 @@ void memory_order_buffer_line_t::package_clean() {
 std::string memory_order_buffer_line_t::content_to_string() {
     std::string content_string;
     content_string = "";
-
+    if(this->status == PACKAGE_STATE_FREE){
+        return content_string;
+    }
     content_string = content_string + " |Exec:" + utils_t::uint64_to_string(this->opcode_address);
     content_string = content_string + " |Executed:" + utils_t::bool_to_string(this->uop_executed);
     content_string = content_string + " |Mem. Operation:" +  get_enum_memory_operation_char(this->memory_operation);
@@ -47,6 +49,7 @@ std::string memory_order_buffer_line_t::content_to_string() {
     content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo);
     return content_string;
 };
+
 
 // ============================================================================
 /// STATIC METHODS
@@ -98,3 +101,11 @@ void memory_order_buffer_line_t::updatePackageFree(uint32_t stallTime){
     this->status = PACKAGE_STATE_FREE;
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
 };
+// =========================================================================
+// Print all strutcure of mob
+// =========================================================================
+void memory_order_buffer_line_t::printAll(memory_order_buffer_line_t* input_array, uint32_t size_array){
+    for (uint32_t i = 0; i < size_array; i++){
+        ORCS_PRINTF("%s\n",input_array[i].content_to_string().c_str())
+    }
+}

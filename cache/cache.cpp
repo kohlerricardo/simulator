@@ -3,8 +3,18 @@
 
 cache_t::cache_t()
 {
-    //ctor
-	this->sets = NULL;
+		this->id = 0;
+        this->nSets = 0;
+        this->nLines = 0;
+        this->sets = NULL;
+        this->shiftData = 0;
+		this->cacheHit = 0;
+        this->cacheMiss = 0;
+        this->cacheAccess = 0;
+        this->cacheRead = 0;
+        this->cacheWrite = 0;
+        this->cacheWriteBack = 0;
+        this->changeLine = 0;
 }
 
 cache_t::~cache_t()
@@ -41,6 +51,10 @@ void cache_t::allocate(cacheLevel_t level){
 			for (size_t i = 0; i < L1_INST_SETS; i++)
 			{
 				this->sets[i].linhas = new linha_t[L1_INST_ASSOCIATIVITY];
+				for ( uint j = 0; j < this->nLines; j++)
+				{
+					this->sets[i].linhas[j].clean_line();
+				}
 				// std::memset(&this->sets[i].linhas[0],0,(L1_INST_ASSOCIATIVITY*sizeof(linha_t)));
 			}
 			this->set_cacheAccess(0);
@@ -60,6 +74,10 @@ void cache_t::allocate(cacheLevel_t level){
 			for (size_t i = 0; i < L1_DATA_SETS; i++)
 			{
 				this->sets[i].linhas = new linha_t[L1_DATA_ASSOCIATIVITY];
+				for ( uint j = 0; j < this->nLines; j++)
+				{
+					this->sets[i].linhas[j].clean_line();
+				}				
 				// std::memset(&this->sets[i].linhas[0],0,(L1_DATA_ASSOCIATIVITY*sizeof(linha_t)));
 			}
 			this->set_cacheAccess(0);
@@ -79,6 +97,10 @@ void cache_t::allocate(cacheLevel_t level){
 			for (size_t i = 0; i < L2_SETS; i++)
 			{
 				this->sets[i].linhas = new linha_t[L2_ASSOCIATIVITY];
+				for ( uint j = 0; j < this->nLines; j++)
+				{
+					this->sets[i].linhas[j].clean_line();
+				}
 				// std::memset(&this->sets[i].linhas[0],0,(L2_ASSOCIATIVITY*sizeof(linha_t)));
 			}
 			this->set_cacheAccess(0);
@@ -98,6 +120,10 @@ void cache_t::allocate(cacheLevel_t level){
 			for (size_t i = 0; i < LLC_SETS; i++)
 			{
 				this->sets[i].linhas = new linha_t[LLC_ASSOCIATIVITY];
+				for ( uint j = 0; j < this->nLines; j++)
+				{
+					this->sets[i].linhas[j].clean_line();
+				}
 				// std::memset(&this->sets[i].linhas[0],0,(LLC_ASSOCIATIVITY*sizeof(linha_t)));
 			}
 			this->set_cacheAccess(0);
@@ -299,7 +325,8 @@ linha_t* cache_t::installLine(uint64_t address){
 // ===================
 inline uint32_t cache_t::searchLru(cacheSet_t *set){
 	uint32_t index=0;
-	for (size_t i = 1; i < this->nLines; i++)
+	uint32_t i=0;
+	for (i = 1; i < this->nLines; i++)
 	{
 		index = (set->linhas[index].lru <= set->linhas[i].lru)? index : i ;
 	}

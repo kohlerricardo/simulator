@@ -2,7 +2,11 @@
 
 // =====================================================================
 orcs_engine_t::orcs_engine_t() {
-
+	this->trace_reader = NULL;
+	this->processor = NULL;
+	this->branchPredictor = NULL;
+	this->cacheManager = NULL;
+	this->memory_controller = NULL;
 };
 
 // =====================================================================

@@ -6,11 +6,12 @@ class cacheSet_t
 {
     public:
     linha_t *linhas;
+    
     cacheSet_t(){
     this->linhas = NULL;
     }
     ~cacheSet_t(){
-    if(this->linhas) delete[] &linhas;
+    if(this->linhas!=NULL) delete[] &linhas;
     }
 
 };

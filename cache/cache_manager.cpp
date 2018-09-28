@@ -143,6 +143,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             //========================================= 
             this->data_cache[1].add_cacheAccess();
             this->data_cache[1].add_cacheMiss();
+            orcs_engine.processor->has_llc_miss=true; // setting llc miss
             //========================================= 
 
             //========================================= 
@@ -272,7 +273,7 @@ void cache_manager_t::insertQueueWrite(memory_order_buffer_line_t* mob_line){
 void cache_manager_t::clock(){
    
 }
-#if EMC_ACTIVE
+
 uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
@@ -322,7 +323,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
     }
     return latency_request;
 };
-#endif
+
 void cache_manager_t::statistics(){
 
     if(orcs_engine.output_file_name == NULL){

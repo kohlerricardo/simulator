@@ -221,33 +221,34 @@ class processor_t {
 		// ====================================================================
 		// EMC Methods and attr
 		// ====================================================================
+		//  ATTR
 		bool has_llc_miss; // have a LLC Miss, verify if is ROB head to add ROB Head on buffer
-		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
 		bool start_emc_module;//if must start generate dep chain
-		//flag to receive uops ready
-		bool receive_emc_ops;
+		bool receive_emc_ops;//flag to receive uops ready
 		container_ptr_reorder_buffer_line_t rob_buffer; // Wait list to propagate registers;
-		uint32_t broadcast_cdb(uint32_t position_rob,int32_t write_register);//broadcast destiny registers on ROB to pseudo wake up operations.
-		// this function add the operatin in rob buffer only. 
-		uint32_t get_position_rob_bcast(reorder_buffer_line_t *rob_ready);
-		//Register remapping table declaration
 		register_remapping_table_t *rrt;
-		int32_t search_register(int32_t write_register);
-    	int32_t allocate_new_register(int32_t write_register);
-		void clean_rrt();
-		// Verifying register spill to include store ops on chain
-		bool verify_spill_register(reorder_buffer_line_t* rob_line);
-		//Renaming entry to EMC
-		void renameEMC(reorder_buffer_line_t *rob_line);
+		uint8_t counter_make_dep_chain;
+		// Statistics
 		// ====================================================================
-
-
-
-		uint64_t halt_execute_chain; // WAIT cycles to generate dep chain
-		uint32_t inst_load_deps;
-		uint32_t all_inst_deps;
-		uint32_t num_load_deps;
-		// verify if operation that results LLC Miss is rob read
+		uint32_t instrucoes_inter_load_deps;
+		uint32_t soma_instrucoes_deps;
+		uint32_t numero_load_deps;
+		// ====================================================================
+		//  Methods
+		// void
+		void clean_rrt();
+		void renameEMC(reorder_buffer_line_t *rob_line);//Renaming entry to EMC
+		void reverse(); //reverte status dos uops ao core
 		void make_dependence_chain(reorder_buffer_line_t* rob_line); //generate dep chain
+		// boolean
+		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
+		bool verify_spill_register(reorder_buffer_line_t* rob_line);// Verifying register spill to include store ops on chain
+		bool verify_dependent_loads(); // verifica se ha loads dependentes -> para execucao
+		// integer
+		uint32_t broadcast_cdb(uint32_t position_rob,int32_t write_register);//broadcast destiny registers on ROB to pseudo wake up operations.
+		uint32_t get_position_rob_bcast(reorder_buffer_line_t *rob_ready);// this function add the operat0in in rob buffer only. 
+		int32_t search_register(int32_t write_register);//Register remapping table declaration
+    	int32_t allocate_new_register(int32_t write_register);
+		// ====================================================================
 		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head);
 };

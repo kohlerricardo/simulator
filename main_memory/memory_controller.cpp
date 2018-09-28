@@ -2,9 +2,9 @@
 #include <string>
 // ============================================================================
 memory_controller_t::memory_controller_t(){
-    #if EMC_ACTIVE
+
     this->emc = NULL;
-    #endif
+
 };
 // ============================================================================
 memory_controller_t::~memory_controller_t(){

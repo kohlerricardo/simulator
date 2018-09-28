@@ -5,6 +5,24 @@ trace_reader_t::trace_reader_t() {
     this->line_static = NULL;
     this->line_dynamic = NULL;
     this->line_memory = NULL;
+    //Trace Files 
+    this->gzStaticTraceFile = NULL;
+    this->gzDynamicTraceFile = NULL;
+    this->gzMemoryTraceFile = NULL;
+
+    /// Control the trace reading
+    this->is_inside_bbl=NULL;
+    this->currect_bbl=0;
+    this->currect_opcode=0;
+
+    /// Control the static dictionary
+    this->binary_total_bbls = 0;     /// Total of BBLs for the static file
+    this->binary_bbl_size = NULL;      /// Total of instructions for each BBL
+    this->binary_dict = NULL; /// Complete dictionary of BBLs and instructions
+
+    this->fetch_instructions=0;
+        //get total opcodes 
+    this->trace_opcode_max=0;
 };
 
 // =====================================================================
@@ -16,6 +34,8 @@ trace_reader_t::~trace_reader_t() {
     utils_t::template_delete_array<char>(line_static);
     utils_t::template_delete_matrix<char>(line_dynamic, TRACE_LINE_SIZE);
     utils_t::template_delete_matrix<char>(line_memory, TRACE_LINE_SIZE);
+
+
 };
 
 // =====================================================================

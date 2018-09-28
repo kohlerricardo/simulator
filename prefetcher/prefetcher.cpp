@@ -1,11 +1,13 @@
 #include "../simulator.hpp"
 
 prefetcher_t::prefetcher_t(){
+    this->prefetcher = NULL;
     //ctor
 };
 
 prefetcher_t::~prefetcher_t()
 {
+    if(this->prefetcher!=NULL) delete &this->prefetcher;
     //dtor
 };
 void prefetcher_t::allocate(){
