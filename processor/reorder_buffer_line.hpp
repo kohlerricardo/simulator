@@ -20,6 +20,12 @@
 
 class reorder_buffer_line_t {
     public:
+        // ==============================================
+        // Operators
+        // ==============================================
+        bool operator==(const reorder_buffer_line_t &reorder_buffer_line);
+        
+        // ==============================================
         uop_package_t uop;                          /// uOP stored
         processor_stage_t stage;                    /// Stage of the uOP
         /// Register Dependencies Control
@@ -44,7 +50,7 @@ class reorder_buffer_line_t {
         bool is_poisoned;
         bool original_miss;
         bool emc_executed;
-        reorder_buffer_line_t* get_deps();
+        void get_deps(std::vector<reorder_buffer_line_t> *buffer);
 
 
 

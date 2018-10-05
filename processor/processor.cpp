@@ -171,6 +171,7 @@ void processor_t::allocate()
 #if EMC_ACTIVE
 	this->rob_buffer.reserve(ROB_SIZE);
 	this->rrt = new register_remapping_table_t[EMC_REGISTERS];
+	this->emc_uop_buffer.reserve(ROB_SIZE);
 #endif
 	//======================================================================
 	// Initializating EMC control variables
@@ -236,9 +237,9 @@ void processor_t::removeFrontROB()
 
 void processor_t::fetch()
 {
-#if FETCH_DEBUG
-	ORCS_PRINTF("Fetch Stage\n")
-#endif
+	#if FETCH_DEBUG
+		ORCS_PRINTF("Fetch Stage\n")
+	#endif
 	opcode_package_t operation;
 	// uint32_t position;
 	// Trace ->fetchBuffer
@@ -309,11 +310,11 @@ void processor_t::fetch()
 		if (!updated)
 		{
 			uint32_t ttc = orcs_engine.cacheManager->searchInstruction(operation.opcode_address);
-#if FETCH_DEBUG
-			ORCS_PRINTF("(%lu) (%lu) TTC %u\n", orcs_engine.get_global_cycle(), operation.opcode_address, ttc)
-			ORCS_PRINTF("(%lu) (%lu) readyAt After  %lu\n", orcs_engine.get_global_cycle(), operation.readyAt, (operation.readyAt + ttc))
-			sleep(1);
-#endif
+	#if FETCH_DEBUG
+				ORCS_PRINTF("(%lu) (%lu) TTC %u\n", orcs_engine.get_global_cycle(), operation.opcode_address, ttc)
+				ORCS_PRINTF("(%lu) (%lu) readyAt After  %lu\n", orcs_engine.get_global_cycle(), operation.readyAt, (operation.readyAt + ttc))
+				sleep(1);
+	#endif
 			this->fetchBuffer.back()->updatePackageReady(FETCH_LATENCY + ttc);
 		}
 	}
@@ -346,9 +347,9 @@ void processor_t::fetch()
 void processor_t::decode()
 {
 
-#if DECODE_DEBUG
-	ORCS_PRINTF("Decode Stage\n")
-#endif
+	#if DECODE_DEBUG
+		ORCS_PRINTF("Decode Stage\n")
+	#endif
 	uop_package_t new_uop;
 	int32_t statusInsert = POSITION_FAIL;
 	for (size_t i = 0; i < DECODE_WIDTH; i++)
@@ -366,9 +367,9 @@ void processor_t::decode()
 		}
 		ERROR_ASSERT_PRINTF(this->decodeCounter == this->fetchBuffer.front()->opcode_number, "Trying decode out-of-order");
 		this->decodeCounter++;
-#if DECODE_DEBUG
-		ORCS_PRINTF("Opcode to decode %s\n", this->fetchBuffer.front()->content_to_string().c_str())
-#endif
+	#if DECODE_DEBUG
+			ORCS_PRINTF("Opcode to decode %s\n", this->fetchBuffer.front()->content_to_string().c_str())
+	#endif
 		// =====================
 		//Decode Read 1
 		// =====================
@@ -406,9 +407,9 @@ void processor_t::decode()
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-#if DECODE_DEBUG
-			ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
-#endif
+	#if DECODE_DEBUG
+				ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
+	#endif
 			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL, "Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
 		// =====================
@@ -448,9 +449,9 @@ void processor_t::decode()
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-#if DECODE_DEBUG
-			ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
-#endif
+	#if DECODE_DEBUG
+				ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
+	#endif
 			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL, "Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
 		// =====================
@@ -505,9 +506,9 @@ void processor_t::decode()
 			}
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-#if DECODE_DEBUG
-			ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
-#endif
+	#if DECODE_DEBUG
+				ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
+	#endif
 			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL, "Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
 		// =====================
@@ -555,9 +556,9 @@ void processor_t::decode()
 			}
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-#if DECODE_DEBUG
-			ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
-#endif
+	#if DECODE_DEBUG
+				ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
+	#endif
 			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL, "Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
 		// =====================
@@ -597,9 +598,9 @@ void processor_t::decode()
 			new_uop.updatePackageReady(DECODE_LATENCY);
 			// printf("\n UOP Created %s \n",new_uop.content_to_string().c_str());
 			statusInsert = this->decodeBuffer.push_back(new_uop);
-#if DECODE_DEBUG
-			ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
-#endif
+	#if DECODE_DEBUG
+				ORCS_PRINTF("uop created %s\n", this->decodeBuffer.back()->content_to_string2().c_str())
+	#endif
 			ERROR_ASSERT_PRINTF(statusInsert != POSITION_FAIL, "Erro, Tentando decodificar mais uops que o maximo permitido")
 		}
 		this->fetchBuffer.pop_front();
@@ -623,9 +624,6 @@ void processor_t::update_registers(reorder_buffer_line_t *new_rob_line)
 		{
 			for (uint32_t j = 0; j < ROB_SIZE; j++)
 			{
-#if RENAME_DEBUG
-				ORCS_PRINTF("register %u, dep %u\n", read_register, j)
-#endif
 				if (this->register_alias_table[read_register]->reg_deps_ptr_array[j] == NULL)
 				{
 					this->register_alias_table[read_register]->wake_up_elements_counter++;
@@ -789,9 +787,9 @@ void processor_t::solve_memory_dependency(memory_order_buffer_line_t *mob_line)
 // ============================================================================
 void processor_t::rename()
 {
-#if RENAME_DEBUG
-	ORCS_PRINTF("Rename Stage\n")
-#endif
+	#if RENAME_DEBUG
+		ORCS_PRINTF("Rename Stage\n")
+	#endif
 	size_t i;
 	int32_t pos_rob, pos_mob;
 
@@ -861,9 +859,9 @@ void processor_t::rename()
 		// Making registers dependences
 		// =======================
 		this->update_registers(&this->reorderBuffer[pos_rob]);
-#if RENAME_DEBUG
-		ORCS_PRINTF("Rename %s\n", this->reorderBuffer[pos_rob].content_to_string().c_str())
-#endif
+	#if RENAME_DEBUG
+			ORCS_PRINTF("Rename %s\n", this->reorderBuffer[pos_rob].content_to_string().c_str())
+	#endif
 		// =======================
 		// Insert into Reservation Station
 		// =======================
@@ -873,9 +871,9 @@ void processor_t::rename()
 		// =======================
 		if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD)
 		{
-#if RENAME_DEBUG
-			ORCS_PRINTF("Mem Load\n")
-#endif
+	#if RENAME_DEBUG
+				ORCS_PRINTF("Mem Load\n")
+	#endif
 			this->reorderBuffer[pos_rob].mob_ptr->opcode_address = this->reorderBuffer[pos_rob].uop.opcode_address;
 			this->reorderBuffer[pos_rob].mob_ptr->memory_address = this->reorderBuffer[pos_rob].uop.memory_address;
 			this->reorderBuffer[pos_rob].mob_ptr->memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
@@ -886,9 +884,9 @@ void processor_t::rename()
 		}
 		else if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
 		{
-#if RENAME_DEBUG
-			ORCS_PRINTF("Mem Store\n")
-#endif
+	#if RENAME_DEBUG
+				ORCS_PRINTF("Mem Store\n")
+	#endif
 			this->reorderBuffer[pos_rob].mob_ptr->opcode_address = this->reorderBuffer[pos_rob].uop.opcode_address;
 			this->reorderBuffer[pos_rob].mob_ptr->memory_address = this->reorderBuffer[pos_rob].uop.memory_address;
 			this->reorderBuffer[pos_rob].mob_ptr->memory_size = this->reorderBuffer[pos_rob].uop.memory_size;
@@ -902,252 +900,255 @@ void processor_t::rename()
 			this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
 		{
 			mob_line->rob_ptr = &this->reorderBuffer[pos_rob];
-#if DESAMBIGUATION_ENABLED
-			this->make_memory_dependencies(this->reorderBuffer[pos_rob].mob_ptr);
-#endif
+	#if DESAMBIGUATION_ENABLED
+				this->make_memory_dependencies(this->reorderBuffer[pos_rob].mob_ptr);
+	#endif
 		}
 	} //end for
 }
+			#if RENAME_DEBUG
+							ORCS_PRINTF("register %u, dep %u\n", read_register, j)
+			#endif
 // ============================================================================
 void processor_t::dispatch()
 {
-#if DISPATCH_DEBUG
-	ORCS_PRINTF("Dispatch Stage\n")
-#endif
-	//control variables
-	uint32_t total_dispatched = 0;
-	/// Control the total dispatched per FU
-	uint32_t fu_int_alu = 0;
-	uint32_t fu_int_mul = 0;
-	uint32_t fu_int_div = 0;
+	#if DISPATCH_DEBUG
+		ORCS_PRINTF("Dispatch Stage\n")
+	#endif
+		//control variables
+		uint32_t total_dispatched = 0;
+		/// Control the total dispatched per FU
+		uint32_t fu_int_alu = 0;
+		uint32_t fu_int_mul = 0;
+		uint32_t fu_int_div = 0;
 
-	uint32_t fu_fp_alu = 0;
-	uint32_t fu_fp_mul = 0;
-	uint32_t fu_fp_div = 0;
+		uint32_t fu_fp_alu = 0;
+		uint32_t fu_fp_mul = 0;
+		uint32_t fu_fp_div = 0;
 
-	uint32_t fu_mem_load = 0;
-	uint32_t fu_mem_store = 0;
+		uint32_t fu_mem_load = 0;
+		uint32_t fu_mem_store = 0;
 
-	// ORCS_PRINTF("Size %lu\n", this->unified_reservation_station.size())
-	// for
-	for (uint32_t i = 0; i < this->unified_reservation_station.size() && i < UNIFIED_RS; i++)
-	{
-		//pointer to entry
-		reorder_buffer_line_t *rob_line = this->unified_reservation_station[i];
-#if DISPATCH_DEBUG
-		ORCS_PRINTF("cycle %lu\n", orcs_engine.get_global_cycle())
-		ORCS_PRINTF("i = %u UNified RS %lu\n", i, this->unified_reservation_station.size())
-		ORCS_PRINTF("Trying Dispatch %s\n", rob_line->content_to_string().c_str())
-#endif
-		if (total_dispatched >= DISPATCH_WIDTH)
+		// ORCS_PRINTF("Size %lu\n", this->unified_reservation_station.size())
+		// for
+		for (uint32_t i = 0; i < this->unified_reservation_station.size() && i < UNIFIED_RS; i++)
 		{
-			break;
-		}
-		if (rob_line->emc_executed == true)
-		{
-			this->unified_reservation_station.erase(this->unified_reservation_station.begin() + i);
-			i--;
-		}
-		if ((rob_line->uop.readyAt <= orcs_engine.get_global_cycle()) &&
-			(rob_line->wait_reg_deps_number == 0) &&
-			(rob_line->is_poisoned == false))
-		{
-			ERROR_ASSERT_PRINTF(rob_line->uop.status == PACKAGE_STATE_READY, "Error, uop not ready being dispatched\n")
-			ERROR_ASSERT_PRINTF(rob_line->stage == PROCESSOR_STAGE_RENAME, "Error, uop not in Rename to rename stage\n")
-			//if dispatched
-			bool dispatched = false;
-			switch (rob_line->uop.uop_operation)
+			//pointer to entry
+			reorder_buffer_line_t *rob_line = this->unified_reservation_station[i];
+	#if DISPATCH_DEBUG
+			ORCS_PRINTF("cycle %lu\n", orcs_engine.get_global_cycle())
+			ORCS_PRINTF("i = %u UNified RS %lu\n", i, this->unified_reservation_station.size())
+			ORCS_PRINTF("Trying Dispatch %s\n", rob_line->content_to_string().c_str())
+	#endif
+			if (total_dispatched >= DISPATCH_WIDTH)
 			{
-			// NOP operation
-			case INSTRUCTION_OPERATION_NOP:
-			// integer alu// add/sub/logical
-			case INSTRUCTION_OPERATION_INT_ALU:
-			// branch op. como fazer, branch solved on fetch
-			case INSTRUCTION_OPERATION_BRANCH:
-			// op not defined
-			case INSTRUCTION_OPERATION_OTHER:
-				if (fu_int_alu < INTEGER_ALU)
-				{
-					for (uint8_t k = 0; k < INTEGER_ALU; k++)
-					{
-						if (this->fu_int_alu[k] <= orcs_engine.get_global_cycle())
-						{
-							//Branch instruction, ????
-							if (rob_line->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH)
-							{
-								//do something
-							}
-							this->fu_int_alu[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_INT_ALU;
-							fu_int_alu++;
-							dispatched = true;
-							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
-							rob_line->uop.updatePackageReady(LATENCY_INTEGER_ALU);
-							break;
-						}
-					}
-				}
 				break;
-			// ====================================================
-			// Integer Multiplication
-			case INSTRUCTION_OPERATION_INT_MUL:
-				if (fu_int_mul < INTEGER_MUL)
-				{
-					for (uint8_t k = 0; k < INTEGER_MUL; k++)
-					{
-						if (this->fu_int_mul[k] <= orcs_engine.get_global_cycle())
-						{
-							this->fu_int_mul[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_INT_MUL;
-							fu_int_mul++;
-							dispatched = true;
-							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
-							rob_line->uop.updatePackageReady(LATENCY_INTEGER_MUL);
-							break;
-						}
-					}
-				}
-				break;
-			// ====================================================
-			// Integer division
-			case INSTRUCTION_OPERATION_INT_DIV:
-				if (fu_int_div < INTEGER_DIV)
-				{
-					for (uint8_t k = 0; k < INTEGER_DIV; k++)
-					{
-						if (this->fu_int_div[k] <= orcs_engine.get_global_cycle())
-						{
-							this->fu_int_div[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_INT_DIV;
-							fu_int_div++;
-							dispatched = true;
-							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
-							rob_line->uop.updatePackageReady(LATENCY_INTEGER_DIV);
-							break;
-						}
-					}
-				}
-				break;
-			// ====================================================
-			// Floating point ALU operation
-			case INSTRUCTION_OPERATION_FP_ALU:
-				if (fu_fp_alu < FP_ALU)
-				{
-					for (uint8_t k = 0; k < FP_ALU; k++)
-					{
-						if (this->fu_fp_alu[k] <= orcs_engine.get_global_cycle())
-						{
-							this->fu_fp_alu[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_FP_ALU;
-							fu_fp_alu++;
-							dispatched = true;
-							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
-							rob_line->uop.updatePackageReady(LATENCY_FP_ALU);
-							break;
-						}
-					}
-				}
-				break;
-			// ====================================================
-			// Floating Point Multiplication
-			case INSTRUCTION_OPERATION_FP_MUL:
-				if (fu_fp_mul < FP_MUL)
-				{
-					for (uint8_t k = 0; k < FP_MUL; k++)
-					{
-						if (this->fu_fp_mul[k] <= orcs_engine.get_global_cycle())
-						{
-							this->fu_fp_mul[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_FP_MUL;
-							fu_fp_mul++;
-							dispatched = true;
-							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
-							rob_line->uop.updatePackageReady(LATENCY_FP_MUL);
-							break;
-						}
-					}
-				}
-				break;
-
-			// ====================================================
-			// Floating Point Division
-			case INSTRUCTION_OPERATION_FP_DIV:
-				if (fu_fp_div < FP_DIV)
-				{
-					for (uint8_t k = 0; k < FP_DIV; k++)
-					{
-						if (this->fu_fp_div[k] <= orcs_engine.get_global_cycle())
-						{
-							this->fu_fp_div[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_FP_DIV;
-							fu_fp_div++;
-							dispatched = true;
-							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
-							rob_line->uop.updatePackageReady(LATENCY_FP_DIV);
-							break;
-						}
-					}
-				}
-				break;
-			// ====================================================
-			// Operation LOAD
-			case INSTRUCTION_OPERATION_MEM_LOAD:
-				if (fu_mem_load < LOAD_UNIT)
-				{
-					for (uint8_t k = 0; k < LOAD_UNIT; k++)
-					{
-						if (this->fu_mem_load[k] <= orcs_engine.get_global_cycle())
-						{
-							this->fu_mem_load[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_MEM_LOAD;
-							fu_mem_load++;
-							dispatched = true;
-							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
-							rob_line->uop.updatePackageReady(LATENCY_MEM_LOAD);
-							break;
-						}
-					}
-				}
-				break;
-
-			// ====================================================
-			// Operation STORE
-			case INSTRUCTION_OPERATION_MEM_STORE:
-				if (fu_mem_store < STORE_UNIT)
-				{
-					for (uint8_t k = 0; k < STORE_UNIT; k++)
-					{
-						if (this->fu_mem_store[k] <= orcs_engine.get_global_cycle())
-						{
-							this->fu_mem_store[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_MEM_STORE;
-							fu_mem_store++;
-							dispatched = true;
-							rob_line->stage = PROCESSOR_STAGE_EXECUTION;
-							rob_line->uop.updatePackageReady(LATENCY_MEM_STORE);
-							break;
-						}
-					}
-				}
-				break;
-
-			// ====================================================
-			case INSTRUCTION_OPERATION_BARRIER:
-			case INSTRUCTION_OPERATION_HMC_ROA:
-			case INSTRUCTION_OPERATION_HMC_ROWA:
-				ERROR_PRINTF("Invalid instruction BARRIER||HMC_ROA||HMC_ROWA being dispatched.\n");
-				break;
-			} //end switch
-			//remover os postos em execucao aqui
-			if (dispatched == true)
+			}
+			if (rob_line->emc_executed == true)
 			{
-#if DISPATCH_DEBUG
-				ORCS_PRINTF("Dispatched %s\n", rob_line->content_to_string().c_str())
-				ORCS_PRINTF("===================================================================\n")
-#endif
-				// update Dispatched
-				total_dispatched++;
-				// insert on FUs waiting structure
-				this->unified_functional_units.push_back(rob_line);
-				// remove from reservation station
 				this->unified_reservation_station.erase(this->unified_reservation_station.begin() + i);
 				i--;
-			} //end 	if dispatched
-		}	 //end if robline is ready
-	}		  //end for
-	// sleep(1);
+			}
+			if ((rob_line->uop.readyAt <= orcs_engine.get_global_cycle()) &&
+				(rob_line->wait_reg_deps_number == 0) &&
+				(rob_line->is_poisoned == false))
+			{
+				ERROR_ASSERT_PRINTF(rob_line->uop.status == PACKAGE_STATE_READY, "Error, uop not ready being dispatched\n")
+				ERROR_ASSERT_PRINTF(rob_line->stage == PROCESSOR_STAGE_RENAME, "Error, uop not in Rename to rename stage\n")
+				//if dispatched
+				bool dispatched = false;
+				switch (rob_line->uop.uop_operation)
+				{
+				// NOP operation
+				case INSTRUCTION_OPERATION_NOP:
+				// integer alu// add/sub/logical
+				case INSTRUCTION_OPERATION_INT_ALU:
+				// branch op. como fazer, branch solved on fetch
+				case INSTRUCTION_OPERATION_BRANCH:
+				// op not defined
+				case INSTRUCTION_OPERATION_OTHER:
+					if (fu_int_alu < INTEGER_ALU)
+					{
+						for (uint8_t k = 0; k < INTEGER_ALU; k++)
+						{
+							if (this->fu_int_alu[k] <= orcs_engine.get_global_cycle())
+							{
+								//Branch instruction, ????
+								if (rob_line->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH)
+								{
+									//do something
+								}
+								this->fu_int_alu[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_INT_ALU;
+								fu_int_alu++;
+								dispatched = true;
+								rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+								rob_line->uop.updatePackageReady(LATENCY_INTEGER_ALU);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Integer Multiplication
+				case INSTRUCTION_OPERATION_INT_MUL:
+					if (fu_int_mul < INTEGER_MUL)
+					{
+						for (uint8_t k = 0; k < INTEGER_MUL; k++)
+						{
+							if (this->fu_int_mul[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_int_mul[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_INT_MUL;
+								fu_int_mul++;
+								dispatched = true;
+								rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+								rob_line->uop.updatePackageReady(LATENCY_INTEGER_MUL);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Integer division
+				case INSTRUCTION_OPERATION_INT_DIV:
+					if (fu_int_div < INTEGER_DIV)
+					{
+						for (uint8_t k = 0; k < INTEGER_DIV; k++)
+						{
+							if (this->fu_int_div[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_int_div[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_INT_DIV;
+								fu_int_div++;
+								dispatched = true;
+								rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+								rob_line->uop.updatePackageReady(LATENCY_INTEGER_DIV);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Floating point ALU operation
+				case INSTRUCTION_OPERATION_FP_ALU:
+					if (fu_fp_alu < FP_ALU)
+					{
+						for (uint8_t k = 0; k < FP_ALU; k++)
+						{
+							if (this->fu_fp_alu[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_fp_alu[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_FP_ALU;
+								fu_fp_alu++;
+								dispatched = true;
+								rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+								rob_line->uop.updatePackageReady(LATENCY_FP_ALU);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Floating Point Multiplication
+				case INSTRUCTION_OPERATION_FP_MUL:
+					if (fu_fp_mul < FP_MUL)
+					{
+						for (uint8_t k = 0; k < FP_MUL; k++)
+						{
+							if (this->fu_fp_mul[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_fp_mul[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_FP_MUL;
+								fu_fp_mul++;
+								dispatched = true;
+								rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+								rob_line->uop.updatePackageReady(LATENCY_FP_MUL);
+								break;
+							}
+						}
+					}
+					break;
+
+				// ====================================================
+				// Floating Point Division
+				case INSTRUCTION_OPERATION_FP_DIV:
+					if (fu_fp_div < FP_DIV)
+					{
+						for (uint8_t k = 0; k < FP_DIV; k++)
+						{
+							if (this->fu_fp_div[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_fp_div[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_FP_DIV;
+								fu_fp_div++;
+								dispatched = true;
+								rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+								rob_line->uop.updatePackageReady(LATENCY_FP_DIV);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Operation LOAD
+				case INSTRUCTION_OPERATION_MEM_LOAD:
+					if (fu_mem_load < LOAD_UNIT)
+					{
+						for (uint8_t k = 0; k < LOAD_UNIT; k++)
+						{
+							if (this->fu_mem_load[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_mem_load[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_MEM_LOAD;
+								fu_mem_load++;
+								dispatched = true;
+								rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+								rob_line->uop.updatePackageReady(LATENCY_MEM_LOAD);
+								break;
+							}
+						}
+					}
+					break;
+
+				// ====================================================
+				// Operation STORE
+				case INSTRUCTION_OPERATION_MEM_STORE:
+					if (fu_mem_store < STORE_UNIT)
+					{
+						for (uint8_t k = 0; k < STORE_UNIT; k++)
+						{
+							if (this->fu_mem_store[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_mem_store[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_MEM_STORE;
+								fu_mem_store++;
+								dispatched = true;
+								rob_line->stage = PROCESSOR_STAGE_EXECUTION;
+								rob_line->uop.updatePackageReady(LATENCY_MEM_STORE);
+								break;
+							}
+						}
+					}
+					break;
+
+				// ====================================================
+				case INSTRUCTION_OPERATION_BARRIER:
+				case INSTRUCTION_OPERATION_HMC_ROA:
+				case INSTRUCTION_OPERATION_HMC_ROWA:
+					ERROR_PRINTF("Invalid instruction BARRIER||HMC_ROA||HMC_ROWA being dispatched.\n");
+					break;
+				} //end switch
+				//remover os postos em execucao aqui
+				if (dispatched == true)
+				{
+	#if DISPATCH_DEBUG
+					ORCS_PRINTF("Dispatched %s\n", rob_line->content_to_string().c_str())
+					ORCS_PRINTF("===================================================================\n")
+	#endif
+					// update Dispatched
+					total_dispatched++;
+					// insert on FUs waiting structure
+					this->unified_functional_units.push_back(rob_line);
+					// remove from reservation station
+					this->unified_reservation_station.erase(this->unified_reservation_station.begin() + i);
+					i--;
+				} //end 	if dispatched
+			}	 //end if robline is ready
+		}		  //end for
+		// sleep(1);
 } //end method
 // ============================================================================
 void processor_t::execute()
@@ -1194,13 +1195,17 @@ void processor_t::execute()
 // ==================================
 #if EMC_ACTIVE
 		if (this->start_emc_module)
-		{
-			
+		{	
+			// sleep(3);
+			ORCS_PRINTF("==================================================================================================\n")
+			ORCS_PRINTF("Cadeia de dependencias geradas\n")
 			for(size_t i = 0; i < this->rob_buffer.size(); i++)
 			{
 				ORCS_PRINTF("%s\n",this->rob_buffer[i]->content_to_string().c_str())
+				this->rob_buffer[i]->on_chain=false;
 			}
 			this->rob_buffer.clear();
+			ORCS_PRINTF("==================================================================================================\n")
 			
 			// int32_t position_rob;
 			// if (orcs_engine.memory_controller->emc->uop_buffer_used >= 16)
@@ -1497,22 +1502,21 @@ void processor_t::execute()
 */
 //Methods for access memory system v1
 // ============================================================================
-uint32_t processor_t::mob_read()
-{
+uint32_t processor_t::mob_read(){
 
 	int32_t position_mem;
-#if MOB_DEBUG
+	#if MOB_DEBUG
 	ORCS_PRINTF("MOB Read")
-#endif
+	#endif
 	memory_order_buffer_line_t *mob_line = NULL;
-#if PARALLEL_LIM_ACTIVE
+	#if PARALLEL_LIM_ACTIVE
 	if (this->parallel_requests >= MAX_PARALLEL_REQUESTS)
 	{
 		// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
 		this->add_times_reach_parallel_requests_read();
 		return FAIL;
 	}
-#endif
+	#endif
 	position_mem = POSITION_FAIL;
 	position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_read,
 																			MOB_READ, PACKAGE_STATE_WAIT);
@@ -1526,11 +1530,11 @@ uint32_t processor_t::mob_read()
 		ttc = orcs_engine.cacheManager->searchData(mob_line);
 		mob_line->updatePackageReady(ttc);
 		mob_line->rob_ptr->uop.updatePackageReady(ttc);
-// this->memory_read_executed--;
-#if PARALLEL_LIM_ACTIVE
+	// this->memory_read_executed--;
+	#if PARALLEL_LIM_ACTIVE
 		this->parallel_requests++; //numero de req paralelas, add+1
-#endif
-#if EMC_ACTIVE
+	#endif
+	#if EMC_ACTIVE
 		if (this->has_llc_miss)
 		{
 			this->has_llc_miss = false;
@@ -1539,39 +1543,39 @@ uint32_t processor_t::mob_read()
 				// =====================================================
 				// generate chain on home core buffer
 				// =====================================================
+				ORCS_PRINTF("Global Cycle %lu\n",orcs_engine.get_global_cycle())
+				this->rob_buffer.push_back(mob_line->rob_ptr);
 				this->make_dependence_chain(mob_line->rob_ptr);
 				// this->start_emc_module=true;
-				// this->rob_buffer.push_back(mob_line->rob_ptr);
 				mob_line->rob_ptr->original_miss = true;
 				this->add_llc_miss_rob_head();
 			}
 		}
-#endif
-#if MOB_DEBUG
+	#endif
+	#if MOB_DEBUG
 		ORCS_PRINTF("On MOB READ Stage\n")
 		ORCS_PRINTF("Time to complete READ %u\n", ttc)
 		ORCS_PRINTF("MOB Line After EXECUTE %s\n", mob_line->content_to_string().c_str())
-#endif
+	#endif
 	} //end if mob_line null
 	return OK;
 }; //end method
 // ============================================================================
-uint32_t processor_t::mob_write()
-{
+uint32_t processor_t::mob_write(){
 
 	int32_t position_mem = POSITION_FAIL;
-#if MOB_DEBUG
+	#if MOB_DEBUG
 	ORCS_PRINTF("MOB Write")
-#endif
+	#endif
 	memory_order_buffer_line_t *mob_line = NULL;
-#if PARALLEL_LIM_ACTIVE
+	#if PARALLEL_LIM_ACTIVE
 	if (this->parallel_requests >= MAX_PARALLEL_REQUESTS)
 	{
 		// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
 		this->add_times_reach_parallel_requests_write();
 		return FAIL;
 	}
-#endif
+	#endif
 	position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_write,
 																			MOB_WRITE, PACKAGE_STATE_WAIT);
 	if (position_mem != POSITION_FAIL)
@@ -1585,15 +1589,15 @@ uint32_t processor_t::mob_write()
 		ttc = orcs_engine.cacheManager->writeData(mob_line);
 		mob_line->updatePackageReady(ttc);
 		mob_line->rob_ptr->uop.updatePackageReady(ttc);
-// this->memory_read_executed--; //numero de writes executados
-#if PARALLEL_LIM_ACTIVE
+	// this->memory_read_executed--; //numero de writes executados
+	#if PARALLEL_LIM_ACTIVE
 		this->parallel_requests++; //numero de req paralelas, add+1
-#endif
-#if MOB_DEBUG
+	#endif
+	#if MOB_DEBUG
 		ORCS_PRINTF("On MOB READ Stage\n")
 		ORCS_PRINTF("Time to complete READ %u\n", ttc)
 		ORCS_PRINTF("MOB Line After EXECUTE %s\n", mob_line->content_to_string().c_str())
-#endif
+	#endif
 	} //end if mob_line null
 	return OK;
 };
@@ -1686,13 +1690,13 @@ void processor_t::commit(){
 			}
 
 			ERROR_ASSERT_PRINTF(uint32_t(pos_buffer) == this->robStart, "Commiting different from the position start\n");
-#if COMMIT_DEBUG
-			if (orcs_engine.get_global_cycle() > WAIT_CYCLE)
-			{
-				ORCS_PRINTF("Commited Instruction\n%s\n", this->reorderBuffer[this->robStart].content_to_string().c_str())
-			}
-// sleep(1);
-#endif
+	#if COMMIT_DEBUG
+				if (orcs_engine.get_global_cycle() > WAIT_CYCLE)
+				{
+					ORCS_PRINTF("Commited Instruction\n%s\n", this->reorderBuffer[this->robStart].content_to_string().c_str())
+				}
+	// sleep(1);
+	#endif
 			this->removeFrontROB();
 		}
 		/// Could not commit the older, then stop looking for ready uops
@@ -1706,49 +1710,49 @@ void processor_t::commit(){
 void processor_t::solve_registers_dependency(reorder_buffer_line_t *rob_line)
 {
 
-	/// Remove pointers from Register Alias Table (RAT)
-	for (uint32_t j = 0; j < MAX_REGISTERS; j++)
-	{
-		if (rob_line->uop.write_regs[j] < 0)
+		/// Remove pointers from Register Alias Table (RAT)
+		for (uint32_t j = 0; j < MAX_REGISTERS; j++)
 		{
-			break;
-		}
-		uint32_t write_register = rob_line->uop.write_regs[j];
-		ERROR_ASSERT_PRINTF(write_register < RAT_SIZE, "Read Register (%d) > Register Alias Table Size (%d)\n",
-							write_register, RAT_SIZE);
-		if (this->register_alias_table[write_register] != NULL &&
-			this->register_alias_table[write_register]->uop.uop_number == rob_line->uop.uop_number)
-		{
-			this->register_alias_table[write_register] = NULL;
-#if EXECUTE_DEBUG
-			ORCS_PRINTF("register_%u\n", write_register)
-#endif
-		} //end if
-	}	 //end for
-
-	// =========================================================================
-	// SOLVE REGISTER DEPENDENCIES - RAT
-	// =========================================================================
-	for (uint32_t j = 0; j < ROB_SIZE; j++)
-	{
-		/// There is an unsolved dependency
-		if (rob_line->reg_deps_ptr_array[j] != NULL)
-		{
-			rob_line->wake_up_elements_counter--;
-			rob_line->reg_deps_ptr_array[j]->wait_reg_deps_number--;
-			/// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
-			if (rob_line->reg_deps_ptr_array[j]->uop.readyAt <= orcs_engine.get_global_cycle())
+			if (rob_line->uop.write_regs[j] < 0)
 			{
-				rob_line->reg_deps_ptr_array[j]->uop.readyAt = orcs_engine.get_global_cycle();
+				break;
 			}
-			rob_line->reg_deps_ptr_array[j] = NULL;
-		}
-		/// All the dependencies are solved
-		else
+			uint32_t write_register = rob_line->uop.write_regs[j];
+			ERROR_ASSERT_PRINTF(write_register < RAT_SIZE, "Read Register (%d) > Register Alias Table Size (%d)\n",
+								write_register, RAT_SIZE);
+			if (this->register_alias_table[write_register] != NULL &&
+				this->register_alias_table[write_register]->uop.uop_number == rob_line->uop.uop_number)
+			{
+				this->register_alias_table[write_register] = NULL;
+	#if EXECUTE_DEBUG
+				ORCS_PRINTF("register_%u\n", write_register)
+	#endif
+			} //end if
+		}	 //end for
+
+		// =========================================================================
+		// SOLVE REGISTER DEPENDENCIES - RAT
+		// =========================================================================
+		for (uint32_t j = 0; j < ROB_SIZE; j++)
 		{
-			break;
+			/// There is an unsolved dependency
+			if (rob_line->reg_deps_ptr_array[j] != NULL)
+			{
+				rob_line->wake_up_elements_counter--;
+				rob_line->reg_deps_ptr_array[j]->wait_reg_deps_number--;
+				/// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
+				if (rob_line->reg_deps_ptr_array[j]->uop.readyAt <= orcs_engine.get_global_cycle())
+				{
+					rob_line->reg_deps_ptr_array[j]->uop.readyAt = orcs_engine.get_global_cycle();
+				}
+				rob_line->reg_deps_ptr_array[j] = NULL;
+			}
+			/// All the dependencies are solved
+			else
+			{
+				break;
+			}
 		}
-	}
 };
 // ============================================================================
 bool processor_t::isRobHead(reorder_buffer_line_t *rob_line)
@@ -1763,27 +1767,52 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line)
 {
 	ORCS_PRINTF("Miss Original %s\n", rob_line->content_to_string().c_str())
 	ERROR_ASSERT_PRINTF(rob_line->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD, "Error, making dependences from NON-LOAD operation\n%s\n", rob_line->content_to_string().c_str())
-	reorder_buffer_line_t *rob_next = NULL;
-	for (size_t i = 0;; i++)
+	
+	while(this->rob_buffer.size()<=EMC_UOP_BUFFER){
+		int32_t next_position = this->get_next_uop_dependence();
+		// ORCS_PRINTF("position ->%d\n",next_position)
+		// sleep(1);
+		if(next_position==POSITION_FAIL){
+			break;
+		}else{
+			reorder_buffer_line_t *next_operation = this->rob_buffer[next_position];		
+				for(uint32_t i = 0; i < ROB_SIZE; i++)
+				{
+					if(next_operation->reg_deps_ptr_array[i]==NULL){
+						break;
+					}
+					if(this->already_exists(next_operation->reg_deps_ptr_array[i])){
+						continue;
+					}
+					if(next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
+					next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
+					next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD ||
+					next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+						this->rob_buffer.push_back(next_operation->reg_deps_ptr_array[i]);
+					}
+				}
+				next_operation->on_chain=true;
+			}
+	}	
+	if(this->verify_dependent_loads()){
+		this->start_emc_module=true;	
+	}else{
+		this->rob_buffer.clear();
+	}
+	
+};
+// =====================================================================
+// @return return the next element to be catch the dependences
+int32_t processor_t::get_next_uop_dependence(){
+	int32_t position = POSITION_FAIL;
+	for (uint32_t i = 0; i < this->rob_buffer.size(); i++)
 	{
-		rob_next = this->rob_buffer[i];
-		if(this->rob_buffer.size()>=16)break;
-		if (rob_next == NULL)
-		{
+		if(this->rob_buffer[i]->on_chain!=true){
+			position = i;
 			break;
 		}
-		int32_t position_rob = this->get_position_rob_bcast(rob_next);
-		for (uint16_t j = 0; j < MAX_REGISTERS; j++)
-			{
-				if (rob_next->uop.write_regs[j] == POSITION_FAIL)
-					break;
-				//broadcast
-				this->broadcast_cdb(position_rob, rob_next->uop.write_regs[j]);
-
-			}
-
 	}
-	this->start_emc_module=true;
+	return position;
 };
 // =====================================================================
 /*
@@ -1794,10 +1823,10 @@ Broadcast registers targets on ROB
 */
 uint32_t processor_t::broadcast_cdb(uint32_t position_rob, int32_t write_register)
 {
+	ORCS_PRINTF("On broadcast CDB\n")
 	uint32_t collect = 0;
 	// ORCS_PRINTF("Register broadcas_CDB %d\n",write_register)
-	for (uint32_t i = (position_rob + 1);; i++)
-	{
+	for (uint32_t i = (position_rob + 1);; i++){
 		if (i >= ROB_SIZE)
 			i = 0; // reinicia a "fila" do rob para busca
 		if (i > this->robEnd)
@@ -1808,35 +1837,32 @@ uint32_t processor_t::broadcast_cdb(uint32_t position_rob, int32_t write_registe
 			continue; //poisoned, ja encontra-se na chain
 		if (this->reorderBuffer[i].on_chain)
 			continue; //ja encontra-se na chain
-		if (this->reorderBuffer[i].wait_reg_deps_number <= 1)
-		{
+		if(this->reorderBuffer[i].stage != PROCESSOR_STAGE_RENAME)
+			continue;
+		if (this->reorderBuffer[i].wait_reg_deps_number <= 1) {
 			// ORCS_PRINTF("candidate Chain %s\n",this->reorderBuffer[i].content_to_string().c_str())
 			// sleep(1);
 			//getting only uops supported operations
-			if (this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
-				this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
-				this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD ||
-				this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
-			{
-
-				for (size_t k = 0; k < MAX_REGISTERS; k++)
-				{
-					if (this->reorderBuffer[i].uop.read_regs[k] == POSITION_FAIL)
-						break;
-					if (this->reorderBuffer[i].uop.read_regs[k] == write_register)
-					{
-						this->rob_buffer.push_back(&this->reorderBuffer[i]);
-						this->reorderBuffer[i].is_poisoned = true;
-						this->reorderBuffer[i].on_chain = true;
-						collect++;
-						ORCS_PRINTF("Add to Chain %s\n", this->reorderBuffer[i].content_to_string().c_str())
-						sleep(1);
-						break;
+			// if (this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
+			// 	this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
+			// 	this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD ||
+			// 	this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE ||  
+			// 	this->reorderBuffer[i].uop.uop_operation == INSTRUCTION_OPERATION_OTHER ){
+					for (size_t k = 0; k < MAX_REGISTERS; k++){
+						if (this->reorderBuffer[i].uop.read_regs[k] == POSITION_FAIL) break;
+						if (this->reorderBuffer[i].uop.read_regs[k] == write_register) {
+							this->rob_buffer.push_back(&this->reorderBuffer[i]);
+							// this->reorderBuffer[i].is_poisoned = true;
+							// this->reorderBuffer[i].on_chain = true;
+							collect++;
+							ORCS_PRINTF("Add to Chain %s\n", this->reorderBuffer[i].content_to_string().c_str())
+							// sleep(1);
+							break;
+						}
 					}
-				}
+				//}
 			}
 		}
-	}
 	return collect;
 };
 // =====================================================================
@@ -1848,7 +1874,7 @@ get the position  on rob to initialize broadcast
 uint32_t processor_t::get_position_rob_bcast(reorder_buffer_line_t *rob_ready)
 {
 	uint32_t position = POSITION_FAIL;
-	for (uint32_t i = (this->robStart + 1);; i++)
+	for (uint32_t i = (this->robStart+1);; i++)
 	{
 		if (i >= ROB_SIZE)
 			i = 0;
@@ -1864,32 +1890,62 @@ uint32_t processor_t::get_position_rob_bcast(reorder_buffer_line_t *rob_ready)
 };
 // =============================================================================
 #if EMC_ACTIVE
-void processor_t::renameEMC(reorder_buffer_line_t *rob_line)
+int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line)
 {
 	// ===========================================================
-	//  Transform rob line in EMC Package
-	int32_t pos_emc = orcs_engine.memory_controller->emc->get_position_uop_buffer();
-	ERROR_ASSERT_PRINTF(pos_emc != POSITION_FAIL, "Error, position on EMC UopBuffer not found ")
-	emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc->uop_buffer[pos_emc];
-	// adding at RS EMC
-	orcs_engine.memory_controller->emc->unified_rs.push_back(emc_package);
-	//
-	emc_package->package_clean();
-	emc_package->uop = rob_line->uop;
-	emc_package->rob_ptr = rob_line;
+	// get position on emc lsq
 	// ===========================================================
-	// getting position on emc lsq.
 	memory_order_buffer_line_t *lsq;
 	int32_t pos_lsq = memory_order_buffer_line_t::find_free(orcs_engine.memory_controller->emc->unified_lsq, EMC_LSQ_SIZE);
-	ERROR_ASSERT_PRINTF(pos_lsq != POSITION_FAIL, "Error, position on EMC LSQ not found ")
-	if (rob_line->mob_ptr != NULL)
-	{
-		orcs_engine.memory_controller->emc->unified_lsq[pos_lsq] = *(rob_line->mob_ptr);
-		lsq = &orcs_engine.memory_controller->emc->unified_lsq[pos_lsq];
-		//linking emc entry to emc lsq
-		emc_package->mob_ptr = lsq;
-		lsq->emc_opcode_ptr = emc_package;
-		lsq->wait_mem_deps_number = 0; //
+	if(pos_lsq == POSITION_FAIL){
+		return POSITION_FAIL;
+	};
+	lsq = &orcs_engine.memory_controller->emc->unified_lsq[pos_lsq];
+	// ===========================================================
+	
+	// ===========================================================
+	// get position on uop buffer
+	// ===========================================================
+	int32_t pos_emc = orcs_engine.memory_controller->emc->get_position_uop_buffer();
+	if(pos_emc==POSITION_FAIL){
+		return POSITION_FAIL;
+	}
+	emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc->uop_buffer[pos_emc];
+	// ===========================================================
+	//Verificar se todos os registradores estao prontos ou no rrt
+	// ===========================================================
+	if(this->count_registers_rrt(rob_line->uop)<rob_line->wait_reg_deps_number){
+		return POSITION_FAIL;
+	}
+	// ===========================================================
+	// IF CAME HERE, CONGRATULATIONS. NEXT STEP
+	// ===========================================================
+	// Add the entry of uopbuffer on reservation station of EMC
+	orcs_engine.memory_controller->emc->unified_rs.push_back(emc_package);
+	// Fill EMC package with info
+	emc_package->package_clean();		//clean package 
+	emc_package->uop = rob_line->uop;	//copy uop to info operation
+	emc_package->rob_ptr = rob_line;	//pointer to rob entry to return
+
+	if (rob_line->mob_ptr != NULL){
+		orcs_engine.memory_controller->emc->unified_lsq[pos_lsq] = *(rob_line->mob_ptr);	//copy infos of memory access
+		if(rob_line->original_miss){
+			emc_package->uop.readyAt = emc_package->uop.readyAt-(L1_DATA_LATENCY+LLC_LATENCY);
+			lsq->readyAt=lsq->readyAt-(L1_DATA_LATENCY+LLC_LATENCY);
+		}
+		// Linking EMC Uop Buffer to EMC LSQ
+		emc_package->mob_ptr = lsq;			//Setting buffer to lsq
+		lsq->emc_opcode_ptr = emc_package;	//setting lsq to buffer
+		// Verify if has dependency memory
+		if(lsq->wait_mem_deps_number!=0){
+			for (uint32_t i = 0; i < ROB_SIZE; i++)
+			{
+				if(lsq->memory_address == lsq->mem_deps_ptr_array[i]->memory_address){
+					
+				}	
+			}
+		}
+		// lsq->wait_mem_deps_number = 0;		//
 	}
 	// ===========================================================
 	/// Control the Register Dependency - Register READ
@@ -2007,36 +2063,47 @@ bool processor_t::verify_spill_register(reorder_buffer_line_t *rob_line)
 	return spill;
 };
 // ============================================================================
-
+// @return true if no loads operation is gt 1
 bool processor_t::verify_dependent_loads()
 {
-	uint8_t loads = 0;
+	uint8_t loads = 1;
 	this->instrucoes_inter_load_deps = 0;
-	for (uint8_t i = orcs_engine.memory_controller->emc->uop_buffer_start;; i++)
+	for (uint32_t i = 1; i < this->rob_buffer.size(); i++)
 	{
-		if (i >= EMC_UOP_BUFFER)
-			i = 0;
-		if (i == orcs_engine.memory_controller->emc->uop_buffer_start)
-			break; //loop
-		if (i == orcs_engine.memory_controller->emc->uop_buffer_end)
-			break; //end itens
-		if (orcs_engine.memory_controller->emc->uop_buffer[i].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD)
-		{
+		if(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 			loads++;
 			this->numero_load_deps++;
-			this->soma_instrucoes_deps += this->instrucoes_inter_load_deps;
-			this->instrucoes_inter_load_deps = 0;
-		}
-		else
-		{
+			this->soma_instrucoes_deps+=this->instrucoes_inter_load_deps;
+			this->instrucoes_inter_load_deps=0;
+		}else{
 			this->instrucoes_inter_load_deps++;
 		}
 	}
+	
 	return (loads > 1) ? true : false; //if compacto
+};
+// ============================================================================
+// @1 receive uop to verify if registers wait is on RRT
+// @return number of registers on RRT
+uint32_t processor_t::count_registers_rrt(uop_package_t uop){
+	uint32_t registers_on_rrt=0;
+	for (uint8_t i = 0; i < MAX_REGISTERS ; i++){
+		if(uop.read_regs[i]<0){
+			break;
+		}
+		for (uint8_t j= 0; j < EMC_REGISTERS; j++){
+			if(uop.read_regs[i] == this->rrt[j].register_core){
+				registers_on_rrt++;
+				break;
+			}
+		}
+	}
+	return registers_on_rrt;
 };
 
 // ============================================================================
-void processor_t::reverse()
+
+void processor_t::cancel_execution_emc()
 {
 	for (uint8_t i = 0; i < EMC_UOP_BUFFER; i++)
 	{
@@ -2057,80 +2124,91 @@ void processor_t::reverse()
 	}
 	orcs_engine.memory_controller->emc->print_structures();
 };
-
+// ============================================================================
+bool processor_t::already_exists(reorder_buffer_line_t *candidate){
+	for (uint32_t i = 0; i <this->rob_buffer.size(); i++)
+	{
+		if (this->rob_buffer[i]->uop.uop_number == candidate->uop.uop_number)
+		{
+			// ORCS_PRINTF("Opcode ja existente %s\n",candidate->content_to_string().c_str())
+			return true;
+		}
+	}
+	return false;
+};
 // ============================================================================
 void processor_t::statistics()
 {
-	if (orcs_engine.output_file_name == NULL)
-	{
-		utils_t::largestSeparator();
-		ORCS_PRINTF("Total_Cicle : %lu\n", orcs_engine.get_global_cycle())
-		utils_t::largeSeparator();
-		ORCS_PRINTF("Stage_Opcode_and_Uop_Counters\n")
-		utils_t::largeSeparator();
-		ORCS_PRINTF("Stage_Fetch: %lu\n", this->fetchCounter)
-		ORCS_PRINTF("Stage_Decode: %lu\n", this->decodeCounter)
-		ORCS_PRINTF("Stage_Rename: %lu\n", this->renameCounter)
-		ORCS_PRINTF("Register_writes: %lu\n", this->get_registerWrite())
-		ORCS_PRINTF("Stage_Commit: %lu\n", this->commit_uop_counter)
-		utils_t::largestSeparator();
-		ORCS_PRINTF("======================== MEMORY DESAMBIGUATION ===========================\n")
-		utils_t::largestSeparator();
-		ORCS_PRINTF("Read_False_Positive: %lu\n", this->get_stat_disambiguation_read_false_positive())
-		ORCS_PRINTF("Write_False_Positive: %lu\n", this->get_stat_disambiguation_write_false_positive())
-		ORCS_PRINTF("Solve_Address_to_Address: %lu\n", this->get_stat_address_to_address())
-#if MAX_PARALLEL_REQUESTS
-		ORCS_PRINTF("Times_Reach_MAX_PARALLEL_REQUESTS_READ: %lu\n", this->get_times_reach_parallel_requests_read())
-		ORCS_PRINTF("Times_Reach_MAX_PARALLEL_REQUESTS_WRITE: %lu\n", this->get_times_reach_parallel_requests_write())
-#endif
-		utils_t::largestSeparator();
-		ORCS_PRINTF("Instruction_Per_Cicle: %.4f\n", float(this->fetchCounter) / float(orcs_engine.get_global_cycle()))
-
-		ORCS_PRINTF("\n======================== EMC INFOS ===========================\n")
-		utils_t::largeSeparator();
-		ORCS_PRINTF("times_llc_rob_head: %u\n", this->get_llc_miss_rob_head())
-		ORCS_PRINTF("numero_load_deps: %u\n", this->numero_load_deps)
-		ORCS_PRINTF("Total_instrucoes_dependentes: %u\n", this->soma_instrucoes_deps)
-		ORCS_PRINTF("load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps))
-		utils_t::largeSeparator();
-	}
-	else
-	{
-		FILE *output = fopen(orcs_engine.output_file_name, "a+");
-		if (output != NULL)
+		if (orcs_engine.output_file_name == NULL)
 		{
-			utils_t::largestSeparator(output);
-			fprintf(output, "Total_Cycle: %lu\n", orcs_engine.get_global_cycle());
-			utils_t::largeSeparator(output);
-			fprintf(output, "Stage_Opcode_and_Uop_Counters\n");
-			utils_t::largeSeparator(output);
-			fprintf(output, "Stage_Fetch: %lu\n", this->fetchCounter);
-			fprintf(output, "Stage_Decode: %lu\n", this->decodeCounter);
-			fprintf(output, "Stage_Rename: %lu\n", this->renameCounter);
-			fprintf(output, "Register_writes: %lu\n", this->get_registerWrite());
-			fprintf(output, "Stage_Commit: %lu\n", this->commit_uop_counter);
-			utils_t::largestSeparator(output);
-			fprintf(output, "======================== MEMORY DESAMBIGUATION ===========================\n");
-			utils_t::largestSeparator(output);
-			fprintf(output, "Read_False_Positive: %lu\n", this->get_stat_disambiguation_read_false_positive());
-			fprintf(output, "Write_False_Positive: %lu\n", this->get_stat_disambiguation_write_false_positive());
-			fprintf(output, "Solve_Address_to_Address: %lu\n", this->get_stat_address_to_address());
+			utils_t::largestSeparator();
+			ORCS_PRINTF("Total_Cicle : %lu\n", orcs_engine.get_global_cycle())
+			utils_t::largeSeparator();
+			ORCS_PRINTF("Stage_Opcode_and_Uop_Counters\n")
+			utils_t::largeSeparator();
+			ORCS_PRINTF("Stage_Fetch: %lu\n", this->fetchCounter)
+			ORCS_PRINTF("Stage_Decode: %lu\n", this->decodeCounter)
+			ORCS_PRINTF("Stage_Rename: %lu\n", this->renameCounter)
+			ORCS_PRINTF("Register_writes: %lu\n", this->get_registerWrite())
+			ORCS_PRINTF("Stage_Commit: %lu\n", this->commit_uop_counter)
+			utils_t::largestSeparator();
+			ORCS_PRINTF("======================== MEMORY DESAMBIGUATION ===========================\n")
+			utils_t::largestSeparator();
+			ORCS_PRINTF("Read_False_Positive: %lu\n", this->get_stat_disambiguation_read_false_positive())
+			ORCS_PRINTF("Write_False_Positive: %lu\n", this->get_stat_disambiguation_write_false_positive())
+			ORCS_PRINTF("Solve_Address_to_Address: %lu\n", this->get_stat_address_to_address())
+	#if MAX_PARALLEL_REQUESTS
+			ORCS_PRINTF("Times_Reach_MAX_PARALLEL_REQUESTS_READ: %lu\n", this->get_times_reach_parallel_requests_read())
+			ORCS_PRINTF("Times_Reach_MAX_PARALLEL_REQUESTS_WRITE: %lu\n", this->get_times_reach_parallel_requests_write())
+	#endif
+			utils_t::largestSeparator();
+			ORCS_PRINTF("Instruction_Per_Cicle: %.4f\n", float(this->fetchCounter) / float(orcs_engine.get_global_cycle()))
 
-#if MAX_PARALLEL_REQUESTS
-			fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_READ: %lu\n", this->get_times_reach_parallel_requests_read());
-			fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_WRITE: %lu\n", this->get_times_reach_parallel_requests_write());
-#endif
-			utils_t::largestSeparator(output);
-			fprintf(output, "Instruction_Per_Cycle: %.4f\n", float(this->fetchCounter) / float(orcs_engine.get_global_cycle()));
-
-			fprintf(output, "\n======================== EMC INFOS ===========================\n");
-			utils_t::largeSeparator(output);
-			fprintf(output, "times_llc_rob_head: %u\n", this->get_llc_miss_rob_head());
-			fprintf(output, "numero_load_deps: %u\n", this->numero_load_deps);
-			fprintf(output, "Total_instrucoes_dependentes: %u\n", this->soma_instrucoes_deps);
-			fprintf(output, "load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps));
+			ORCS_PRINTF("\n======================== EMC INFOS ===========================\n")
+			utils_t::largeSeparator();
+			ORCS_PRINTF("times_llc_rob_head: %u\n", this->get_llc_miss_rob_head())
+			ORCS_PRINTF("numero_load_deps: %u\n", this->numero_load_deps)
+			ORCS_PRINTF("Total_instrucoes_dependentes: %u\n", this->soma_instrucoes_deps)
+			ORCS_PRINTF("load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps))
+			utils_t::largeSeparator();
 		}
-		fclose(output);
+		else
+		{
+			FILE *output = fopen(orcs_engine.output_file_name, "a+");
+			if (output != NULL)
+			{
+				utils_t::largestSeparator(output);
+				fprintf(output, "Total_Cycle: %lu\n", orcs_engine.get_global_cycle());
+				utils_t::largeSeparator(output);
+				fprintf(output, "Stage_Opcode_and_Uop_Counters\n");
+				utils_t::largeSeparator(output);
+				fprintf(output, "Stage_Fetch: %lu\n", this->fetchCounter);
+				fprintf(output, "Stage_Decode: %lu\n", this->decodeCounter);
+				fprintf(output, "Stage_Rename: %lu\n", this->renameCounter);
+				fprintf(output, "Register_writes: %lu\n", this->get_registerWrite());
+				fprintf(output, "Stage_Commit: %lu\n", this->commit_uop_counter);
+				utils_t::largestSeparator(output);
+				fprintf(output, "======================== MEMORY DESAMBIGUATION ===========================\n");
+				utils_t::largestSeparator(output);
+				fprintf(output, "Read_False_Positive: %lu\n", this->get_stat_disambiguation_read_false_positive());
+				fprintf(output, "Write_False_Positive: %lu\n", this->get_stat_disambiguation_write_false_positive());
+				fprintf(output, "Solve_Address_to_Address: %lu\n", this->get_stat_address_to_address());
+
+	#if MAX_PARALLEL_REQUESTS
+				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_READ: %lu\n", this->get_times_reach_parallel_requests_read());
+				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_WRITE: %lu\n", this->get_times_reach_parallel_requests_write());
+	#endif
+				utils_t::largestSeparator(output);
+				fprintf(output, "Instruction_Per_Cycle: %.4f\n", float(this->fetchCounter) / float(orcs_engine.get_global_cycle()));
+
+				fprintf(output, "\n======================== EMC INFOS ===========================\n");
+				utils_t::largeSeparator(output);
+				fprintf(output, "times_llc_rob_head: %u\n", this->get_llc_miss_rob_head());
+				fprintf(output, "numero_load_deps: %u\n", this->numero_load_deps);
+				fprintf(output, "Total_instrucoes_dependentes: %u\n", this->soma_instrucoes_deps);
+				fprintf(output, "load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps));
+			}
+			fclose(output);
 	}
 };
 // ============================================================================

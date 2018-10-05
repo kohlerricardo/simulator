@@ -23,7 +23,28 @@ void uop_package_t::package_clean()
     this->readyAt = orcs_engine.get_global_cycle();;
     this->status =PACKAGE_STATE_FREE;
 };
+bool uop_package_t::operator==(const uop_package_t &package) {
+    /// TRACE Variables
+    if (strcmp(this->opcode_assembly, package.opcode_assembly) != 0) return FAIL;
+    if (this->opcode_operation != package.opcode_operation) return FAIL;
+    if (this->opcode_address != package.opcode_address) return FAIL;
+    if (this->opcode_size != package.opcode_size) return FAIL;
 
+    if ( memcmp(this->read_regs, package.read_regs, sizeof(int32_t)*MAX_REGISTERS) != 0) return FAIL;
+    if ( memcmp(this->write_regs, package.write_regs, sizeof(int32_t)*MAX_REGISTERS) != 0) return FAIL;
+
+    if (this->uop_operation != package.uop_operation) return FAIL;
+    if (this->memory_address != package.memory_address) return FAIL;
+    if (this->memory_size != package.memory_size) return FAIL;
+
+    
+    if (this->opcode_number != package.opcode_number) return FAIL;
+    if (this->uop_number != package.uop_number) return FAIL;
+    if (this->readyAt != package.readyAt) return FAIL;
+    if (this->status != package.status) return FAIL;
+
+    return OK;
+};
 void uop_package_t::opcode_to_uop(uint64_t uop_number, instruction_operation_t uop_operation, uint64_t memory_address, uint32_t memory_size, opcode_package_t opcode)
 {
     // ERROR_ASSERT_PRINTF(this->state == PACKAGE_STATE_FREE,
@@ -64,6 +85,8 @@ std::string uop_package_t::content_to_string() {
     std::string content_string;
     content_string = "";
 
+    content_string = content_string + "Uop Number " + utils_t::uint64_to_string(this->uop_number);
+    
     content_string = content_string + " " + utils_t::uint64_to_string(this->opcode_address);
     content_string = content_string + " " + get_enum_instruction_operation_char(this->uop_operation);
 

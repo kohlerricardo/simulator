@@ -393,6 +393,7 @@ void emc_t::clock()
 {
 	if (this->ready_to_execute)
 	{
+		ORCS_PRINTF("Executando no EMC -  Print sequencias\n")
 if(this->executed){
 	this->executed = false;
 	for (uint32_t i = this->uop_buffer_start;; i++)

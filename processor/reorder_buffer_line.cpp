@@ -31,7 +31,26 @@ reorder_buffer_line_t::reorder_buffer_line_t() {
 reorder_buffer_line_t::~reorder_buffer_line_t() {
     utils_t::template_delete_array<reorder_buffer_line_t*>(reg_deps_ptr_array);
 };
-
+ bool reorder_buffer_line_t::operator==(const reorder_buffer_line_t& reorder_buffer_line){
+        // cmp uop
+        if(this->uop==reorder_buffer_line.uop)return FAIL;                      /// uOP stored
+        // cmp entry stafge
+        if(this->stage !=reorder_buffer_line.stage)return FAIL;
+        /// wait Register Dependencies Control
+        if(this->wait_reg_deps_number !=reorder_buffer_line.wait_reg_deps_number)return FAIL;
+       //cmp reg deps array
+        if(memcmp(this->reg_deps_ptr_array,reorder_buffer_line.reg_deps_ptr_array,sizeof(reorder_buffer_line_t)*ROB_SIZE)!=0) return FAIL;  
+       //cmp  counter wake up
+        if(this->wake_up_elements_counter !=reorder_buffer_line.wake_up_elements_counter)return FAIL;
+       //cmp mob pointer
+        if(memcmp(this->mob_ptr,reorder_buffer_line.mob_ptr,sizeof(memory_order_buffer_line_t))!=0) return FAIL;  
+        
+        if(this->on_chain !=reorder_buffer_line.on_chain)return FAIL;
+        if(this->is_poisoned !=reorder_buffer_line.is_poisoned)return FAIL;
+        if(this->original_miss !=reorder_buffer_line.original_miss)return FAIL;
+        if(this->emc_executed !=reorder_buffer_line.emc_executed)return FAIL;
+    return OK;
+};
 // ============================================================================
 void reorder_buffer_line_t::package_clean() {
     this->uop.package_clean(); 
@@ -118,14 +137,16 @@ std::string reorder_buffer_line_t::print_all(reorder_buffer_line_t *input_array,
 /// Generate Dep Chains to EMC
 // ====================================================================
 
-reorder_buffer_line_t* reorder_buffer_line_t::get_deps(){
-    reorder_buffer_line_t *deps = NULL;
+void reorder_buffer_line_t::get_deps(std::vector<reorder_buffer_line_t> *buffer){
     if(this->wake_up_elements_counter>0){
-        deps = new reorder_buffer_line_t[this->wake_up_elements_counter];
-        for (size_t i = 0; i < this->wake_up_elements_counter; i++)
+        for (size_t i = 0; i < ROB_SIZE; i++)
         {
-            deps[i] = *this->reg_deps_ptr_array[i];
+            if(this->reg_deps_ptr_array[i]!=NULL){
+                buffer->push_back(*this->reg_deps_ptr_array[i]);
+            }
+            else{
+                break;
+                }
         }
-    }else{return NULL;}
-    return deps;
+    }
 };

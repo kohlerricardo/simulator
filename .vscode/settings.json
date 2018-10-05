@@ -33,6 +33,11 @@
         "list": "cpp",
         "vector": "cpp",
         "string_view": "cpp",
-        "unordered_map": "cpp"
+        "unordered_map": "cpp",
+        "cstdarg": "cpp",
+        "fstream": "cpp",
+        "functional": "cpp",
+        "cinttypes": "cpp",
+        "optional": "cpp"
     }
 }

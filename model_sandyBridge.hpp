@@ -191,6 +191,8 @@ Arquivo definindo os parametros do modelo de processador
 #define EMC_CACHE_ASSOCIATIVITY 4
 #define EMC_CACHE_LATENCY 1
 #define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
+// SPECIAL CODES
+#define CANCEL_CHAIN_EXECUTION -2
 // ===================== EMC =======================================
 // =====================CHECKS=======================
 #define SANITY_CHECK 0

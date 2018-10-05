@@ -226,6 +226,7 @@ class processor_t {
 		bool start_emc_module;//if must start generate dep chain
 		bool receive_emc_ops;//flag to receive uops ready
 		container_ptr_reorder_buffer_line_t rob_buffer; // Wait list to propagate registers;
+		std::vector<reorder_buffer_line_t> emc_uop_buffer; //waitlist v2
 		register_remapping_table_t *rrt;
 		uint8_t counter_make_dep_chain;
 		// Statistics
@@ -237,16 +238,30 @@ class processor_t {
 		//  Methods
 		// void
 		void clean_rrt();
-		void renameEMC(reorder_buffer_line_t *rob_line);//Renaming entry to EMC
-		void reverse(); //reverte status dos uops ao core
+		void cancel_execution_emc(); //reverte status dos uops ao core
 		void make_dependence_chain(reorder_buffer_line_t* rob_line); //generate dep chain
 		// boolean
 		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
 		bool verify_spill_register(reorder_buffer_line_t* rob_line);// Verifying register spill to include store ops on chain
+		// =================================================================================
+		// Funcoes auxiliares para EMC
+		// =================================================================================
 		bool verify_dependent_loads(); // verifica se ha loads dependentes -> para execucao
+		bool already_exists(reorder_buffer_line_t *candidate);//verifica se já existe a instrução na cadeia
+		uint32_t count_registers_rrt(uop_package_t uop);
+		// =================================================================================
 		// integer
+		int32_t renameEMC(reorder_buffer_line_t *rob_line);//Renaming entry to EMC
 		uint32_t broadcast_cdb(uint32_t position_rob,int32_t write_register);//broadcast destiny registers on ROB to pseudo wake up operations.
 		uint32_t get_position_rob_bcast(reorder_buffer_line_t *rob_ready);// this function add the operat0in in rob buffer only. 
+		// =================================================================================
+		int32_t get_next_uop_dependence();
+
+		// =================================================================================
+
+
+
+
 		int32_t search_register(int32_t write_register);//Register remapping table declaration
     	int32_t allocate_new_register(int32_t write_register);
 		// ====================================================================
