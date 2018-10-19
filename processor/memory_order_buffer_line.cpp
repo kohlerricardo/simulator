@@ -44,7 +44,7 @@ std::string memory_order_buffer_line_t::content_to_string() {
     content_string = content_string + " |Mem. Operation:" +  get_enum_memory_operation_char(this->memory_operation);
     content_string = content_string + " |Mem. Address:" +  utils_t::uint64_to_string(this->memory_address);
     content_string = content_string + " |Status:" +  get_enum_package_state_char(this->status);
-    content_string = content_string + " |Mem Deps:" + utils_t::uint32_to_string(this->wait_mem_deps_number);
+    content_string = content_string + " |Mem Deps:" + utils_t::int32_to_string(this->wait_mem_deps_number);
     content_string = content_string + " |Ready At:" +  utils_t::uint64_to_string(this->readyAt);
     content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo);
     return content_string;
@@ -71,7 +71,7 @@ int32_t memory_order_buffer_line_t::find_old_request_state_ready(memory_order_bu
     for (uint32_t i = 0; i < size_array ; i++) {
         if (input_array[i].status == state &&
         input_array[i].uop_number < old_uop_number &&
-        input_array[i].wait_mem_deps_number == 0 &&
+        input_array[i].wait_mem_deps_number <= 0 &&
         input_array[i].uop_executed == true 
         && input_array[i].readyToGo <= orcs_engine.get_global_cycle()
         ) {

@@ -224,9 +224,9 @@ class processor_t {
 		//  ATTR
 		bool has_llc_miss; // have a LLC Miss, verify if is ROB head to add ROB Head on buffer
 		bool start_emc_module;//if must start generate dep chain
-		bool receive_emc_ops;//flag to receive uops ready
+		bool on_emc_execution;//flag to receive uops ready
 		container_ptr_reorder_buffer_line_t rob_buffer; // Wait list to propagate registers;
-		std::vector<reorder_buffer_line_t> emc_uop_buffer; //waitlist v2
+		std::vector<uint32_t> emc_live_in;
 		register_remapping_table_t *rrt;
 		uint8_t counter_make_dep_chain;
 		// Statistics
@@ -234,6 +234,7 @@ class processor_t {
 		uint32_t instrucoes_inter_load_deps;
 		uint32_t soma_instrucoes_deps;
 		uint32_t numero_load_deps;
+		uint32_t cancel_emc_execution;
 		// ====================================================================
 		//  Methods
 		// void
@@ -249,6 +250,7 @@ class processor_t {
 		bool verify_dependent_loads(); // verifica se ha loads dependentes -> para execucao
 		bool already_exists(reorder_buffer_line_t *candidate);//verifica se já existe a instrução na cadeia
 		uint32_t count_registers_rrt(uop_package_t uop);
+		bool verify_ambiguation(memory_order_buffer_line_t *mob_line);
 		// =================================================================================
 		// integer
 		int32_t renameEMC(reorder_buffer_line_t *rob_line);//Renaming entry to EMC
@@ -266,4 +268,5 @@ class processor_t {
     	int32_t allocate_new_register(int32_t write_register);
 		// ====================================================================
 		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head);
+		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution);
 };

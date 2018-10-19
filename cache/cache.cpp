@@ -212,6 +212,12 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 						ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
 					#endif
 				}
+				else if(this->level == EMC_DATA_CACHE){
+					ttc+=EMC_CACHE_LATENCY;
+					#if CACHE_MANAGER_DEBUG
+						ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+					#endif
+				}
 				return HIT;
 			}
 			// =====================================================
@@ -240,6 +246,8 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 			}else if(this->level == L1){
 				ttc+=L1_DATA_LATENCY;
 			}else if(this->level == L2){
+				ttc+=L2_LATENCY;
+			}else if(this->level == EMC_DATA_CACHE){
 				ttc+=L2_LATENCY;
 			}else{
 				ttc+=LLC_LATENCY;

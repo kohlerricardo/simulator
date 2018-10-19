@@ -62,6 +62,7 @@ void reorder_buffer_line_t::package_clean() {
     this->is_poisoned=false;
     this->original_miss = false;
     this->emc_executed=false;
+    this->op_on_emc_buffer=0;
     };
 
 // ============================================================================
@@ -78,10 +79,12 @@ std::string reorder_buffer_line_t::content_to_string() {
     content_string = this->uop.content_to_string();
     content_string = content_string + " | Stage:" + get_enum_processor_stage_char(this->stage);
     content_string = content_string + " | Reg.Wait:" + utils_t::uint32_to_string(this->wait_reg_deps_number);
+    content_string = content_string + " | Op_On_EMC_B.:" + utils_t::uint32_to_string(this->op_on_emc_buffer);
     content_string = content_string + " | WakeUp:" + utils_t::uint32_to_string(this->wake_up_elements_counter);
     content_string = content_string + " | ReadyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
     content_string = content_string + " | On Dep Chain: " + utils_t::bool_to_string(this->on_chain);
     content_string = content_string + " | Poisoned: " + utils_t::bool_to_string(this->is_poisoned);
+    content_string = content_string + " | Executed on EMC: " + utils_t::bool_to_string(this->emc_executed);
     if(this->mob_ptr != NULL){
         content_string = content_string + this->mob_ptr->content_to_string();
     }

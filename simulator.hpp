@@ -15,6 +15,8 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <chrono>
+#include <thread>
 //original
 #include <cstdio>
 #include <cstdlib>
