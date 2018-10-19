@@ -380,7 +380,9 @@ void emc_t::emc_commit()
 			break;
 		}
 	}
-	this->print_structures();
+	#if EMC_COMMIT_DEBUG
+		this->print_structures();
+	#endif
 };
 // ============================================================================
 void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){

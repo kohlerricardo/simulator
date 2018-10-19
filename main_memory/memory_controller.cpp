@@ -7,11 +7,7 @@ memory_controller_t::memory_controller_t(){
 
 };
 // ============================================================================
-memory_controller_t::~memory_controller_t(){
-    #if EMC_ACTIVE
-    if(this->emc !=NULL) delete emc;
-    #endif
-};
+memory_controller_t::~memory_controller_t() = default;
 // ============================================================================
 
 // ============================================================================

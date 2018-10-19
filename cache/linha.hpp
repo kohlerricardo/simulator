@@ -19,10 +19,10 @@ class linha_t
         }
         ~linha_t(){
             // deleting pointes
-            if(this->linha_ptr_inf) delete this->linha_ptr_inf;
-            if(this->linha_ptr_sup) delete this->linha_ptr_sup;
+            if(this->linha_ptr_inf != NULL) delete &linha_ptr_inf;
+            if(this->linha_ptr_sup != NULL) delete &linha_ptr_sup;
             #if EMC_ACTIVE
-            if(this->linha_ptr_emc) delete this->linha_ptr_emc;
+            if(this->linha_ptr_emc != NULL) delete &linha_ptr_emc;
             #endif
             // Nulling pointers
             this->linha_ptr_inf = NULL;

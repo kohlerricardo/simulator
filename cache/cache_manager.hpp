@@ -8,10 +8,6 @@ class cache_manager_t{
         uint64_t readHit;
         uint64_t writeMiss;
         uint64_t writeHit;
-        
-        std::priority_queue<memory_order_buffer_line_t*, std::vector<memory_order_buffer_line_t*>,priority_memory_access_t> read_buffer;
-        std::priority_queue<memory_order_buffer_line_t*, std::vector<memory_order_buffer_line_t*>,priority_memory_access_t> write_buffer;
-        
     public:
         cache_t *data_cache;
         cache_t *inst_cache;

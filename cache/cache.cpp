@@ -19,7 +19,7 @@ cache_t::cache_t()
 
 cache_t::~cache_t()
 {
-	// if(this->sets) delete &sets;
+	if(this->sets!=NULL) delete[] &sets;
 }    
 // ==================
 // @*linha -linha to be printed

@@ -146,16 +146,19 @@ int main(int argc, char **argv) {
     }
     // to be prinf
 	ORCS_PRINTF("End of Simulation\n")
-    orcs_engine.processor->printConfiguration();
 	orcs_engine.trace_reader->statistics();
     orcs_engine.processor->statistics();
     orcs_engine.branchPredictor->statistics();
     orcs_engine.cacheManager->statistics();
     orcs_engine.memory_controller->statistics();
 
+    ORCS_PRINTF("Deleting Processor\n")
     delete orcs_engine.processor;
+    ORCS_PRINTF("Deleting Branch predictor\n")
     delete orcs_engine.branchPredictor;
+    ORCS_PRINTF("Deleting Cache manager\n")
     delete orcs_engine.cacheManager;
+    ORCS_PRINTF("Deleting Memory Controller\n")
     delete orcs_engine.memory_controller;
     
     return(EXIT_SUCCESS);

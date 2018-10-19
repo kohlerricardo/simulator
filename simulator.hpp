@@ -171,9 +171,9 @@ extern orcs_engine_t orcs_engine;
 // Cache Classes
 //  =========================================//
 // // CACHE INCLUDES
-#include "./cache/cache.hpp"
-#include "./cache/cacheSet.hpp"
 #include "./cache/linha.hpp"
+#include "./cache/cacheSet.hpp"
+#include "./cache/cache.hpp"
 #include "./cache/cache_manager.hpp"
 //  =========================================//
 // // Prefetcher INCLUDES
