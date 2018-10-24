@@ -117,6 +117,9 @@ void emc_t::emc_dispatch()
 		{
 			break;
 		}
+		if(emc_opcode == NULL){
+			break;
+		}
 		if ((emc_opcode->rob_ptr !=NULL)&&(emc_opcode->rob_ptr->original_miss == true))
 		{
 			this->unified_rs.erase(this->unified_rs.begin() + i);
@@ -264,6 +267,9 @@ void emc_t::emc_execute()
 		emc_opcode_package_t *emc_package = this->unified_fus[i];
 		if (uop_total_executed >= EMC_EXECUTE_WIDTH)
 		{
+			break;
+		}
+		if(emc_package == NULL){
 			break;
 		}
 		if (emc_package->uop.readyAt <= orcs_engine.get_global_cycle())

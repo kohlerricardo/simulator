@@ -498,6 +498,17 @@ std::string utils_t::int64_to_string(int64_t input_int) {
     return answer;
 };
 
+std::string pointer_rob_to_string(reorder_buffer_line_t *rob_pointer){
+    char a[2];
+    a[0] = '\0';
+    std::string answer;
+    answer.clear();
+
+    a[0] = '\0';
+    sprintf(a , "%s", (rob_pointer !=NULL) ? "T" : "F");
+    answer = a;
+    return answer;
+};
 
 // =============================================================================
 /*! process_mem_usage(double &, double &) - takes two doubles by reference,

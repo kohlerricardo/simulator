@@ -150,7 +150,9 @@ class utils_t {
         static std::string big_uint64_to_string(uint64_t input_int);
         static std::string uint64_to_string(uint64_t input_int);
         static std::string int64_to_string(int64_t input_int);
-
+        //*******************************************************************************
+        static std::string pointer_rob_to_string(reorder_buffer_line_t* rob_pointer);
+        //*******************************************************************************
         static void process_mem_usage(double *stat_vm_usage, double *resident_set);
 
         static void smallSeparator();

@@ -1157,9 +1157,9 @@ void processor_t::dispatch()
 // ============================================================================
 void processor_t::execute()
 {
-#if EXECUTE_DEBUG
-	ORCS_PRINTF("Execute Stage\n")
-#endif
+	#if EXECUTE_DEBUG
+		ORCS_PRINTF("Execute Stage\n")
+	#endif
 	// ==================================
 	// verificar leituras prontas no ciclo,
 	// remover do MOB e atualizar os registradores,
@@ -1191,56 +1191,102 @@ void processor_t::execute()
 			// break;
 		}
 	}
+#if EMC_ACTIVE
+	if (this->start_emc_module)
+	{	
+#if DEBUG
+	sleep(1);
+	ORCS_PRINTF("Global Cycle started %lu\n",orcs_engine.get_global_cycle())
+#endif
+		for(uint32_t i=0;i<this->rob_buffer.size();i++){
+			bool renamed_emc=false;
+			reorder_buffer_line_t *rob_next = this->rob_buffer.front();
+			///verificando se é um reg spill
+			// ORCS_PRINTF("\n\nRenaming %s\n",rob_next->content_to_string().c_str())
+		
+			if(rob_next->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+				if(this->verify_spill_register(rob_next)){
+					this->rob_buffer.erase(this->rob_buffer.begin());
+					i--;
+					continue;
+				}
+			}
+			////////////////////////////////////////
+			if(this->renameEMC(rob_next) == POSITION_FAIL){
+				this->rob_buffer.clear();	
+			}else{
+				rob_next->is_poisoned=true;
+				renamed_emc=true;
+			}
+			// orcs_engine.memory_controller->emc->print_structures();
+			////////////////////////////////////////
+			if(renamed_emc==true){
+				this->rob_buffer.erase(this->rob_buffer.begin());
+				i--;
+			}
+			// Verifica se o rob_buffer está vazio, ou uop buffer cheio
+			if (orcs_engine.memory_controller->emc->uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty()){
+				this->start_emc_module = false; // disable emc module CORE
+				this->rob_buffer.clear();		// flush core buffer
+				orcs_engine.memory_controller->emc->ready_to_execute = true; //execute emc
+				orcs_engine.memory_controller->emc->executed = true; //print dep chain emc
+				this->clean_rrt(); //Limpa RRT;
+				break;
+			}
+		}
+	}
+#endif
+
 	uint32_t uop_total_executed = 0;
 	for (uint32_t i = 0; i < this->unified_functional_units.size(); i++)
 	{
 // ==================================
 // Caso haja um LLC Miss RobHead,gera dep chain
 // ==================================
-#if EMC_ACTIVE
-	if (this->start_emc_module)
-	{	
-		if (orcs_engine.memory_controller->emc->uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty())
-		{
-			this->start_emc_module = false; // disable emc module CORE
-			this->rob_buffer.clear();		// flush core buffer
-			orcs_engine.memory_controller->emc->ready_to_execute = true; //execute emc
-			orcs_engine.memory_controller->emc->executed = true; //print dep chain emc
-			this->clean_rrt(); //Limpa RRT;
-			break;
-		}
-		else{
-			if (this->rob_buffer.size() > 0){
-				// ORCS_PRINTF("=====================================================================================================\n")
-				// for(size_t i = 0; i < this->rob_buffer.size(); i++)
-				// {
-				// 	ORCS_PRINTF("%s\n",this->rob_buffer[i]->content_to_string().c_str())
-				// }
-				// ORCS_PRINTF("=====================================================================================================\n")
-				// this->start_emc_module=false;
-				// this->rob_buffer.clear();
-				reorder_buffer_line_t *rob_next = this->rob_buffer.front();
-				// ORCS_PRINTF("\n\nRenaming %s\n",rob_next->content_to_string().c_str())
-				// orcs_engine.memory_controller->emc->print_structures();
-				// sleep(1);
-				if(rob_next->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
-					if(this->verify_spill_register(rob_next)){
-						this->rob_buffer.erase(this->rob_buffer.begin());
-						continue;
-					}
-				}
+
+
+
+		// if (orcs_engine.memory_controller->emc->uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty())
+		// {
+		// 	this->start_emc_module = false; // disable emc module CORE
+		// 	this->rob_buffer.clear();		// flush core buffer
+		// 	orcs_engine.memory_controller->emc->ready_to_execute = true; //execute emc
+		// 	orcs_engine.memory_controller->emc->executed = true; //print dep chain emc
+		// 	this->clean_rrt(); //Limpa RRT;
+		// 	break;
+		// }
+		// else{
+		// 	if (this->rob_buffer.size() > 0){
+		// 		ORCS_PRINTF("=====================================================================================================\n")
+		// 		ORCS_PRINTF("================================== Sequencias =======================================================\n")
+		// 		for(size_t i = 0; i < this->rob_buffer.size(); i++)
+		// 		{
+		// 		
+		// 		}
+		// 		ORCS_PRINTF("=====================================================================================================\n")
+		// 		// this->start_emc_module=false;
+		// 		// this->rob_buffer.clear();
+		// 		reorder_buffer_line_t *rob_next = this->rob_buffer.front();
+		// 		ORCS_PRINTF("\n\nRenaming %s\n",rob_next->content_to_string().c_str())
+		// 		orcs_engine.memory_controller->emc->print_structures();
+		// 		// sleep(1);
+		// 		if(rob_next->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+		// 			if(this->verify_spill_register(rob_next)){
+		// 				this->rob_buffer.erase(this->rob_buffer.begin());
+		// 				continue;
+		// 			}
+		// 		}
 				
-				if(this->renameEMC(rob_next) == POSITION_FAIL){
-					this->rob_buffer.erase(this->rob_buffer.begin());
-				}else{
-					this->rob_buffer.erase(this->rob_buffer.begin());
-					uop_total_executed++;
-					rob_next->is_poisoned=true;
-				}
-			}
-		}
-	}
-#endif
+		// 		if(this->renameEMC(rob_next) == POSITION_FAIL){
+		// 			ORCS_PRINTF("Failed to remane emc")
+		// 			this->rob_buffer.clear();
+		// 		}else{
+		// 			this->rob_buffer.erase(this->rob_buffer.begin());
+		// 			uop_total_executed++;
+		// 			rob_next->is_poisoned=true;
+		// 		}
+		// 	}
+		// }
 		// =====================================
 
 		reorder_buffer_line_t *rob_line = this->unified_functional_units[i];
@@ -1365,102 +1411,6 @@ void processor_t::execute()
 		}
 	}
 } //end method
-/*
-	//Methods for access memory system v1
-	// ============================================================================
-	void processor_t::mob_read(){	
-		
-		int32_t position_mem;
-		#if MOB_DEBUG
-		ORCS_PRINTF("MOB Read")
-		#endif
-		memory_order_buffer_line_t *mob_line = NULL; 
-		for (size_t i = 0; i < PARALLEL_LOADS; i++)
-		{
-			#if PARALLEL_LIM_ACTIVE
-			if(this->parallel_requests>=MAX_PARALLEL_REQUESTS){
-				// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
-				break;
-			}
-			#endif
-			position_mem = POSITION_FAIL;
-			position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_read,
-								MOB_READ,PACKAGE_STATE_UNTREATED);
-			if(position_mem != POSITION_FAIL){
-				mob_line = &this->memory_order_buffer_read[position_mem];
-			}
-			if(mob_line != NULL){
-					uint32_t ttc=0;
-					ttc = orcs_engine.cacheManager->searchData(mob_line);
-					mob_line->updatePackageReady(ttc);
-					mob_line->rob_ptr->uop.updatePackageReady(ttc);
-					this->memory_read_executed--;
-					#if PARALLEL_LIM_ACTIVE
-					this->parallel_requests++;//numero de req paralelas, add+1
-					#endif
-					#if EMC_ACTIVE
-						if(ttc >(L1_DATA_LATENCY+LLC_LATENCY)){
-							// this->has_llc_miss=false;
-							if(this->isRobHead(mob_line->rob_ptr)){
-								this->start_emc_module=true;
-								// this->has_llc_miss=true;
-								this->rob_buffer.push_back(mob_line->rob_ptr);
-								this->add_llc_miss_rob_head();
-							}
-						}
-					#endif
-				#if MOB_DEBUG
-					ORCS_PRINTF("On MOB READ Stage\n")
-					ORCS_PRINTF("Time to complete READ %u\n",ttc)
-					ORCS_PRINTF("MOB Line After EXECUTE %s\n",mob_line->content_to_string().c_str())
-				#endif
-			}//end if mob_line null
-		}
-		
-	}; //end method
-	// ============================================================================
-	void processor_t::mob_write(){
-		
-		int32_t position_mem = POSITION_FAIL;
-		#if MOB_DEBUG
-			ORCS_PRINTF("MOB Write")
-		#endif
-		memory_order_buffer_line_t *mob_line = NULL; 
-		for (uint8_t i = 0; i < PARALLEL_STORES; i++)
-		{
-			#if PARALLEL_LIM_ACTIVE
-				if(this->parallel_requests>=MAX_PARALLEL_REQUESTS){
-					// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
-					break;
-				}
-			#endif
-			position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_write,
-								MOB_WRITE,PACKAGE_STATE_UNTREATED);
-			if(position_mem != POSITION_FAIL){
-				mob_line = &this->memory_order_buffer_write[position_mem];
-			}
-			if(mob_line != NULL){
-				// ORCS_PRINTF("iterations on mob Write %hhu \n",i)
-				uint32_t ttc=0;
-				ttc = orcs_engine.cacheManager->writeData(mob_line);
-				mob_line->updatePackageReady(ttc);
-				mob_line->rob_ptr->uop.updatePackageReady(ttc);
-				this->memory_read_executed--; //numero de writes executados
-				#if PARALLEL_LIM_ACTIVE
-					this->parallel_requests++;//numero de req paralelas, add+1
-				#endif
-			#if MOB_DEBUG
-					ORCS_PRINTF("On MOB READ Stage\n")
-					ORCS_PRINTF("Time to complete READ %u\n",ttc)
-					ORCS_PRINTF("MOB Line After EXECUTE %s\n",mob_line->content_to_string().c_str())
-			#endif
-			}//end if mob_line null
-		}
-		
-	};
-	// ============================================================================
-*/
-//Methods for access memory system v1
 // ============================================================================
 uint32_t processor_t::mob_read(){
 
@@ -1666,7 +1616,7 @@ void processor_t::commit(){
 	}
 } //end method
 // ============================================================================
-void processor_t::	solve_registers_dependency(reorder_buffer_line_t *rob_line)
+void processor_t::solve_registers_dependency(reorder_buffer_line_t *rob_line)
 {
 
 		/// Remove pointers from Register Alias Table (RAT)
@@ -1752,7 +1702,8 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line)
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){ 
 				// || next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
 					//verify memory ambiguation
-					if(next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE || 
+					if(
+						// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE || 
 						next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 							if(this->verify_ambiguation(next_operation->reg_deps_ptr_array[i]->mob_ptr)){
 								// cancel chain execution
@@ -1770,6 +1721,9 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line)
 	}	
 	if(this->verify_dependent_loads()){
 		this->start_emc_module=true;	
+#if DEBUG
+	ORCS_PRINTF("Global Cycle %lu, start emc module %s\n",orcs_engine.get_global_cycle(),utils_t::bool_to_string(this->start_emc_module).c_str())
+#endif
 	}else{
 		this->rob_buffer.clear();
 	}
@@ -1853,7 +1807,6 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line)
 	emc_package->package_clean();		//clean package 
 	emc_package->uop = rob_line->uop;	//copy uop to info operation
 	emc_package->rob_ptr = rob_line;	//pointer to rob entry to return
-
 	if (rob_line->mob_ptr != NULL){
 		orcs_engine.memory_controller->emc->unified_lsq[pos_lsq] = *(rob_line->mob_ptr);	//copy infos of memory access
 		if(rob_line->original_miss){ //if original memory miss, reduce latency
