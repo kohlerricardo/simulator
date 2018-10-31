@@ -484,12 +484,12 @@ void cache_t::statistics(){
 			utils_t::largeSeparator(output);
 			fprintf(output,"Cache_Level: %s\n",get_enum_cache_level_char(this->level));
 			fprintf(output,"%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess());
-			fprintf(output,"%s_Cache_Hits: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()));
-			fprintf(output,"%s_Cache_Miss: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()));
-			fprintf(output,"%s_Cache_Read: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()));
-			fprintf(output,"%s_Cache_Write: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()));
+			fprintf(output,"%s_Cache_Hits: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheHit());
+			fprintf(output,"%s_Cache_Miss: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheMiss());
+			fprintf(output,"%s_Cache_Read: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheRead());
+			fprintf(output,"%s_Cache_Write: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWrite());
 			if(this->get_cacheWriteBack()!=0){
-				fprintf(output,"%s_Cache_WriteBack: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()));
+				fprintf(output,"%s_Cache_WriteBack: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack());
 			}
 			utils_t::largeSeparator(output);
 		}

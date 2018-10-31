@@ -51,9 +51,9 @@ void prefetcher_t::statistics(){
             utils_t::largeSeparator(output);
             fprintf(output,"##############  PREFETCHER ##################\n");
             fprintf(output,"Total Prefetches: %u\n", this->get_totalPrefetched());
-            fprintf(output,"Useful Prefetches: %u -> %.4f \n", this->get_usefulPrefetches(),(this->get_usefulPrefetches()*100.0)/this->get_totalPrefetched());
-            fprintf(output,"Late Prefetches: %u -> %.4f \n",this->get_latePrefetches(),((this->get_latePrefetches()*100.0)/this->get_totalPrefetched()));
-            fprintf(output,"MediaAtraso: %.3f\n",(float)this->get_totalCycleLate()/(float)this->get_latePrefetches());
+            fprintf(output,"Useful Prefetches: %u\n", this->get_usefulPrefetches());
+            fprintf(output,"Late Prefetches: %u\n",this->get_latePrefetches());
+            fprintf(output,"MediaAtraso: %.4f\n",(float)this->get_totalCycleLate()/(float)this->get_latePrefetches());
             utils_t::largeSeparator(output);
         }
         fclose(output);

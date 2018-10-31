@@ -112,15 +112,15 @@ void branch_predictor_t::statistics(){
 		FILE *output = fopen(orcs_engine.output_file_name,"a+");
 		if(output != NULL){
 			utils_t::largestSeparator(output);
-			fprintf(output,"BTB Hits: %u -> %.2f\n",this->btbHits,(this->btbHits*100.0)/(float)(this->btbHits+this->btbMiss));
-			fprintf(output,"BTB Miss: %u -> %.2f\n\n",this->btbMiss,(this->btbMiss*100.0)/(float)(this->btbHits+this->btbMiss));
+			fprintf(output,"BTB Hits: %u\n",this->btbHits);
+			fprintf(output,"BTB Miss: %u\n",this->btbMiss);
 			fprintf(output,"Total Branchs: %u\n",this->branches);
-			fprintf(output,"Total Branchs Taken: %u -> %.2f \n",this->branchTaken,((this->branchTaken*100.0)/this->branches));
-			fprintf(output,"Total Branchs Not Taken: %u -> %.2f\n",this->branchNotTaken,((this->branchNotTaken*100.0)/this->branches));
-			fprintf(output,"Correct Branchs Taken: %u -> %.2f\n",(this->branchTaken-this->branchTakenMiss),((this->branchTaken-this->branchTakenMiss)*100.0)/this->branchTaken);
-			fprintf(output,"Incorrect Branchs Taken: %u -> %.2f\n",this->branchTakenMiss,((this->branchTakenMiss*100.0)/this->branchTaken));
-			fprintf(output,"Correct Branchs Not Taken: %u -> %.2f\n",(this->branchNotTaken-this->branchNotTakenMiss),((this->branchNotTaken-this->branchNotTakenMiss)*100.0)/this->branchNotTaken);
-			fprintf(output,"Incorrect Branchs Not Taken: %u -> %.2f\n",this->branchNotTakenMiss,((this->branchNotTakenMiss*100.0)/this->branchNotTaken));
+			fprintf(output,"Total Branchs Taken: %u\n",this->branchTaken);
+			fprintf(output,"Total Branchs Not Taken: %u\n",this->branchNotTaken);
+			fprintf(output,"Correct Branchs Taken: %u\n",(this->branchTaken-this->branchTakenMiss));
+			fprintf(output,"Incorrect Branchs Taken: %u\n",this->branchTakenMiss);
+			fprintf(output,"Correct Branchs Not Taken: %u\n",(this->branchNotTaken-this->branchNotTakenMiss));
+			fprintf(output,"Incorrect Branchs Not Taken: %u\n",this->branchNotTakenMiss);
 			utils_t::largestSeparator(output);
 		}
 		fclose(output);

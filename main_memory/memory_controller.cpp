@@ -36,11 +36,11 @@ void memory_controller_t::statistics(){
         FILE *output = fopen(orcs_engine.output_file_name,"a+");
 		if(output != NULL){
         utils_t::largestSeparator(output);
-        fprintf(output,"Memory Controller\n");
+        fprintf(output,"#Memory Controller\n");
         utils_t::largestSeparator(output);
-        fprintf(output,"Requests_Made %lu\n",this->get_requests_made());
-        fprintf(output,"Requests_from_LLC %lu\n",this->get_requests_llc());
-        fprintf(output,"Requests_from_EMC %lu\n",this->get_requests_emc());
+        fprintf(output,"Requests_Made: %lu\n",this->get_requests_made());
+        fprintf(output,"Requests_from_LLC: %lu\n",this->get_requests_llc());
+        fprintf(output,"Requests_from_EMC: %lu\n",this->get_requests_emc());
         utils_t::largestSeparator(output);
 #if EMC_ACTIVE
         this->emc->statistics();
