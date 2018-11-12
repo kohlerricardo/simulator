@@ -17,7 +17,6 @@ ORCS_D=("C1_ROB_168_LLC_4M_RAM_200"
 # mkdir ${SINUCA_D}
 for jj in ${ORCS_D[@]}
 do
-        echo ${jj}
         mkdir ${jj}'.d'
         for i in ${LIST_BENCHS[@]}
         do  

@@ -171,7 +171,6 @@ void processor_t::allocate()
 #if EMC_ACTIVE
 	this->rob_buffer.reserve(ROB_SIZE);
 	this->rrt = new register_remapping_table_t[EMC_REGISTERS];
-	this->emc_live_in.reserve(EMC_REGISTERS);
 #endif
 	//======================================================================
 	// Initializating EMC control variables
@@ -1194,6 +1193,20 @@ void processor_t::execute()
 #if EMC_ACTIVE
 	if (this->start_emc_module)
 	{	
+// ======================================================================
+// Contando numero de loads dependentes nas cadeias elegiveis para execução
+		this->instrucoes_inter_load_deps = 0;
+		for (uint32_t i = 1; i < this->rob_buffer.size(); i++)
+		{
+			if(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
+				this->numero_load_deps++;
+				this->soma_instrucoes_deps+=this->instrucoes_inter_load_deps;
+				this->instrucoes_inter_load_deps=0;
+			}else{
+				this->instrucoes_inter_load_deps++;
+			}
+		}
+// ======================================================================
 #if DEBUG
 	sleep(1);
 	ORCS_PRINTF("Global Cycle started %lu\n",orcs_engine.get_global_cycle())
@@ -1240,55 +1253,6 @@ void processor_t::execute()
 	uint32_t uop_total_executed = 0;
 	for (uint32_t i = 0; i < this->unified_functional_units.size(); i++)
 	{
-// ==================================
-// Caso haja um LLC Miss RobHead,gera dep chain
-// ==================================
-
-
-
-		// if (orcs_engine.memory_controller->emc->uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty())
-		// {
-		// 	this->start_emc_module = false; // disable emc module CORE
-		// 	this->rob_buffer.clear();		// flush core buffer
-		// 	orcs_engine.memory_controller->emc->ready_to_execute = true; //execute emc
-		// 	orcs_engine.memory_controller->emc->executed = true; //print dep chain emc
-		// 	this->clean_rrt(); //Limpa RRT;
-		// 	break;
-		// }
-		// else{
-		// 	if (this->rob_buffer.size() > 0){
-		// 		ORCS_PRINTF("=====================================================================================================\n")
-		// 		ORCS_PRINTF("================================== Sequencias =======================================================\n")
-		// 		for(size_t i = 0; i < this->rob_buffer.size(); i++)
-		// 		{
-		// 		
-		// 		}
-		// 		ORCS_PRINTF("=====================================================================================================\n")
-		// 		// this->start_emc_module=false;
-		// 		// this->rob_buffer.clear();
-		// 		reorder_buffer_line_t *rob_next = this->rob_buffer.front();
-		// 		ORCS_PRINTF("\n\nRenaming %s\n",rob_next->content_to_string().c_str())
-		// 		orcs_engine.memory_controller->emc->print_structures();
-		// 		// sleep(1);
-		// 		if(rob_next->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
-		// 			if(this->verify_spill_register(rob_next)){
-		// 				this->rob_buffer.erase(this->rob_buffer.begin());
-		// 				continue;
-		// 			}
-		// 		}
-				
-		// 		if(this->renameEMC(rob_next) == POSITION_FAIL){
-		// 			ORCS_PRINTF("Failed to remane emc")
-		// 			this->rob_buffer.clear();
-		// 		}else{
-		// 			this->rob_buffer.erase(this->rob_buffer.begin());
-		// 			uop_total_executed++;
-		// 			rob_next->is_poisoned=true;
-		// 		}
-		// 	}
-		// }
-		// =====================================
-
 		reorder_buffer_line_t *rob_line = this->unified_functional_units[i];
 		if (uop_total_executed == EXECUTE_WIDTH)
 		{
@@ -1333,7 +1297,7 @@ void processor_t::execute()
 			// MEMORY LOAD/STORE ==========================================
 			case INSTRUCTION_OPERATION_MEM_LOAD:
 			{
-				ERROR_ASSERT_PRINTF(rob_line->mob_ptr != NULL, "Read with a NULL pointer to MOB")
+				ERROR_ASSERT_PRINTF(rob_line->mob_ptr != NULL, "Read with a NULL pointer to MOB\n%s\n",rob_line->content_to_string().c_str())
 				this->memory_read_executed++;
 				rob_line->mob_ptr->uop_executed = true;
 				rob_line->uop.updatePackageReady(EXECUTE_LATENCY);
@@ -1345,7 +1309,7 @@ void processor_t::execute()
 			break;
 			case INSTRUCTION_OPERATION_MEM_STORE:
 			{
-				ERROR_ASSERT_PRINTF(rob_line->mob_ptr != NULL, "Write with a NULL pointer to MOB")
+				ERROR_ASSERT_PRINTF(rob_line->mob_ptr != NULL, "Write with a NULL pointer to MOB\n%s\n",rob_line->content_to_string().c_str())
 				this->memory_write_executed++;
 				;
 				rob_line->mob_ptr->uop_executed = true;
@@ -1721,11 +1685,13 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line)
 	}	
 	if(this->verify_dependent_loads()){
 		this->start_emc_module=true;	
+		this->add_started_emc_execution();
 #if DEBUG
 	ORCS_PRINTF("Global Cycle %lu, start emc module %s\n",orcs_engine.get_global_cycle(),utils_t::bool_to_string(this->start_emc_module).c_str())
 #endif
 	}else{
 		this->rob_buffer.clear();
+		this->add_cancel_emc_execution();
 	}
 	
 };
@@ -1942,16 +1908,10 @@ bool processor_t::verify_spill_register(reorder_buffer_line_t *rob_line)
 bool processor_t::verify_dependent_loads()
 {
 	uint8_t loads = 1;
-	this->instrucoes_inter_load_deps = 0;
 	for (uint32_t i = 1; i < this->rob_buffer.size(); i++)
 	{
 		if(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 			loads++;
-			this->numero_load_deps++;
-			this->soma_instrucoes_deps+=this->instrucoes_inter_load_deps;
-			this->instrucoes_inter_load_deps=0;
-		}else{
-			this->instrucoes_inter_load_deps++;
 		}
 	}
 	
@@ -2067,6 +2027,7 @@ void processor_t::statistics()
 			ORCS_PRINTF("numero_load_deps: %u\n", this->numero_load_deps)
 			ORCS_PRINTF("Total_instrucoes_dependentes: %u\n", this->soma_instrucoes_deps)
 			ORCS_PRINTF("load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps))
+			ORCS_PRINTF("started_emc_execution: %d\n", this->get_started_emc_execution())
 			ORCS_PRINTF("canceled_emc_execution: %d\n", this->get_cancel_emc_execution())
 			utils_t::largeSeparator();
 		}
@@ -2105,6 +2066,7 @@ void processor_t::statistics()
 				fprintf(output, "numero_load_deps: %u\n", this->numero_load_deps);
 				fprintf(output, "Total_instrucoes_dependentes: %u\n", this->soma_instrucoes_deps);
 				fprintf(output, "load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps));
+				fprintf(output, "started_emc_execution: %d\n", this->get_started_emc_execution());
 				fprintf(output, "canceled_emc_execution: %d\n", this->get_cancel_emc_execution());
 
 			}

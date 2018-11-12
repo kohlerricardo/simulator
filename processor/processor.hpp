@@ -226,7 +226,6 @@ class processor_t {
 		bool start_emc_module;//if must start generate dep chain
 		bool on_emc_execution;//flag to receive uops ready
 		container_ptr_reorder_buffer_line_t rob_buffer; // Wait list to propagate registers;
-		std::vector<uint32_t> emc_live_in;
 		register_remapping_table_t *rrt;
 		uint8_t counter_make_dep_chain;
 		// Statistics
@@ -235,6 +234,7 @@ class processor_t {
 		uint32_t soma_instrucoes_deps;
 		uint32_t numero_load_deps;
 		uint32_t cancel_emc_execution;
+		uint32_t started_emc_execution;
 		// ====================================================================
 		//  Methods
 		// void
@@ -269,4 +269,5 @@ class processor_t {
 		// ====================================================================
 		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head);
 		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution);
+		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_execution);
 };

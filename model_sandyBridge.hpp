@@ -136,8 +136,8 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 4*MEGA
-#define LLC_ASSOCIATIVITY 16
+#define LLC_SIZE 512 * KILO
+#define LLC_ASSOCIATIVITY 8
 #define LLC_LATENCY 12
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
