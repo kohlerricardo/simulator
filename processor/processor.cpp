@@ -1200,6 +1200,7 @@ void processor_t::execute()
 		{
 			if(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 				this->numero_load_deps++;
+				this->instrucoes_inter_load_deps++;
 				this->soma_instrucoes_deps+=this->instrucoes_inter_load_deps;
 				this->instrucoes_inter_load_deps=0;
 			}else{

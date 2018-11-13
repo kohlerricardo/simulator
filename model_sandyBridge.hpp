@@ -78,11 +78,11 @@ Arquivo definindo os parametros do modelo de processador
 #define FETCH_BUFFER 18
 #define DECODE_BUFFER 28
 #define RAT_SIZE 260
-#define ROB_SIZE 168
+#define ROB_SIZE 384
 #define UNIFIED_RS 54
 //MOB
-#define MOB_READ 64
-#define MOB_WRITE 36
+#define MOB_READ 168
+#define MOB_WRITE 168
 
 
 // ===========BRANCH PREDICTOR=============
@@ -136,7 +136,7 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 512 * KILO
+#define LLC_SIZE 256 * KILO
 #define LLC_ASSOCIATIVITY 8
 #define LLC_LATENCY 12
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
@@ -144,7 +144,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 
 // =====================RAM=======================
-#define RAM_LATENCY 200
+#define RAM_LATENCY 800
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
 #define MAX_PARALLEL_REQUESTS 4

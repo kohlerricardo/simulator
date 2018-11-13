@@ -37,9 +37,10 @@ def get_values(dados,dicionario):
         values.append(dicionario.get(i))
     return values
 def main():
-    fields_required=['benchmark','Total_Cycle','fetch_instructions','INST_CACHE_Cache_Hits','INST_CACHE_Cache_Miss','L1_DATA_CACHE_Cache_Hits','L1_DATA_CACHE_Cache_Miss','LLC_Cache_Hits','LLC_Cache_Miss','EMC_DATA_CACHE_Cache_Hits','EMC_DATA_CACHE_Cache_Miss','EMC_Access_LLC_HIT','EMC_Access_LLC_MISS','times_llc_rob_head','numero_load_deps','Total_instrucoes_dependentes','canceled_emc_execution'] 
+    fields_required=['benchmark','Total_Cycle','fetch_instructions','INST_CACHE_Cache_Hits','INST_CACHE_Cache_Miss','L1_DATA_CACHE_Cache_Hits','L1_DATA_CACHE_Cache_Miss','LLC_Cache_Hits','LLC_Cache_Miss','EMC_DATA_CACHE_Cache_Hits','EMC_DATA_CACHE_Cache_Miss','EMC_Access_LLC_HIT','EMC_Access_LLC_MISS','times_llc_rob_head','numero_load_deps','Total_instrucoes_dependentes','started_emc_execution','canceled_emc_execution'] 
     folder = sys.argv[1]
     files = get_list_file(folder)
+    data_array = list()
     with open(sys.argv[2],'a') as csv_file:
         spaw_writter = csv.writer(csv_file,delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spaw_writter.writerow(fields_required)
@@ -47,11 +48,13 @@ def main():
     for f in files:
         dados = read_file(folder+f)
         dicionario = generate_dict(dados)
-        dicionario['benchmark'] = f
+        dicionario['benchmark'] = str(f).lower()
+        data_array.append(get_values(fields_required,dicionario))
+        data_array = sorted(data_array)
+    for d in data_array:
         with open(sys.argv[2],'a') as csv_file:
             spaw_writter = csv.writer(csv_file,delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            spaw_writter.writerow(get_values(fields_required,dicionario))
-        csv_file.close()
+            spaw_writter.writerow(d)
 
 
 
