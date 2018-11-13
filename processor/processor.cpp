@@ -941,7 +941,7 @@ void processor_t::dispatch()
 			ORCS_PRINTF("i = %u UNified RS %lu\n", i, this->unified_reservation_station.size())
 			ORCS_PRINTF("Trying Dispatch %s\n", rob_line->content_to_string().c_str())
 	#endif
-			if (rob_line->emc_executed == true)
+			if (rob_line->is_poisoned == true)
 			{
 				this->unified_reservation_station.erase(this->unified_reservation_station.begin() + i);
 				i--;
@@ -1208,10 +1208,6 @@ void processor_t::execute()
 			}
 		}
 // ======================================================================
-#if DEBUG
-	sleep(1);
-	ORCS_PRINTF("Global Cycle started %lu\n",orcs_engine.get_global_cycle())
-#endif
 		for(uint32_t i=0;i<this->rob_buffer.size();i++){
 			bool renamed_emc=false;
 			reorder_buffer_line_t *rob_next = this->rob_buffer.front();
@@ -1230,6 +1226,7 @@ void processor_t::execute()
 				this->rob_buffer.clear();	
 			}else{
 				rob_next->is_poisoned=true;
+				
 				renamed_emc=true;
 			}
 			// orcs_engine.memory_controller->emc->print_structures();
@@ -1687,9 +1684,6 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line)
 	if(this->verify_dependent_loads()){
 		this->start_emc_module=true;	
 		this->add_started_emc_execution();
-#if DEBUG
-	ORCS_PRINTF("Global Cycle %lu, start emc module %s\n",orcs_engine.get_global_cycle(),utils_t::bool_to_string(this->start_emc_module).c_str())
-#endif
 	}else{
 		this->rob_buffer.clear();
 		this->add_cancel_emc_execution();

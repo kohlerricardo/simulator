@@ -81,8 +81,8 @@ Arquivo definindo os parametros do modelo de processador
 #define ROB_SIZE 384
 #define UNIFIED_RS 54
 //MOB
-#define MOB_READ 168
-#define MOB_WRITE 168
+#define MOB_READ 192
+#define MOB_WRITE 108
 
 
 // ===========BRANCH PREDICTOR=============
@@ -199,7 +199,7 @@ Arquivo definindo os parametros do modelo de processador
 #define HEARTBEAT 1
 #define HEARTBEAT_CLOCKS 10000000
 // ==========DEBUGS
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #define FETCH_DEBUG 0
@@ -222,6 +222,6 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 10
-#define WAIT_CYCLE 209999
+#define WAIT_CYCLE 517000000
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP
