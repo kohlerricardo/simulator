@@ -79,15 +79,15 @@ std::string get_status_execution(){
     // Get  status opcodes total, executed -> calculate percent 
     uint64_t total_opcodes = orcs_engine.trace_reader->get_trace_opcode_max();
     uint64_t fetched_opcodes = orcs_engine.trace_reader->get_fetch_instructions();
-    snprintf(report,sizeof(report),"opcodes Processed: %lu of %lu\n",fetched_opcodes,total_opcodes);
+    snprintf(report,sizeof(report),"Opcodes Processed: %lu of %lu\n",fetched_opcodes,total_opcodes);
     final_report+=report;
     ////////
     double percentage_complete = 100.0 * (static_cast<double>(fetched_opcodes) / static_cast<double>(total_opcodes));
     //    
-    snprintf(report,sizeof(report),"Total Progress %8.4lf%%\n",percentage_complete);
+    snprintf(report,sizeof(report),"Total Progress %4.2lf%%\n",percentage_complete);
     final_report+=report;
     // IPC parcial
-    snprintf(report,sizeof(report)," IPC(%5.3lf)\n", static_cast<double>(fetched_opcodes) / static_cast<double>(orcs_engine.get_global_cycle()));
+    snprintf(report,sizeof(report),"IPC(%1.6lf)\n", static_cast<double>(fetched_opcodes) / static_cast<double>(orcs_engine.get_global_cycle()));
     final_report+=report;
     //get time of execution
     gettimeofday(&orcs_engine.stat_timer_end, NULL);

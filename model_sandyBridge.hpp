@@ -169,7 +169,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================MEMORY DESAMBIGUATION=======================
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 1
+#define EMC_ACTIVE 0
 //WIDHTs
 #define EMC_DISPATCH_WIDTH 2
 #define EMC_EXECUTE_WIDTH 2

@@ -27,6 +27,7 @@ void memory_order_buffer_line_t::package_clean() {
         this->readyToGo = orcs_engine.get_global_cycle();
         this->wait_mem_deps_number = 0;
         this->waiting_dram = false;
+        this->package_age=orcs_engine.get_global_cycle();
         #if EMC_ACTIVE
         this->emc_opcode_ptr=NULL;
         #endif
@@ -47,6 +48,7 @@ std::string memory_order_buffer_line_t::content_to_string() {
     content_string = content_string + " |Mem Deps:" + utils_t::int32_to_string(this->wait_mem_deps_number);
     content_string = content_string + " |Ready At:" +  utils_t::uint64_to_string(this->readyAt);
     content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo);
+    content_string = content_string + " |Age:"+utils_t::uint64_to_string(this->package_age);
     return content_string;
 };
 

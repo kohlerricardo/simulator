@@ -95,6 +95,8 @@ class processor_t {
 		// MOB WRITE RELATED
 		int32_t search_position_mob_write();
 		void remove_front_mob_write();
+
+
 		void make_memory_dependencies(memory_order_buffer_line_t *mob_line);
 		void solve_memory_dependency(memory_order_buffer_line_t *mob_line);
 
@@ -143,24 +145,29 @@ class processor_t {
 		// ======================
 		// Memory Order Buffer
 		// ======================
+		
+		// ======================
 		//READ
+		// ======================
 		memory_order_buffer_line_t *memory_order_buffer_read;
-        // uint32_t memory_order_buffer_read_start;
-        // uint32_t memory_order_buffer_read_end;
-        // uint32_t memory_order_buffer_read_used;
-		// std::list<memory_order_buffer_line_t> memory_order_buffer_read; 
-		memory_order_buffer_line_t* *disambiguation_load_hash;
-		uint32_t disambiguation_load_hash_bits_mask;
-		uint32_t disambiguation_load_hash_bits_shift;		
+        uint32_t memory_order_buffer_read_start;
+        uint32_t memory_order_buffer_read_end;
+        uint32_t memory_order_buffer_read_used;
+		// memory_order_buffer_line_t* *disambiguation_load_hash;
+		// uint32_t disambiguation_load_hash_bits_shift;
+		// uint32_t disambiguation_load_hash_bits_mask;
+		
+		// ======================
 		//WRITE
+		// ======================
 		memory_order_buffer_line_t *memory_order_buffer_write;
-		// uint32_t memory_order_buffer_write_start;
-        // uint32_t memory_order_buffer_write_end;
-        // uint32_t memory_order_buffer_write_used;
-		// std::list<memory_order_buffer_line_t> memory_order_buffer_write; 
-		memory_order_buffer_line_t* *disambiguation_store_hash;
-		uint32_t disambiguation_store_hash_bits_shift;
-		uint32_t disambiguation_store_hash_bits_mask;
+		uint32_t memory_order_buffer_write_start;
+        uint32_t memory_order_buffer_write_end;
+        uint32_t memory_order_buffer_write_used;
+		
+		// memory_order_buffer_line_t* *disambiguation_store_hash;
+		// uint32_t disambiguation_store_hash_bits_shift;
+		// uint32_t disambiguation_store_hash_bits_mask;
 		// ======================
 		// Parallel requests to DRAM 
 		int32_t parallel_requests;
