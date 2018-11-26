@@ -19,7 +19,7 @@ FD_CACHE = cache
 FD_PREFETCHER = prefetcher
 FD_MEMORY = main_memory
 FD_EMC = emc
-
+FD_DISAMBIGUATION = memory_disambiguation
 
 
 ###
@@ -28,6 +28,10 @@ LIBRARY = -lz
 SRC_PACKAGE = 		$(FD_PACKAGE)/opcode_package.cpp $(FD_PACKAGE)/uop_package.cpp
 
 SRC_TRACE_READER = 	trace_reader.cpp
+
+SRC_MEMORY_DISAMBIGUATION = $(FD_PROCESSOR)/$(FD_DISAMBIGUATION)/disambiguation.cpp\
+							$(FD_PROCESSOR)/$(FD_DISAMBIGUATION)/disambiguation_perfect.cpp\
+							$(FD_PROCESSOR)/$(FD_DISAMBIGUATION)/disambiguation_hashed.cpp
 
 SRC_PROCESSOR =		$(FD_PROCESSOR)/processor.cpp\
 					$(FD_PROCESSOR)/reorder_buffer_line.cpp\
@@ -54,6 +58,7 @@ SRC_EMC = 	$(FD_MEMORY)/$(FD_EMC)/emc.cpp\
 SRC_CORE =  simulator.cpp orcs_engine.cpp\
 			$(SRC_TRACE_READER)\
 			$(SRC_PACKAGE)\
+			$(SRC_MEMORY_DISAMBIGUATION)\
 			$(SRC_PROCESSOR)\
 			$(SRC_OTHER)\
 			$(SRC_BRANCH_PREDICTOR)\

@@ -95,12 +95,6 @@ class processor_t {
 		// MOB WRITE RELATED
 		int32_t search_position_mob_write();
 		void remove_front_mob_write();
-
-
-		void make_memory_dependencies(memory_order_buffer_line_t *mob_line);
-		void solve_memory_dependency(memory_order_buffer_line_t *mob_line);
-
-
 		// ====================================================================
 		// Stage Methods
 		// ====================================================================
@@ -145,7 +139,7 @@ class processor_t {
 		// ======================
 		// Memory Order Buffer
 		// ======================
-		
+		desambiguation_t *desambiguator;
 		// ======================
 		//READ
 		// ======================
@@ -153,10 +147,7 @@ class processor_t {
         uint32_t memory_order_buffer_read_start;
         uint32_t memory_order_buffer_read_end;
         uint32_t memory_order_buffer_read_used;
-		// memory_order_buffer_line_t* *disambiguation_load_hash;
-		// uint32_t disambiguation_load_hash_bits_shift;
-		// uint32_t disambiguation_load_hash_bits_mask;
-		
+
 		// ======================
 		//WRITE
 		// ======================
@@ -164,10 +155,9 @@ class processor_t {
 		uint32_t memory_order_buffer_write_start;
         uint32_t memory_order_buffer_write_end;
         uint32_t memory_order_buffer_write_used;
-		
-		// memory_order_buffer_line_t* *disambiguation_store_hash;
-		// uint32_t disambiguation_store_hash_bits_shift;
-		// uint32_t disambiguation_store_hash_bits_mask;
+		// Pointers to retain oldests memory operations
+		memory_order_buffer_line_t *oldest_read_to_send;
+		memory_order_buffer_line_t *oldest_write_to_send;
 		// ======================
 		// Parallel requests to DRAM 
 		int32_t parallel_requests;

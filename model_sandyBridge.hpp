@@ -144,7 +144,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 
 // =====================RAM=======================
-#define RAM_LATENCY 800
+#define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
 #define MAX_PARALLEL_REQUESTS 4
@@ -160,11 +160,16 @@ Arquivo definindo os parametros do modelo de processador
 
 // =====================MEMORY DESAMBIGUATION=======================
 #define DESAMBIGUATION_ENABLED 1
+// PERFECT
+#define PERFECT 0
+// HASHED
+#define HASHED 1    
 #define LOAD_HASH_SIZE 512
 #define STORE_HASH_SIZE 512
 #define DESAMBIGUATION_BLOCK_SIZE 4
-
+// SOLVING ADDRESS TO ADDRESS
 #define ADDRESS_TO_ADDRESS 1
+// REGISTER FORWARD ON EXECUTION
 #define REGISTER_FORWARD 1
 // =====================MEMORY DESAMBIGUATION=======================
 
@@ -199,7 +204,7 @@ Arquivo definindo os parametros do modelo de processador
 #define HEARTBEAT 1
 #define HEARTBEAT_CLOCKS 10000000
 // ==========DEBUGS
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #define FETCH_DEBUG 0
@@ -207,8 +212,8 @@ Arquivo definindo os parametros do modelo de processador
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 0
-#define MOB_DEBUG 0
-#define COMMIT_DEBUG 0
+#define MOB_DEBUG 1
+#define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
 // EMC Debugs
@@ -221,7 +226,7 @@ Arquivo definindo os parametros do modelo de processador
 #endif
 
 #define PERIODIC_CHECK 0
-#define CLOCKS_TO_CHECK 10
-#define WAIT_CYCLE 517000000
+#define CLOCKS_TO_CHECK 500
+#define WAIT_CYCLE 8500
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP

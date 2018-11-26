@@ -4,31 +4,14 @@
 processor_t::processor_t()
 {
 	//Setting Pointers to NULL
+	// ========OLDEST MEMORY OPERATIONS POINTER======
+	this->oldest_read_to_send = NULL;
+	this->oldest_write_to_send = NULL;
 	// ========MOB======
 	this->memory_order_buffer_read = NULL;
 	this->memory_order_buffer_write = NULL;
 	//=========DESAMBIGUATION ============
-	// ==============================================================
-	// HASHED LOAD/STORE
-	// ==============================================================
-	// this->disambiguation_load_hash = NULL;
-	// this->disambiguation_load_hash_bits_mask = 0;
-	// this->disambiguation_load_hash_bits_shift = 0;
-	// ==============================================================
-	// this->disambiguation_store_hash = NULL;
-	// this->disambiguation_store_hash_bits_mask = 0;
-	// this->disambiguation_store_hash_bits_shift = 0;
-	// ==============================================================
-	// ARRAY
-	// ==============================================================
-	// LOAD
-	this->memory_order_buffer_read_start = 0;
-	this->memory_order_buffer_read_end = 0;
-	this->memory_order_buffer_read_used =0;
-	// STORE
-	this->memory_order_buffer_write_start = 0;
-	this->memory_order_buffer_write_end = 0;
-	this->memory_order_buffer_write_used =0;
+	this->desambiguator = NULL;
 	// ==========RAT======
 	this->register_alias_table = NULL;
 	// ==========ROB========
@@ -52,12 +35,11 @@ processor_t::processor_t()
 };
 processor_t::~processor_t()
 {
-	//NULLing Pointers
-	//deleting MOB read and MOB write
-	// utils_t::template_delete_array<memory_order_buffer_line_t *>(this->disambiguation_load_hash);
-	// utils_t::template_delete_array<memory_order_buffer_line_t *>(this->disambiguation_store_hash);
+	//Memory
 	utils_t::template_delete_array<memory_order_buffer_line_t>(this->memory_order_buffer_read);
 	utils_t::template_delete_array<memory_order_buffer_line_t>(this->memory_order_buffer_write);
+	utils_t::template_delete_variable<desambiguation_t>(this->desambiguator);
+
 	//deleting deps array rob
 	for (size_t i = 0; i < ROB_SIZE; i++)
 	{
@@ -133,33 +115,23 @@ void processor_t::allocate()
 	{
 		this->memory_order_buffer_read[i].mem_deps_ptr_array = utils_t::template_allocate_initialize_array<memory_order_buffer_line_t *>(ROB_SIZE, NULL);
 	}
+	// LOAD
+	this->memory_order_buffer_read_start = 0;
+	this->memory_order_buffer_read_end = 0;
+	this->memory_order_buffer_read_used =0;
 	// // Memory Order Buffer Write
 	this->memory_order_buffer_write = utils_t::template_allocate_array<memory_order_buffer_line_t>(MOB_WRITE);
 	for (size_t i = 0; i < MOB_WRITE; i++)
 	{
 		this->memory_order_buffer_write[i].mem_deps_ptr_array = utils_t::template_allocate_initialize_array<memory_order_buffer_line_t *>(ROB_SIZE, NULL);
 	}
-	// =========================================================================================
-	// DISAMBIGUATION 
-	// =========================================================================================
-	// ERROR_ASSERT_PRINTF(utils_t::check_if_power_of_two(LOAD_HASH_SIZE), "Wrong disambiguation_load_hash_size.\n")
-	// for (uint32_t i = 0; i < utils_t::get_power_of_two(LOAD_HASH_SIZE); i++)
-	// {
-	// 	this->disambiguation_load_hash_bits_mask |= 1 << i;
-	// }
-	// this->disambiguation_load_hash_bits_shift = utils_t::get_power_of_two(DESAMBIGUATION_BLOCK_SIZE);
-	// this->disambiguation_load_hash_bits_mask <<= this->disambiguation_load_hash_bits_shift;
-	// this->disambiguation_load_hash = utils_t::template_allocate_initialize_array<memory_order_buffer_line_t *>(LOAD_HASH_SIZE, NULL);
-
-	// /// DISAMBIGUATION OFFSET MASK
-	// ERROR_ASSERT_PRINTF(utils_t::check_if_power_of_two(STORE_HASH_SIZE), "Wrong disambiguation_store_hash_size.\n")
-	// for (uint32_t i = 0; i < utils_t::get_power_of_two(STORE_HASH_SIZE); i++)
-	// {
-	// 	this->disambiguation_store_hash_bits_mask |= 1 << i;
-	// }
-	// this->disambiguation_store_hash_bits_shift <<= utils_t::get_power_of_two(DESAMBIGUATION_BLOCK_SIZE);
-	// this->disambiguation_store_hash_bits_mask <<= this->disambiguation_store_hash_bits_shift;
-	// this->disambiguation_store_hash = utils_t::template_allocate_initialize_array<memory_order_buffer_line_t *>(STORE_HASH_SIZE, NULL);
+	// STORE
+	this->memory_order_buffer_write_start = 0;
+	this->memory_order_buffer_write_end = 0;
+	this->memory_order_buffer_write_used =0;
+	//desambiguator
+	this->desambiguator = new desambiguation_t;
+	this->desambiguator->allocate();
 	// parallel requests
 	
 	// =========================================================================================
@@ -331,8 +303,7 @@ void processor_t::remove_front_mob_write(){
 };
 // ============================================================================
 
-void processor_t::fetch()
-{
+void processor_t::fetch(){
 	#if FETCH_DEBUG
 		ORCS_PRINTF("Fetch Stage\n")
 	#endif
@@ -440,8 +411,7 @@ void processor_t::fetch()
 			WriteRegs   = NULL
 	============================================================================
 */
-void processor_t::decode()
-{
+void processor_t::decode(){
 
 	#if DECODE_DEBUG
 		ORCS_PRINTF("Decode Stage\n")
@@ -704,8 +674,7 @@ void processor_t::decode()
 };
 
 // ============================================================================
-void processor_t::update_registers(reorder_buffer_line_t *new_rob_line)
-{
+void processor_t::update_registers(reorder_buffer_line_t *new_rob_line){
 	/// Control the Register Dependency - Register READ
 	for (uint32_t k = 0; k < MAX_REGISTERS; k++)
 	{
@@ -746,243 +715,6 @@ void processor_t::update_registers(reorder_buffer_line_t *new_rob_line)
 	}
 };
 // ============================================================================
-/*
-void processor_t::make_memory_dependencies(memory_order_buffer_line_t *new_mob_line){
-
-	uint64_t load_hash = new_mob_line->memory_address & this->disambiguation_load_hash_bits_mask;
-	uint64_t store_hash = new_mob_line->memory_address & this->disambiguation_store_hash_bits_mask;
-	load_hash >>= this->disambiguation_load_hash_bits_shift;
-	store_hash >>= this->disambiguation_store_hash_bits_shift;
-	// ORCS_PRINTF("Memory address -> %lu, load_hash %lu, store_hash %lu\n",new_mob_line->memory_address,load_hash,store_hash)
-
-	memory_order_buffer_line_t *old_mob_line = NULL;
-
-	/// Check if LOAD_HASH matches
-	ERROR_ASSERT_PRINTF(load_hash < LOAD_HASH_SIZE, "load_hash (%lu) > disambiguation_load_hash_size (%d)\n",
-						load_hash, LOAD_HASH_SIZE);
-	/// Check if STORE_HASH matches
-	ERROR_ASSERT_PRINTF(store_hash < STORE_HASH_SIZE, "store_hash (%lu) > disambiguation_store_hash_size (%d)\n",
-						store_hash, STORE_HASH_SIZE);
-	/// Create R -> W,  R -> R
-	if (this->disambiguation_load_hash[load_hash] != NULL)
-	{
-		old_mob_line = disambiguation_load_hash[load_hash];
-		for (uint32_t k = 0; k < ROB_SIZE; k++)
-		{
-			if (old_mob_line->mem_deps_ptr_array[k] == NULL)
-			{
-				old_mob_line->mem_deps_ptr_array[k] = new_mob_line;
-				new_mob_line->wait_mem_deps_number++;
-				break;
-			}
-		}
-	}
-
-	/// Create W -> R, W -> W deps.
-	if (this->disambiguation_store_hash[store_hash] != NULL)
-	{
-		old_mob_line = disambiguation_store_hash[store_hash];
-		for (uint32_t k = 0; k < ROB_SIZE; k++)
-		{
-			if (old_mob_line->mem_deps_ptr_array[k] == NULL)
-			{
-				old_mob_line->mem_deps_ptr_array[k] = new_mob_line;
-				new_mob_line->wait_mem_deps_number++;
-				break;
-			}
-		}
-	}
-
-	/// Add the new entry into LOAD or STORE hash
-	if (new_mob_line->memory_operation == MEMORY_OPERATION_READ)
-	{
-		this->disambiguation_load_hash[load_hash] = new_mob_line;
-	}
-	else
-	{
-		this->disambiguation_store_hash[store_hash] = new_mob_line;
-	}
-};
-void processor_t::solve_memory_dependency(memory_order_buffer_line_t *mob_line){
-
-	/// Remove pointers from disambiguation_hash
-	/// Add the new entry into LOAD or STORE hash
-	if (mob_line->memory_operation == MEMORY_OPERATION_READ)
-	{
-		uint64_t load_hash = mob_line->memory_address & this->disambiguation_load_hash_bits_mask;
-		load_hash >>= this->disambiguation_load_hash_bits_shift;
-
-		ERROR_ASSERT_PRINTF(load_hash < LOAD_HASH_SIZE, "load_hash (%" PRIu64 ") > disambiguation_load_hash_size (%d)\n",
-							load_hash, LOAD_HASH_SIZE);
-		if (this->disambiguation_load_hash[load_hash] == mob_line)
-		{
-			this->disambiguation_load_hash[load_hash] = NULL;
-		}
-	}
-	else
-	{
-		uint64_t store_hash = mob_line->memory_address & this->disambiguation_store_hash_bits_mask;
-		store_hash >>= this->disambiguation_store_hash_bits_shift;
-
-		ERROR_ASSERT_PRINTF(store_hash < STORE_HASH_SIZE, "store_hash (%" PRIu64 ") > disambiguation_store_hash_size (%d)\n",
-							store_hash, STORE_HASH_SIZE);
-
-		if (this->disambiguation_store_hash[store_hash] == mob_line)
-		{
-			this->disambiguation_store_hash[store_hash] = NULL;
-		}
-	}
-
-	// =========================================================================
-	/// SOLVE MEMORY DEPENDENCIES - MOB
-	// =========================================================================
-	/// Send message to acknowledge the dependency is over
-	for (uint32_t j = 0; j < ROB_SIZE; j++)
-	{
-		/// All the dependencies are solved
-		if (mob_line->mem_deps_ptr_array[j] == NULL)
-		{
-			break;
-		}
-
-		/// Keep track of false positives
-		if (mob_line->mem_deps_ptr_array[j]->memory_address != mob_line->memory_address)
-		{
-			if (mob_line->memory_operation == MEMORY_OPERATION_READ)
-			{
-				this->add_stat_disambiguation_read_false_positive();
-			}
-			else
-			{
-				this->add_stat_disambiguation_write_false_positive();
-			}
-		}
-
-		/// There is an unsolved dependency
-		mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number--;
-
-		if (ADDRESS_TO_ADDRESS == 1)
-		{
-			if (mob_line->mem_deps_ptr_array[j]->uop_executed == true &&
-				mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number == 0 &&
-				mob_line->mem_deps_ptr_array[j]->memory_operation == MEMORY_OPERATION_READ &&
-				mob_line->mem_deps_ptr_array[j]->memory_address == mob_line->memory_address &&
-				mob_line->mem_deps_ptr_array[j]->memory_size == mob_line->memory_size)
-			{
-				this->add_stat_address_to_address();
-				mob_line->mem_deps_ptr_array[j]->status = PACKAGE_STATE_READY;
-				mob_line->mem_deps_ptr_array[j]->readyAt = orcs_engine.get_global_cycle() + REGISTER_FORWARD;
-				this->memory_read_executed--;
-			}
-		}
-		/// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
-		mob_line->mem_deps_ptr_array[j] = NULL;
-	}
-};
-// ============================================================================
-*/
-void processor_t::make_memory_dependencies(memory_order_buffer_line_t *mob_line){
-	//makes dependencies Read After Write (RAW)
-	if(mob_line->memory_operation == MEMORY_OPERATION_READ){
-		for (uint16_t i = this->memory_order_buffer_write_start;; i++){
-			if(i == this->memory_order_buffer_write_end)break;
-			if(i >= MOB_WRITE) i=0;
-			if((mob_line->memory_address == this->memory_order_buffer_write[i].memory_address)&&
-				(mob_line->package_age > this->memory_order_buffer_write[i].package_age)){
-					mob_line->wait_mem_deps_number++;
-					for(size_t j = 0; j < ROB_SIZE; j++){
-						if(this->memory_order_buffer_write[i].mem_deps_ptr_array[j]==NULL){
-							this->memory_order_buffer_write[i].mem_deps_ptr_array[j]=mob_line;
-							break;
-						}
-					}//end for
-					
-				}//end add and age comp.
-		}//end for
-	}//end read dependences
-	else if (mob_line->memory_operation == MEMORY_OPERATION_WRITE){
-		//make dependencies Write After Read (WAR) and Wrte After Write(WAW)
-		// Write After Read (WAR)
-		for (uint16_t i = this->memory_order_buffer_read_start;; i++){
-			if(i == this->memory_order_buffer_read_end)break;
-			if(i >= MOB_READ) i=0;
-			if((mob_line->memory_address == this->memory_order_buffer_read[i].memory_address)&&
-				(mob_line->package_age > this->memory_order_buffer_read[i].package_age)){
-					mob_line->wait_mem_deps_number++;
-					for(size_t j = 0; j < ROB_SIZE; j++){
-						if(this->memory_order_buffer_read[i].mem_deps_ptr_array[j]==NULL){
-							this->memory_order_buffer_read[i].mem_deps_ptr_array[j]=mob_line;
-							break;
-						}
-					}//end for
-					
-				}//end add and age comp.
-		}//end for
-		// Write After Write (WAW)
-		for (uint16_t i = this->memory_order_buffer_write_start;; i++){
-					if(i == this->memory_order_buffer_write_end)break;
-					if(i >= MOB_WRITE) i=0;
-					if((mob_line->memory_address == this->memory_order_buffer_write[i].memory_address)&&
-						(mob_line->package_age > this->memory_order_buffer_write[i].package_age)){
-							mob_line->wait_mem_deps_number++;
-							for(size_t j = 0; j < ROB_SIZE; j++){
-								if(this->memory_order_buffer_write[i].mem_deps_ptr_array[j]==NULL){
-									this->memory_order_buffer_write[i].mem_deps_ptr_array[j]=mob_line;
-									break;
-								}
-							}//end for
-							
-						}//end add and age comp.
-				}//end for
-	}//end write  dependences
-};
-void processor_t::solve_memory_dependency(memory_order_buffer_line_t *mob_line){
-// =========================================================================
-	/// SOLVE MEMORY DEPENDENCIES - MOB
-	// =========================================================================
-	/// Send message to acknowledge the dependency is over
-	for (uint32_t j = 0; j < ROB_SIZE; j++)
-	{
-		/// All the dependencies are solved
-		if (mob_line->mem_deps_ptr_array[j] == NULL)
-		{
-			break;
-		}
-
-		/// Keep track of false positives
-		if (mob_line->mem_deps_ptr_array[j]->memory_address != mob_line->memory_address)
-		{
-			if (mob_line->memory_operation == MEMORY_OPERATION_READ)
-			{
-				this->add_stat_disambiguation_read_false_positive();
-			}
-			else
-			{
-				this->add_stat_disambiguation_write_false_positive();
-			}
-		}
-
-		/// There is an unsolved dependency
-		mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number--;
-
-		if (ADDRESS_TO_ADDRESS == 1)
-		{
-			if (mob_line->mem_deps_ptr_array[j]->uop_executed == true &&
-				mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number == 0 &&
-				mob_line->mem_deps_ptr_array[j]->memory_operation == MEMORY_OPERATION_READ &&
-				mob_line->mem_deps_ptr_array[j]->memory_address == mob_line->memory_address &&
-				mob_line->mem_deps_ptr_array[j]->memory_size == mob_line->memory_size)
-			{
-				this->add_stat_address_to_address();
-				mob_line->mem_deps_ptr_array[j]->status = PACKAGE_STATE_READY;
-				mob_line->mem_deps_ptr_array[j]->readyAt = orcs_engine.get_global_cycle() + REGISTER_FORWARD;
-				this->memory_read_executed--;
-			}
-		}
-		/// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
-		mob_line->mem_deps_ptr_array[j] = NULL;
-	}
-};
 void processor_t::rename()
 {
 	#if RENAME_DEBUG
@@ -1008,7 +740,8 @@ void processor_t::rename()
 		//=======================
 		if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_LOAD)
 		{
-			pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_read, MOB_READ);
+			// pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_read, MOB_READ);
+			pos_mob = this->search_position_mob_read();
 			if (pos_mob == POSITION_FAIL)
 			{
 				this->add_stall_full_MOB_Read();
@@ -1021,7 +754,8 @@ void processor_t::rename()
 		//=======================
 		if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
 		{
-			pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_write, MOB_WRITE);
+			// pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_write, MOB_WRITE);
+			pos_mob = this->search_position_mob_write();
 			if (pos_mob == POSITION_FAIL)
 			{
 				this->add_stall_full_MOB_Write();
@@ -1098,15 +832,13 @@ void processor_t::rename()
 			this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
 		{
 			mob_line->rob_ptr = &this->reorderBuffer[pos_rob];
+			mob_line->package_age = orcs_engine.get_global_cycle();
 	#if DESAMBIGUATION_ENABLED
-				this->make_memory_dependencies(this->reorderBuffer[pos_rob].mob_ptr);
+				this->desambiguator->make_memory_dependences(this->reorderBuffer[pos_rob].mob_ptr);
 	#endif
 		}
 	} //end for
 }
-			#if RENAME_DEBUG
-							ORCS_PRINTF("register %u, dep %u\n", read_register, j)
-			#endif
 // ============================================================================
 void processor_t::dispatch()
 {
@@ -1371,13 +1103,13 @@ void processor_t::execute()
 			this->memory_order_buffer_read[i].rob_ptr->uop.updatePackageReady(COMMIT_LATENCY);
 			this->memory_order_buffer_read[i].rob_ptr->mob_ptr = NULL;
 #if EXECUTE_DEBUG
-			ORCS_PRINTF("Solving %s\n", this->memory_order_buffer_read[entry].rob_ptr->content_to_string().c_str())
+			ORCS_PRINTF("Solving %s\n", this->memory_order_buffer_read[i].rob_ptr->content_to_string().c_str())
 #endif
 			// solving register dependence
 			this->solve_registers_dependency(this->memory_order_buffer_read[i].rob_ptr);
 // solving memory dependency
 #if DESAMBIGUATION_ENABLED
-			this->solve_memory_dependency(&this->memory_order_buffer_read[i]);
+			this->desambiguator->solve_memory_dependences(&this->memory_order_buffer_read[i]);
 #endif
 			this->memory_order_buffer_read[i].package_clean(); //limpa package
 #if PARALLEL_LIM_ACTIVE
@@ -1390,8 +1122,8 @@ void processor_t::execute()
 #if EMC_ACTIVE
 	if (this->start_emc_module)
 	{	
-// ======================================================================
-// Contando numero de loads dependentes nas cadeias elegiveis para execução
+	// ======================================================================
+	// Contando numero de loads dependentes nas cadeias elegiveis para execução
 		this->instrucoes_inter_load_deps = 0;
 		for (uint32_t i = 1; i < this->rob_buffer.size(); i++)
 		{
@@ -1404,7 +1136,7 @@ void processor_t::execute()
 				this->instrucoes_inter_load_deps++;
 			}
 		}
-// ======================================================================
+	// ======================================================================
 		for(uint32_t i=0;i<this->rob_buffer.size();i++){
 			bool renamed_emc=false;
 			reorder_buffer_line_t *rob_next = this->rob_buffer.front();
@@ -1527,146 +1259,147 @@ void processor_t::execute()
 #endif
 		} //end if ready package
 	}	 //end for
-		  // =========================================================================
-		  // Verificar se foi executado alguma operação de leitura,
-		  //  e executar a mais antiga no MOB
-		  // =========================================================================
-		  // if(this->memory_read_executed != 0){
-	this->mob_read();
-	// }
+		// =========================================================================
+		// Verificar se foi executado alguma operação de leitura,
+		//  e executar a mais antiga no MOB
+		// =========================================================================
+		if(this->memory_read_executed != 0){
+			this->mob_read();
+		}
 	// ==================================
 	// Executar o MOB Write, com a escrita mais antiga.
 	// depois liberar e tratar as escrita prontas;
 	// ==================================
-	// if(this->memory_write_executed != 0){
-	// ORCS_PRINTF("Mob ops executed %u\n",this->memory_write_executed)
-	this->mob_write();
-	// }
-	// =====================================
-	for (uint8_t i = 0; i < MOB_WRITE; i++)
-	{
-		if (this->memory_order_buffer_write[i].status == PACKAGE_STATE_READY &&
-			this->memory_order_buffer_write[i].readyAt <= orcs_engine.get_global_cycle())
-		{
-			ERROR_ASSERT_PRINTF(this->memory_order_buffer_write[i].uop_executed == true, "Removing memory read before being executed.\n")
-			ERROR_ASSERT_PRINTF(this->memory_order_buffer_write[i].wait_mem_deps_number <= 0, "Number of memory dependencies should be zero.\n")
-			// ERROR_ASSERT_PRINTF
-			this->memory_order_buffer_write[i].rob_ptr->stage = PROCESSOR_STAGE_COMMIT;
-			this->memory_order_buffer_write[i].rob_ptr->uop.updatePackageReady(COMMIT_LATENCY);
-			this->memory_order_buffer_write[i].rob_ptr->mob_ptr = NULL;
-#if EXECUTE_DEBUG
-			ORCS_PRINTF("Solving %s\n", this->memory_order_buffer_write[entry].rob_ptr->content_to_string().c_str())
-#endif
-			// solving register dependence
-			this->solve_registers_dependency(this->memory_order_buffer_write[i].rob_ptr);
-// solving memory dependency
-#if DESAMBIGUATION_ENABLED
-			this->solve_memory_dependency(&this->memory_order_buffer_write[i]);
-#endif
-#if PARALLEL_LIM_ACTIVE
-			(this->parallel_requests <= 0) ? (this->parallel_requests = 0) : (this->parallel_requests--);
-#endif
-			this->memory_order_buffer_write[i].package_clean();
+		if(this->memory_write_executed != 0){
+			this->mob_write();
 		}
-	}
+	// =====================================
+// 	for (uint8_t i = 0; i < MOB_WRITE; i++)
+// 	{
+// 		if (this->memory_order_buffer_write[i].status == PACKAGE_STATE_READY &&
+// 			this->memory_order_buffer_write[i].readyAt <= orcs_engine.get_global_cycle())
+// 		{
+// 			ERROR_ASSERT_PRINTF(this->memory_order_buffer_write[i].uop_executed == true, "Removing memory read before being executed.\n")
+// 			ERROR_ASSERT_PRINTF(this->memory_order_buffer_write[i].wait_mem_deps_number <= 0, "Number of memory dependencies should be zero.\n")
+// 			// ERROR_ASSERT_PRINTF
+// 			this->memory_order_buffer_write[i].rob_ptr->stage = PROCESSOR_STAGE_COMMIT;
+// 			this->memory_order_buffer_write[i].rob_ptr->uop.updatePackageReady(COMMIT_LATENCY);
+// 			this->memory_order_buffer_write[i].rob_ptr->mob_ptr = NULL;
+// #if EXECUTE_DEBUG
+// 			ORCS_PRINTF("Solving %s\n", this->memory_order_buffer_write[entry].rob_ptr->content_to_string().c_str())
+// #endif
+// 			// solving register dependence
+// 			this->solve_registers_dependency(this->memory_order_buffer_write[i].rob_ptr);
+// // solving memory dependency
+// #if DESAMBIGUATION_ENABLED
+// 			this->desambiguator->solve_memory_dependences(&this->memory_order_buffer_write[i]);
+// #endif
+// #if PARALLEL_LIM_ACTIVE
+// 			(this->parallel_requests <= 0) ? (this->parallel_requests = 0) : (this->parallel_requests--);
+// #endif
+// 			this->memory_order_buffer_write[i].package_clean();
+// 		}
+// 	}
 } //end method
 // ============================================================================
 uint32_t processor_t::mob_read(){
+	#if MOB_DEBUG
+		ORCS_PRINTF("MOB Read")
+	#endif
 
-	int32_t position_mem;
-	#if MOB_DEBUG
-	ORCS_PRINTF("MOB Read")
-	#endif
-	memory_order_buffer_line_t *mob_line = NULL;
-	#if PARALLEL_LIM_ACTIVE
-	if (this->parallel_requests >= MAX_PARALLEL_REQUESTS)
-	{
-		// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
-		this->add_times_reach_parallel_requests_read();
-		return FAIL;
-	}
-	#endif
-	position_mem = POSITION_FAIL;
-	position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_read,
-																			MOB_READ, PACKAGE_STATE_WAIT);
-	if (position_mem != POSITION_FAIL)
-	{
-		mob_line = &this->memory_order_buffer_read[position_mem];
-	}
-	if (mob_line != NULL)
-	{
-		uint32_t ttc = 0;
-		ttc = orcs_engine.cacheManager->searchData(mob_line);
-		mob_line->updatePackageReady(ttc);
-		mob_line->rob_ptr->uop.updatePackageReady(ttc);
-	// this->memory_read_executed--;
-	#if PARALLEL_LIM_ACTIVE
-		this->parallel_requests++; //numero de req paralelas, add+1
-	#endif
-	#if EMC_ACTIVE
-		if (this->has_llc_miss)
-		{
-			this->has_llc_miss = false;
-			if (this->isRobHead(mob_line->rob_ptr))
+	int32_t position_mem = POSITION_FAIL;
+	if(oldest_read_to_send == NULL){
+		#if PARALLEL_LIM_ACTIVE
+			if (this->parallel_requests >= MAX_PARALLEL_REQUESTS)
 			{
-				// =====================================================
-				// generate chain on home core buffer
-				// =====================================================
-				// ORCS_PRINTF("Global Cycle %lu\n",orcs_engine.get_global_cycle())
-				this->rob_buffer.push_back(mob_line->rob_ptr);
-				this->make_dependence_chain(mob_line->rob_ptr);
-				// this->start_emc_module=true;
-				mob_line->rob_ptr->original_miss = true;
-				this->add_llc_miss_rob_head();
+				// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
+				this->add_times_reach_parallel_requests_read();
+				return FAIL;
 			}
-		}
-	#endif
-	#if MOB_DEBUG
-		ORCS_PRINTF("On MOB READ Stage\n")
-		ORCS_PRINTF("Time to complete READ %u\n", ttc)
-		ORCS_PRINTF("MOB Line After EXECUTE %s\n", mob_line->content_to_string().c_str())
-	#endif
+		#endif
+		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_read,MOB_READ, PACKAGE_STATE_WAIT);
+		if (position_mem != POSITION_FAIL)
+			{
+				oldest_read_to_send = &this->memory_order_buffer_read[position_mem];
+			}
+	}
+	if (oldest_read_to_send != NULL){
+		uint32_t ttc = orcs_engine.cacheManager->searchData(oldest_read_to_send);
+		oldest_read_to_send->updatePackageReady(ttc);
+		this->memory_read_executed--;
+		#if PARALLEL_LIM_ACTIVE
+			this->parallel_requests++; //numero de req paralelas, add+1
+		#endif
+		#if EMC_ACTIVE
+			if (this->has_llc_miss)
+			{
+				this->has_llc_miss = false;
+				if (this->isRobHead(oldest_read_to_send->rob_ptr))
+				{
+					// =====================================================
+					// generate chain on home core buffer
+					// =====================================================
+					// ORCS_PRINTF("Global Cycle %lu\n",orcs_engine.get_global_cycle())
+					this->rob_buffer.push_back(oldest_read_to_send->rob_ptr);
+					this->make_dependence_chain(oldest_read_to_send->rob_ptr);
+					// this->start_emc_module=true;
+					oldest_read_to_send->rob_ptr->original_miss = true;
+					this->add_llc_miss_rob_head();
+				}
+			}
+		#endif
+		#if MOB_DEBUG
+			ORCS_PRINTF("On MOB READ Stage\n")
+			ORCS_PRINTF("Time to complete READ %u\n", ttc)
+			ORCS_PRINTF("MOB Line After EXECUTE %s\n", oldest_read_to_send->content_to_string().c_str())
+		#endif
+		oldest_read_to_send=NULL;
 	} //end if mob_line null
 	return OK;
 }; //end method
 // ============================================================================
 uint32_t processor_t::mob_write(){
-
-	int32_t position_mem = POSITION_FAIL;
 	#if MOB_DEBUG
-	ORCS_PRINTF("MOB Write")
+		ORCS_PRINTF("MOB Write")
 	#endif
-	memory_order_buffer_line_t *mob_line = NULL;
-	#if PARALLEL_LIM_ACTIVE
-	if (this->parallel_requests >= MAX_PARALLEL_REQUESTS)
-	{
-		// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
-		this->add_times_reach_parallel_requests_write();
-		return FAIL;
+	int32_t position_mem = POSITION_FAIL;
+	if(oldest_write_to_send==NULL){
+		#if PARALLEL_LIM_ACTIVE
+			if (this->parallel_requests >= MAX_PARALLEL_REQUESTS)
+			{
+				// ORCS_PRINTF("Parallel Requests %d > MAX",this->parallel_requests)
+				this->add_times_reach_parallel_requests_write();
+				return FAIL;
+			}
+		#endif
+		position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_write,MOB_WRITE, PACKAGE_STATE_WAIT);
+		if (position_mem != POSITION_FAIL){
+			oldest_write_to_send = &this->memory_order_buffer_write[position_mem];
+		}
 	}
-	#endif
-	position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_write,
-																			MOB_WRITE, PACKAGE_STATE_WAIT);
-	if (position_mem != POSITION_FAIL)
-	{
-		mob_line = &this->memory_order_buffer_write[position_mem];
-	}
-	if (mob_line != NULL)
+	if (oldest_write_to_send != NULL)
 	{
 		// ORCS_PRINTF("iterations on mob Write %hhu \n",i)
 		uint32_t ttc = 0;
-		ttc = orcs_engine.cacheManager->writeData(mob_line);
-		mob_line->updatePackageReady(ttc);
-		mob_line->rob_ptr->uop.updatePackageReady(ttc);
-	// this->memory_read_executed--; //numero de writes executados
-	#if PARALLEL_LIM_ACTIVE
-		this->parallel_requests++; //numero de req paralelas, add+1
-	#endif
-	#if MOB_DEBUG
-		ORCS_PRINTF("On MOB READ Stage\n")
-		ORCS_PRINTF("Time to complete READ %u\n", ttc)
-		ORCS_PRINTF("MOB Line After EXECUTE %s\n", mob_line->content_to_string().c_str())
-	#endif
+		ttc = orcs_engine.cacheManager->writeData(oldest_write_to_send);
+		// oldest_write_to_send->updatePackageReady(ttc);
+		oldest_write_to_send->rob_ptr->stage=PROCESSOR_STAGE_COMMIT;
+		oldest_write_to_send->rob_ptr->uop.updatePackageReady(ttc);
+		oldest_write_to_send->rob_ptr->mob_ptr=NULL;
+		//solving dendences
+		this->solve_registers_dependency(oldest_write_to_send->rob_ptr);
+		this->desambiguator->solve_memory_dependences(oldest_write_to_send);
+		#if PARALLEL_LIM_ACTIVE
+			this->parallel_requests++; //numero de req paralelas, add+1
+		#endif
+		#if MOB_DEBUG
+			ORCS_PRINTF("On MOB WRITE Stage\n")
+			ORCS_PRINTF("Time to complete WRITE %u\n", ttc)
+			ORCS_PRINTF("MOB Line After EXECUTE %s\n", oldest_write_to_send->content_to_string().c_str())
+		#endif
+		oldest_write_to_send->package_clean();
+		this->memory_read_executed--; //numero de writes executados
+		oldest_write_to_send=NULL;
 	} //end if mob_line null
 	return OK;
 };
@@ -1734,7 +1467,7 @@ void processor_t::commit(){
 			case INSTRUCTION_OPERATION_MEM_STORE:
 				this->add_stat_inst_store_completed();
 				break;
-				// BRANCHES				mob_line->emc_opcode_ptr->rob_ptr->mob_ptr->uop_executed = mob_line->uop_executed;		//uop foi executado
+				// BRANCHES	
 
 			case INSTRUCTION_OPERATION_BRANCH:
 				this->add_stat_inst_branch_completed();
@@ -2203,16 +1936,14 @@ void processor_t::statistics()
 			utils_t::largestSeparator();
 			ORCS_PRINTF("======================== MEMORY DESAMBIGUATION ===========================\n")
 			utils_t::largestSeparator();
-			ORCS_PRINTF("Read_False_Positive: %lu\n", this->get_stat_disambiguation_read_false_positive())
-			ORCS_PRINTF("Write_False_Positive: %lu\n", this->get_stat_disambiguation_write_false_positive())
-			ORCS_PRINTF("Solve_Address_to_Address: %lu\n", this->get_stat_address_to_address())
+			this->desambiguator->statistics();
 	#if MAX_PARALLEL_REQUESTS
 			ORCS_PRINTF("Times_Reach_MAX_PARALLEL_REQUESTS_READ: %lu\n", this->get_times_reach_parallel_requests_read())
 			ORCS_PRINTF("Times_Reach_MAX_PARALLEL_REQUESTS_WRITE: %lu\n", this->get_times_reach_parallel_requests_write())
 	#endif
 			utils_t::largestSeparator();
 			ORCS_PRINTF("Instruction_Per_Cicle: %.4f\n", float(this->fetchCounter) / float(orcs_engine.get_global_cycle()))
-
+	#if EMC_ACTIVE
 			ORCS_PRINTF("\n======================== EMC INFOS ===========================\n")
 			utils_t::largeSeparator();
 			ORCS_PRINTF("times_llc_rob_head: %u\n", this->get_llc_miss_rob_head())
@@ -2221,6 +1952,7 @@ void processor_t::statistics()
 			ORCS_PRINTF("load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps))
 			ORCS_PRINTF("started_emc_execution: %d\n", this->get_started_emc_execution())
 			ORCS_PRINTF("canceled_emc_execution: %d\n", this->get_cancel_emc_execution())
+	#endif
 			utils_t::largeSeparator();
 		}
 		else
@@ -2241,17 +1973,14 @@ void processor_t::statistics()
 				utils_t::largestSeparator(output);
 				fprintf(output, "======================== MEMORY DESAMBIGUATION ===========================\n");
 				utils_t::largestSeparator(output);
-				fprintf(output, "Read_False_Positive: %lu\n", this->get_stat_disambiguation_read_false_positive());
-				fprintf(output, "Write_False_Positive: %lu\n", this->get_stat_disambiguation_write_false_positive());
-				fprintf(output, "Solve_Address_to_Address: %lu\n", this->get_stat_address_to_address());
-
+				this->desambiguator->statistics();
 	#if MAX_PARALLEL_REQUESTS
 				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_READ: %lu\n", this->get_times_reach_parallel_requests_read());
 				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_WRITE: %lu\n", this->get_times_reach_parallel_requests_write());
 	#endif
 				utils_t::largestSeparator(output);
 				fprintf(output, "Instruction_Per_Cycle: %.4f\n", float(this->fetchCounter) / float(orcs_engine.get_global_cycle()));
-
+	#if EMC_ACTIVE
 				fprintf(output, "\n======================== EMC INFOS ===========================\n");
 				utils_t::largeSeparator(output);
 				fprintf(output, "times_llc_rob_head: %u\n", this->get_llc_miss_rob_head());
@@ -2260,7 +1989,7 @@ void processor_t::statistics()
 				fprintf(output, "load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps));
 				fprintf(output, "started_emc_execution: %d\n", this->get_started_emc_execution());
 				fprintf(output, "canceled_emc_execution: %d\n", this->get_cancel_emc_execution());
-
+	#endif
 			}
 			fclose(output);
 	}
@@ -2426,6 +2155,7 @@ void processor_t::clock()
 #if DEBUG
 	if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 		ORCS_PRINTF("===================================================================\n")
+		sleep(1);
 	}
 #endif
 #if PERIODIC_CHECK

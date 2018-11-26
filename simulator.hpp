@@ -49,6 +49,12 @@ class branch_predictor_t;
 //  =========================================//
 // Out of order Execution classes
 //  =========================================//
+class disambiguation_t;
+class disambiguation_perfect_t;
+class disambiguation_hashed_t;
+//  =========================================//
+// Out of order Execution classes
+//  =========================================//
 
 class uop_package_t;
 class reorder_buffer_line_t;
@@ -148,6 +154,13 @@ extern orcs_engine_t orcs_engine;
 #include "./utils/circular_buffer.hpp"
 #include "./utils/utils.hpp"
 #include "./utils/sanityTest.hpp"
+//  =========================================//
+// Core Includes
+//  =========================================//
+#include "./processor/memory_disambiguation/disambiguation.hpp"
+#include "./processor/memory_disambiguation/disambiguation_perfect.hpp"
+#include "./processor/memory_disambiguation/disambiguation_hashed.hpp"
+
 //  =========================================//
 // Core Includes
 //  =========================================//
