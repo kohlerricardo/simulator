@@ -740,8 +740,8 @@ void processor_t::rename()
 		//=======================
 		if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_LOAD)
 		{
-			// pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_read, MOB_READ);
-			pos_mob = this->search_position_mob_read();
+			pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_read, MOB_READ);
+			// pos_mob = this->search_position_mob_read();
 			if (pos_mob == POSITION_FAIL)
 			{
 				this->add_stall_full_MOB_Read();
@@ -754,8 +754,8 @@ void processor_t::rename()
 		//=======================
 		if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
 		{
-			// pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_write, MOB_WRITE);
-			pos_mob = this->search_position_mob_write();
+			pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_write, MOB_WRITE);
+			// pos_mob = this->search_position_mob_write();
 			if (pos_mob == POSITION_FAIL)
 			{
 				this->add_stall_full_MOB_Write();
@@ -840,8 +840,7 @@ void processor_t::rename()
 	} //end for
 }
 // ============================================================================
-void processor_t::dispatch()
-{
+void processor_t::dispatch(){
 	#if DISPATCH_DEBUG
 		ORCS_PRINTF("Dispatch Stage\n")
 	#endif
@@ -1092,11 +1091,9 @@ void processor_t::execute()
 	// verificar leituras prontas no ciclo,
 	// remover do MOB e atualizar os registradores,
 	// ==================================
-	for (uint8_t i = 0; i < MOB_READ; i++)
-	{
+	for (uint8_t i = 0; i < MOB_READ; i++){
 		if (this->memory_order_buffer_read[i].status == PACKAGE_STATE_READY &&
-			this->memory_order_buffer_read[i].readyAt <= orcs_engine.get_global_cycle())
-		{
+			this->memory_order_buffer_read[i].readyAt <= orcs_engine.get_global_cycle()){
 			ERROR_ASSERT_PRINTF(this->memory_order_buffer_read[i].uop_executed == true, "Removing memory read before being executed.\n")
 			ERROR_ASSERT_PRINTF(this->memory_order_buffer_read[i].wait_mem_deps_number <= 0, "Number of memory dependencies should be zero.\n %s\n",this->memory_order_buffer_read[i].rob_ptr->content_to_string().c_str())
 			this->memory_order_buffer_read[i].rob_ptr->stage = PROCESSOR_STAGE_COMMIT;
@@ -1116,7 +1113,7 @@ void processor_t::execute()
 			(this->parallel_requests <= 0) ? (this->parallel_requests = 0) : (this->parallel_requests--);
 #endif
 			//controlar aguardo paralelos
-			// break;
+			break;
 		}
 	}
 #if EMC_ACTIVE
@@ -1263,16 +1260,12 @@ void processor_t::execute()
 		// Verificar se foi executado alguma operação de leitura,
 		//  e executar a mais antiga no MOB
 		// =========================================================================
-		if(this->memory_read_executed != 0){
-			this->mob_read();
-		}
+		this->mob_read();
 	// ==================================
 	// Executar o MOB Write, com a escrita mais antiga.
 	// depois liberar e tratar as escrita prontas;
 	// ==================================
-		if(this->memory_write_executed != 0){
-			this->mob_write();
-		}
+		this->mob_write();
 	// =====================================
 // 	for (uint8_t i = 0; i < MOB_WRITE; i++)
 // 	{
@@ -1377,8 +1370,7 @@ uint32_t processor_t::mob_write(){
 			oldest_write_to_send = &this->memory_order_buffer_write[position_mem];
 		}
 	}
-	if (oldest_write_to_send != NULL)
-	{
+	if (oldest_write_to_send != NULL){
 		// ORCS_PRINTF("iterations on mob Write %hhu \n",i)
 		uint32_t ttc = 0;
 		ttc = orcs_engine.cacheManager->writeData(oldest_write_to_send);
@@ -1389,16 +1381,16 @@ uint32_t processor_t::mob_write(){
 		//solving dendences
 		this->solve_registers_dependency(oldest_write_to_send->rob_ptr);
 		this->desambiguator->solve_memory_dependences(oldest_write_to_send);
-		#if PARALLEL_LIM_ACTIVE
-			this->parallel_requests++; //numero de req paralelas, add+1
-		#endif
+		// #if PARALLEL_LIM_ACTIVE
+		// 	this->parallel_requests++; //numero de req paralelas, add+1
+		// #endif
 		#if MOB_DEBUG
 			ORCS_PRINTF("On MOB WRITE Stage\n")
 			ORCS_PRINTF("Time to complete WRITE %u\n", ttc)
 			ORCS_PRINTF("MOB Line After EXECUTE %s\n", oldest_write_to_send->content_to_string().c_str())
 		#endif
 		oldest_write_to_send->package_clean();
-		this->memory_read_executed--; //numero de writes executados
+		this->memory_write_executed--; //numero de writes executados
 		oldest_write_to_send=NULL;
 	} //end if mob_line null
 	return OK;
