@@ -85,6 +85,7 @@ std::string reorder_buffer_line_t::content_to_string() {
     content_string = content_string + " | On Dep Chain: " + utils_t::bool_to_string(this->on_chain);
     content_string = content_string + " | Poisoned: " + utils_t::bool_to_string(this->is_poisoned);
     content_string = content_string + " | Executed on EMC: " + utils_t::bool_to_string(this->emc_executed);
+    content_string = content_string + " | Sent: " + utils_t::bool_to_string(this->sent);
     if(this->mob_ptr != NULL){
         content_string = content_string + this->mob_ptr->content_to_string();
     }
@@ -106,6 +107,7 @@ std::string reorder_buffer_line_t::content_to_string2() {
     content_string = content_string + " | WakeUp:" + utils_t::uint32_to_string(this->wake_up_elements_counter);
     content_string = content_string + " | ReadyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
     content_string = content_string + " | On Dep Chain: " + utils_t::bool_to_string(this->on_chain);
+    content_string = content_string + " | Sent: " + utils_t::bool_to_string(this->sent);
     return content_string;
 };
 // ============================================================================

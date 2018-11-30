@@ -144,7 +144,6 @@ int32_t circular_buffer_t<CB_TYPE>::push_back(const CB_TYPE& new_element) {
         virtual_position = this->size;
         this->size++;
         this->data[end_index] = new_element;
-
         this->end_index++;
         if (this->end_index >= this->capacity)
             this->end_index = 0;

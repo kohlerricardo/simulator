@@ -103,10 +103,7 @@ class processor_t {
 		void rename();
 		void dispatch();
 		void execute();
-/*
-		void mob_read();
-		void mob_write();
-*/
+
 		uint32_t mob_read();
 		uint32_t mob_write();
 		void commit();
@@ -144,24 +141,29 @@ class processor_t {
 		//READ
 		// ======================
 		memory_order_buffer_line_t *memory_order_buffer_read;
+		#if CIRCULAR_BUFFER
         uint32_t memory_order_buffer_read_start;
         uint32_t memory_order_buffer_read_end;
         uint32_t memory_order_buffer_read_used;
-
+		memory_order_buffer_line_t* get_next_op_load();
+		memory_order_buffer_line_t* get_next_op_store();
+		#endif
 		// ======================
 		//WRITE
 		// ======================
 		memory_order_buffer_line_t *memory_order_buffer_write;
+		#if CIRCULAR_BUFFER
 		uint32_t memory_order_buffer_write_start;
         uint32_t memory_order_buffer_write_end;
         uint32_t memory_order_buffer_write_used;
+		#endif
 		// Pointers to retain oldests memory operations
 		memory_order_buffer_line_t *oldest_read_to_send;
 		memory_order_buffer_line_t *oldest_write_to_send;
 		// ======================
-		// Parallel requests to DRAM 
+		// Parallel requests
 		int32_t parallel_requests;
-
+		int32_t request_DRAM;
 		// ======================
 		//Reservation Station 
 		container_ptr_reorder_buffer_line_t unified_reservation_station;

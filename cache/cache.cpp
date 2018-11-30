@@ -286,18 +286,18 @@ uint32_t cache_t::write(uint64_t address){
 // @address - address to install a line
 // @return - pointer to line  
 // ==================
-linha_t* cache_t::installLine(uint64_t address){
+linha_t* cache_t::installLine(uint64_t address,uint64_t latency){
 	uint32_t idx = this->idxSetCalculation(address);
 	uint32_t tag = this->tagSetCalculation(address);
 	for (size_t i = 0; i < this->nLines; i++)
 	{
 		if(this->sets[idx].linhas[i].valid==0){
 			this->sets[idx].linhas[i].tag = tag;
-			this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle()+RAM_LATENCY;
+			this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle()+latency;
 			this->sets[idx].linhas[i].valid = 1;
 			this->sets[idx].linhas[i].dirty = 0;
 			this->sets[idx].linhas[i].prefetched = 0;
-			this->sets[idx].linhas[i].readyAt = orcs_engine.get_global_cycle()+RAM_LATENCY;
+			this->sets[idx].linhas[i].readyAt = orcs_engine.get_global_cycle()+latency;
 			// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[i].readyAt)
 			return &this->sets[idx].linhas[i];
 			ORCS_PRINTF("passando do ponto\n")
@@ -319,11 +319,11 @@ linha_t* cache_t::installLine(uint64_t address){
 		}
 	#endif
 	this->sets[idx].linhas[line].tag = tag;
-	this->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle()+RAM_LATENCY;
+	this->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle()+latency;
 	this->sets[idx].linhas[line].valid = 1;	
 	this->sets[idx].linhas[line].dirty = 0;	
 	this->sets[idx].linhas[line].prefetched = 0;	
-	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+RAM_LATENCY;
+	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+latency;
 	// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[line].readyAt)
 	return &this->sets[idx].linhas[line];
 };
@@ -383,14 +383,14 @@ void cache_t::returnLine(uint64_t address,cache_t *cache){
 	for (size_t i = 0; i < this->nLines; i++)
 	{
 		if(this->sets[idx].linhas[i].tag==tag){
-			this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
+			this->sets[idx].linhas[i].lru=orcs_engine.get_global_cycle();
 			line = i;
 			break;
 		}
 	}
 	ERROR_ASSERT_PRINTF(line!=POSITION_FAIL,"Error, linha LLC não encontrada para retorno")
 	linha_t *linha_l1 = NULL;
-	linha_l1 = cache->installLine(address);
+	linha_l1 = cache->installLine(address,LLC_LATENCY);
 	this->sets[idx].linhas[line].linha_ptr_inf=linha_l1;
 	linha_l1->linha_ptr_sup = &this->sets[idx].linhas[line];
 	//copia dados da linha superior

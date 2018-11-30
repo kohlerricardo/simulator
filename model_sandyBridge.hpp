@@ -78,11 +78,11 @@ Arquivo definindo os parametros do modelo de processador
 #define FETCH_BUFFER 18
 #define DECODE_BUFFER 28
 #define RAT_SIZE 260
-#define ROB_SIZE 384
+#define ROB_SIZE 168
 #define UNIFIED_RS 54
 //MOB
-#define MOB_READ 192
-#define MOB_WRITE 108
+#define MOB_READ 64
+#define MOB_WRITE 36
 
 
 // ===========BRANCH PREDICTOR=============
@@ -136,7 +136,7 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 512 * KILO
+#define LLC_SIZE 4 * MEGA
 #define LLC_ASSOCIATIVITY 8
 #define LLC_LATENCY 12
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
@@ -172,6 +172,13 @@ Arquivo definindo os parametros do modelo de processador
 // REGISTER FORWARD ON EXECUTION
 #define REGISTER_FORWARD 1
 // =====================MEMORY DESAMBIGUATION=======================
+
+// =====================MEMORY CONFIGURATION=======================
+#define ARRAY 0
+#define CIRCULAR_BUFFER 1
+// =====================MEMORY CONFIGURATION=======================
+
+
 
 // ===================== EMC =======================================
 #define EMC_ACTIVE 0
@@ -211,7 +218,7 @@ Arquivo definindo os parametros do modelo de processador
 #define DECODE_DEBUG 0
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
-#define EXECUTE_DEBUG 0
+#define EXECUTE_DEBUG 1
 #define MOB_DEBUG 1
 #define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
@@ -227,6 +234,6 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 8500
+#define WAIT_CYCLE 100000
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP

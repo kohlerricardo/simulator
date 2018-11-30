@@ -31,7 +31,7 @@ void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache)
         uint32_t status = cache->read(newAddress,sacrifice);
         if(status == MISS){
             this->add_totalPrefetched();
-            linha_t *linha = cache->installLine(newAddress);
+            linha_t *linha = cache->installLine(newAddress,RAM_LATENCY);
             linha->prefetched =1; 
         }
     }

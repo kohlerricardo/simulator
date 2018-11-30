@@ -77,8 +77,8 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
             // ====================
             linha_t *linha_inst = NULL;
             linha_t *linha_llc = NULL;
-            linha_llc = this->data_cache[1].installLine(instructionAddress);
-            linha_inst = this->inst_cache->installLine(instructionAddress);
+            linha_llc = this->data_cache[1].installLine(instructionAddress,latency_request);
+            linha_inst = this->inst_cache->installLine(instructionAddress,latency_request);
             linha_inst->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_inst;
         }
@@ -141,25 +141,28 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             this->data_cache[1].add_cacheMiss();
             orcs_engine.processor->has_llc_miss=true; // setting llc miss
             //========================================= 
-
             //========================================= 
             #if PREFETCHER_ACTIVE
-            this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
+                this->prefetcher->prefecht(mob_line,&this->data_cache[1]);
             #endif
             //========================================= 
             //llc inst miss
             //request to Memory Controller
             ttc = orcs_engine.memory_controller->requestDRAM();
-            orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
-            latency_request +=ttc;
-            mob_line->waiting_dram=true;
+            orcs_engine.memory_controller->add_requests_llc();  // requests made by LLC
+            mob_line->waiting_DRAM=true;                        //Settind wait DRAM
+            latency_request +=ttc;                              // Add latency from RAM
+            // ====================
+            orcs_engine.processor->request_DRAM++;
+            // ====================
+
             // ====================
             // Install cache lines
             // ====================
             linha_t *linha_l1 = NULL;
             linha_t *linha_llc = NULL;
-            linha_llc = this->data_cache[1].installLine(mob_line->memory_address);
-            linha_l1 = this->data_cache[0].installLine(mob_line->memory_address);
+            linha_llc = this->data_cache[1].installLine(mob_line->memory_address,latency_request);
+            linha_l1 = this->data_cache[0].installLine(mob_line->memory_address,latency_request);
             linha_l1->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_l1;
 
@@ -172,9 +175,6 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             linha_llc->linha_ptr_emc=linha_emc;
             linha_emc->linha_ptr_inf=linha_llc;
             #endif
-            #if CACHE_MANAGER_DEBUG
-                ORCS_PRINTF("DRAM TTC %u\n",ttc)
-             #endif
         }
     }
     #if CACHE_MANAGER_DEBUG
@@ -243,14 +243,13 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
             ttc = orcs_engine.memory_controller->requestDRAM();
             orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
             latency_request +=ttc;
-            mob_line->waiting_dram=true;
             // ====================
             // Install cache lines
             // ====================
             linha_t *linha_l1 = NULL;
             linha_t *linha_llc = NULL;
-            linha_llc = this->data_cache[1].installLine(mob_line->memory_address);
-            linha_l1 = this->data_cache[0].installLine(mob_line->memory_address);
+            linha_llc = this->data_cache[1].installLine(mob_line->memory_address,latency_request);
+            linha_l1 = this->data_cache[0].installLine(mob_line->memory_address,latency_request);
             linha_l1->linha_ptr_sup=linha_llc;
             linha_llc->linha_ptr_inf=linha_l1;
             this->data_cache[0].write(mob_line->memory_address);
@@ -298,8 +297,8 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             orcs_engine.memory_controller->emc->add_access_LLC();
             orcs_engine.memory_controller->emc->add_access_LLC_Miss();
 
-            linha_t *linha_llc = this->data_cache[1].installLine(mob_line->memory_address);
-            linha_t *linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(mob_line->memory_address);
+            linha_t *linha_llc = this->data_cache[1].installLine(mob_line->memory_address,latency_request);
+            linha_t *linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(mob_line->memory_address,latency_request);
             // linking emc and llc
             linha_llc->linha_ptr_emc = linha_emc;
             linha_emc->linha_ptr_inf = linha_llc;

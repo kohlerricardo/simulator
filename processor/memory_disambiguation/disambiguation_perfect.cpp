@@ -15,8 +15,7 @@ void disambiguation_perfect_t::make_memory_dependencies(memory_order_buffer_line
 		for (uint16_t i = orcs_engine.processor->memory_order_buffer_write_start;; i++){
 			if(i == orcs_engine.processor->memory_order_buffer_write_end)break;
 			if(i >= MOB_WRITE) i=0;
-			if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_write[i].memory_address)&&
-				(mob_line->package_age > orcs_engine.processor->memory_order_buffer_write[i].package_age)){
+			if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_write[i].memory_address)){
 					mob_line->wait_mem_deps_number++;
 					for(size_t j = 0; j < ROB_SIZE; j++){
 						if(orcs_engine.processor->memory_order_buffer_write[i].mem_deps_ptr_array[j]==NULL){
@@ -34,8 +33,7 @@ void disambiguation_perfect_t::make_memory_dependencies(memory_order_buffer_line
 		for (uint16_t i = orcs_engine.processor->memory_order_buffer_read_start;; i++){
 			if(i == orcs_engine.processor->memory_order_buffer_read_end)break;
 			if(i >= MOB_READ) i=0;
-			if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_read[i].memory_address)&&
-				(mob_line->package_age > orcs_engine.processor->memory_order_buffer_read[i].package_age)){
+			if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_read[i].memory_address)){
 					mob_line->wait_mem_deps_number++;
 					for(size_t j = 0; j < ROB_SIZE; j++){
 						if(orcs_engine.processor->memory_order_buffer_read[i].mem_deps_ptr_array[j]==NULL){
@@ -50,8 +48,7 @@ void disambiguation_perfect_t::make_memory_dependencies(memory_order_buffer_line
 		for (uint16_t i = orcs_engine.processor->memory_order_buffer_write_start;; i++){
 					if(i == orcs_engine.processor->memory_order_buffer_write_end)break;
 					if(i >= MOB_WRITE) i=0;
-					if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_write[i].memory_address)&&
-						(mob_line->package_age > orcs_engine.processor->memory_order_buffer_write[i].package_age)){
+					if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_write[i].memory_address)){
 							mob_line->wait_mem_deps_number++;
 							for(size_t j = 0; j < ROB_SIZE; j++){
 								if(orcs_engine.processor->memory_order_buffer_write[i].mem_deps_ptr_array[j]==NULL){

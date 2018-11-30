@@ -173,7 +173,14 @@ void disambiguation_hashed_t::solve_memory_dependencies(memory_order_buffer_line
 			{
 				this->add_stat_address_to_address();
 				mob_line->mem_deps_ptr_array[j]->status = PACKAGE_STATE_READY;
+				mob_line->mem_deps_ptr_array[j]->sent = true;
+				mob_line->mem_deps_ptr_array[j]->rob_ptr->sent = true;
 				mob_line->mem_deps_ptr_array[j]->readyAt = orcs_engine.get_global_cycle() + REGISTER_FORWARD;
+				mob_line->mem_deps_ptr_array[j]->forwarded_data=true;
+				#if MOB_DEBUG
+					ORCS_PRINTF("Forwarded : %s\n",mob_line->mem_deps_ptr_array[j]->content_to_string().c_str())
+				#endif
+
 			}
 		}
 		/// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
