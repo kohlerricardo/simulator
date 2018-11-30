@@ -234,6 +234,6 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 100000
+#define WAIT_CYCLE 1146200
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP
