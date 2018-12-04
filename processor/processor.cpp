@@ -305,6 +305,7 @@ void processor_t::remove_front_mob_write(){
 };
 // ============================================================================
 
+
 void processor_t::fetch(){
 	#if FETCH_DEBUG
 		ORCS_PRINTF("Fetch Stage\n")
@@ -748,12 +749,14 @@ void processor_t::rename(){
 		//=======================
 		if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_LOAD)
 		{
-			// pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_read, MOB_READ);
+			if(	this->memory_order_buffer_read_used>=MOB_READ ||
+				this->robUsed>=ROB_SIZE )break;
+			
 			pos_mob = this->search_position_mob_read();
 			if (pos_mob == POSITION_FAIL)
 			{
 				#if RENAME_DEBUG
-							ORCS_PRINTF("Stall_MOB_Read_Full\n")
+					ORCS_PRINTF("Stall_MOB_Read_Full\n")
 				#endif
 				this->add_stall_full_MOB_Read();
 				break;
@@ -768,7 +771,8 @@ void processor_t::rename(){
 		//=======================
 		if (this->decodeBuffer.front()->uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
 		{
-			// pos_mob = memory_order_buffer_line_t::find_free(this->memory_order_buffer_write, MOB_WRITE);
+			if(	this->memory_order_buffer_write_used>=MOB_WRITE ||
+				this->robUsed>=ROB_SIZE )break;
 			pos_mob = this->search_position_mob_write();
 			if (pos_mob == POSITION_FAIL)
 			{
@@ -789,6 +793,9 @@ void processor_t::rename(){
 		pos_rob = this->searchPositionROB();
 		if (pos_rob == POSITION_FAIL)
 		{
+			#if RENAME_DEBUG
+				ORCS_PRINTF("Stall_MOB_Read_Full\n")
+			#endif
 			this->add_stall_full_ROB();
 			break;
 		}
