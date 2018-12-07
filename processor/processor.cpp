@@ -1150,6 +1150,7 @@ void processor_t::execute()
 				this->request_DRAM--;
 			}
 			//controlar aguardo paralelos
+			this->memory_read_executed--;
 			break;
 		}
 	}
@@ -1339,8 +1340,8 @@ void processor_t::execute()
 			#endif
 			#if PARALLEL_LIM_ACTIVE
 				if(!this->memory_order_buffer_write[i].forwarded_data){
-						ERROR_ASSERT_PRINTF(this->parallel_requests > 0,"ERRO, Contador negativo READ\n")
-						this->parallel_requests--;
+					ERROR_ASSERT_PRINTF(this->parallel_requests > 0,"ERRO, Contador negativo READ\n")
+					this->parallel_requests--;
 				}
 			#endif
 			if(this->memory_order_buffer_write[i].waiting_DRAM){
@@ -1366,11 +1367,13 @@ memory_order_buffer_line_t* processor_t::get_next_op_load(){
 			this->memory_order_buffer_read[pos].sent==false && 
         	this->memory_order_buffer_read[pos].wait_mem_deps_number <= 0 &&
 			this->memory_order_buffer_read[pos].readyToGo <= orcs_engine.get_global_cycle()){
-				if(this->memory_order_buffer_write_used>0){
-					if(this->memory_order_buffer_read[pos].uop_number > this->memory_order_buffer_write[this->memory_order_buffer_write_start].uop_number){
-						break;
-					}
-				}					
+				#if STORE_ONLY_ROB_HEAD
+					if(this->memory_order_buffer_write_used>0){
+						if(this->memory_order_buffer_read[pos].uop_number > this->memory_order_buffer_write[this->memory_order_buffer_write_start].uop_number){
+							break;
+						}
+					}	
+				#endif				
 				return &this->memory_order_buffer_read[pos];
 			}
 		pos++;
@@ -1398,8 +1401,6 @@ uint32_t processor_t::mob_read(){
 			}		
 		}
 	#endif
-		
-	
 	if(this->oldest_read_to_send == NULL){
 		
 			this->oldest_read_to_send = this->get_next_op_load();
@@ -1466,6 +1467,7 @@ uint32_t processor_t::mob_read(){
 
 // ============================================================================
 memory_order_buffer_line_t* processor_t::get_next_op_store(){
+	#if STORE_ONLY_ROB_HEAD
 		uint32_t i = this->memory_order_buffer_write_start;
 		if(this->memory_order_buffer_write[i].uop_executed &&
 			this->memory_order_buffer_write[i].status == PACKAGE_STATE_WAIT &&  
@@ -1475,6 +1477,20 @@ memory_order_buffer_line_t* processor_t::get_next_op_store(){
 		{
 			return &this->memory_order_buffer_write[i];
 		}
+	#else
+		uint32_t pos = this->memory_order_buffer_write_start;
+		for(uint32_t i = 0 ; i < this->memory_order_buffer_write_used; i++){
+			if(this->memory_order_buffer_write[pos].uop_executed && 
+				this->memory_order_buffer_write[pos].status == PACKAGE_STATE_WAIT && 
+				this->memory_order_buffer_write[pos].sent==false && 
+				this->memory_order_buffer_write[pos].wait_mem_deps_number <= 0 &&
+				this->memory_order_buffer_write[pos].readyToGo <= orcs_engine.get_global_cycle()){	
+					return &this->memory_order_buffer_write[pos];
+				}
+			pos++;
+			if( pos >= MOB_WRITE) pos=0;
+		}
+	#endif
 	return NULL;
 };
 // ============================================================================
@@ -1495,23 +1511,15 @@ uint32_t processor_t::mob_write(){
 		}
 	#endif
 	if(this->oldest_write_to_send==NULL){
-		#if ARRAY
-			int32_t position_mem = POSITION_FAIL;
-			position_mem = memory_order_buffer_line_t::find_old_request_state_ready(this->memory_order_buffer_write,MOB_WRITE, PACKAGE_STATE_WAIT);
-			if (position_mem != POSITION_FAIL){
-				oldest_write_to_send = &this->memory_order_buffer_write[position_mem];
-			}
-		#else
-			this->oldest_write_to_send = this->get_next_op_store();
-		#endif
+		this->oldest_write_to_send = this->get_next_op_store();
 //////////////////////////////////////
-			#if MOB_DEBUG
-				if(this->oldest_write_to_send==NULL){
-					if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
-						ORCS_PRINTF("Oldest Write NULL\n")
-					}		
-				}
-			#endif
+		#if MOB_DEBUG
+			if(this->oldest_write_to_send==NULL){
+				if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
+					ORCS_PRINTF("Oldest Write NULL\n")
+				}		
+			}
+		#endif
 /////////////////////////////////////////////
 	}
 	if (this->oldest_write_to_send != NULL)
@@ -1523,15 +1531,17 @@ uint32_t processor_t::mob_write(){
 				return FAIL;
 			}
 		#endif
-		if(!this->isRobHead(this->oldest_write_to_send->rob_ptr)){
-			#if MOB_DEBUG
-				if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
-					ORCS_PRINTF("Testing if was ROB Head\n")
-					ORCS_PRINTF("NOT ROB Head %s\n",this->oldest_write_to_send->content_to_string().c_str())
-				}		
-			#endif
-			return FAIL;
-		}
+		#if STORE_ONLY_ROB_HEAD
+			if(!this->isRobHead(this->oldest_write_to_send->rob_ptr)){
+				#if MOB_DEBUG
+					if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
+						ORCS_PRINTF("Testing if was ROB Head\n")
+						ORCS_PRINTF("NOT ROB Head %s\n",this->oldest_write_to_send->content_to_string().c_str())
+					}		
+				#endif
+				return FAIL;
+			}
+		#endif
 		uint32_t ttc = 0;
 		#if MOB_DEBUG
 			if (orcs_engine.get_global_cycle() > WAIT_CYCLE){

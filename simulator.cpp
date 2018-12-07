@@ -87,7 +87,7 @@ std::string get_status_execution(){
     // Get total uops decoded, uops coppleted
     uint64_t uops_decoded = orcs_engine.processor->renameCounter;
     uint64_t uop_completed = orcs_engine.processor->commit_uop_counter;
-    snprintf(report,sizeof(report),"Uops decoded/uops Completed: %lu of %lu\n",uops_decoded,uop_completed);
+    snprintf(report,sizeof(report),"Uops Completed/uops decoded: %lu of %lu\n",uop_completed,uops_decoded);
     final_report+=report;
     ////////
     snprintf(report,sizeof(report),"Total Progress %4.2lf%%\n",percentage_complete);
