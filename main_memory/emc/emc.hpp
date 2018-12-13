@@ -27,7 +27,15 @@ class emc_t{
         uint64_t *fu_int_alu;
         uint64_t *fu_mem_load;
         uint64_t *fu_mem_store;
-
+        // ==========================================================================
+        // Structures to predictor
+        int8_t *memory_access_counter_table;
+        uint32_t mact_bits_mask;
+        void update_mact_entry(uint64_t pc,int32_t value);
+        uint64_t direct_ram_access;
+        uint64_t incorrect_prediction_ram_access;
+         INSTANTIATE_GET_SET_ADD(uint64_t,direct_ram_access);
+         INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_ram_access);
         // ==========================================================================
         // control attr 
         bool ready_to_execute;

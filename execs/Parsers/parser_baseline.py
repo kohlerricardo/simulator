@@ -34,10 +34,13 @@ def generate_dict(dados):
 def get_values(dados,dicionario):
     values=[]
     for i in dados:
-        values.append(dicionario.get(i))
+        if i is None:
+            values.append("")
+        else: 
+            values.append(dicionario.get(i))
     return values
 def main():
-    fields_required=['benchmark','Total_Cycle','fetch_instructions','INST_CACHE_Cache_Hits','INST_CACHE_Cache_Miss','L1_DATA_CACHE_Cache_Hits','L1_DATA_CACHE_Cache_Miss','LLC_Cache_Hits','LLC_Cache_Miss','EMC_DATA_CACHE_Cache_Hits','EMC_DATA_CACHE_Cache_Miss','EMC_Access_LLC_HIT','EMC_Access_LLC_MISS','times_llc_rob_head','numero_load_deps','Total_instrucoes_dependentes','started_emc_execution','canceled_emc_execution'] 
+    fields_required=['benchmark','Total_Cycle','fetch_instructions',None,'Stage_Rename','INST_CACHE_Cache_Hits','INST_CACHE_Cache_Miss',None,'L1_DATA_CACHE_Cache_Hits','L1_DATA_CACHE_Cache_Miss',None,'LLC_Cache_Hits','LLC_Cache_Miss',None,'times_llc_rob_head','started_emc_execution','canceled_emc_execution'] 
     folder = sys.argv[1]
     files = get_list_file(folder)
     data_array = list()

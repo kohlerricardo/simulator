@@ -51,6 +51,7 @@ class reorder_buffer_line_t {
         bool is_poisoned;
         bool original_miss;
         bool emc_executed;
+        bool emc_sent;
         uint32_t op_on_emc_buffer;
         // ====================================================================
         void get_deps(std::vector<reorder_buffer_line_t> *buffer);

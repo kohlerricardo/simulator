@@ -31,6 +31,7 @@ void memory_order_buffer_line_t::package_clean() {
         this->sent=false;
         this->forwarded_data=false;
         this->waiting_DRAM=false;
+        this->emc_executed=false;
         #if EMC_ACTIVE
         this->emc_opcode_ptr=NULL;
         #endif
@@ -49,7 +50,7 @@ std::string memory_order_buffer_line_t::content_to_string() {
     content_string = content_string + " |Mem. Operation:" +  get_enum_memory_operation_char(this->memory_operation);
     content_string = content_string + " |Mem. Address:" +  utils_t::uint64_to_string(this->memory_address);
     content_string = content_string + " |Status:" +  get_enum_package_state_char(this->status);
-    content_string = content_string + " |Mem Deps:" + utils_t::int32_to_string(this->wait_mem_deps_number);
+    content_string = content_string + " |Wait Mem Deps:" + utils_t::int32_to_string(this->wait_mem_deps_number);
     content_string = content_string + " |Ready At:" +  utils_t::uint64_to_string(this->readyAt);
     content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo);
     content_string = content_string + " |Sent:"+utils_t::bool_to_string(this->sent);
@@ -113,12 +114,6 @@ void memory_order_buffer_line_t::updatePackageFree(uint32_t stallTime){
 // =========================================================================
 // Print all strutcure of mob array
 // =========================================================================
-void memory_order_buffer_line_t::printAll(memory_order_buffer_line_t* input_array, uint32_t size_array){
-    for (uint32_t i = 0; i < size_array; i++){
-        ORCS_PRINTF("%s\n",input_array[i].content_to_string().c_str())
-    }
-}
-#if CIRCULAR_BUFFER
 void memory_order_buffer_line_t::printAllOrder(memory_order_buffer_line_t* input_array, uint32_t size_array,uint32_t start, uint32_t used){
     uint32_t pos = start;
     for (uint32_t i = 0; i< used; i++){
@@ -126,19 +121,4 @@ void memory_order_buffer_line_t::printAllOrder(memory_order_buffer_line_t* input
         pos++;
 		if(pos>=size_array)pos=0;
     }
-}
-// =========================================================================
-// verifies if mob write head is ok to send
-// =========================================================================
-int32_t memory_order_buffer_line_t::is_ready_to_send(memory_order_buffer_line_t *element){
-    int32_t position = POSITION_FAIL;
-        if (element->status == PACKAGE_STATE_WAIT &&
-        element->wait_mem_deps_number <= 0 &&
-        element->uop_executed == true 
-        && element->readyToGo <= orcs_engine.get_global_cycle()
-        ) {
-           position=OK;
-        }
-    return position;
 };
-#endif

@@ -94,3 +94,19 @@ const char *get_enum_status_stride_prefetcher_char(status_stride_prefetcher_t ty
     ERROR_PRINTF("Wrong Status Prefetcher STRIDE\n");
     return "FAIL";
 };  
+// ============================================================================
+/// Enumerates the types of hash function
+const char *get_enum_hash_function_char(hash_function_t type)  {
+    switch (type) {
+        case HASH_FUNCTION_XOR_SIMPLE:  return "HASH_FUNCTION_XOR_SIMPLE"; break;
+        case HASH_FUNCTION_INPUT1_ONLY: return "HASH_FUNCTION_INPUT1_ONLY"; break;
+        case HASH_FUNCTION_INPUT2_ONLY: return "HASH_FUNCTION_INPUT2_ONLY"; break;
+        case HASH_FUNCTION_INPUT1_2BITS: return "HASH_FUNCTION_INPUT1_2BITS"; break;
+        case HASH_FUNCTION_INPUT1_4BITS: return "HASH_FUNCTION_INPUT1_4BITS"; break;
+        case HASH_FUNCTION_INPUT1_8BITS: return "HASH_FUNCTION_INPUT1_8BITS"; break;
+        case HASH_FUNCTION_INPUT1_16BITS: return "HASH_FUNCTION_INPUT1_16BITS"; break;
+        case HASH_FUNCTION_INPUT1_32BITS: return "HASH_FUNCTION_INPUT1_32BITS"; break;
+    };
+    ERROR_PRINTF("Wrong HASH_FUNCTION\n");
+    return "FAIL";
+};

@@ -12,7 +12,7 @@ class memory_order_buffer_line_t {
         package_state_t status;
         memory_operation_t memory_operation;
         uint64_t readyToGo;                                 /// Cycles of waiting
-        int32_t wait_mem_deps_number;                      /// Must wait BEFORE execution
+        uint32_t wait_mem_deps_number;                      /// Must wait BEFORE execution
         memory_order_buffer_line_t* *mem_deps_ptr_array;    /// Elements to wake-up AFTER execution
         //==========================================================================================
         //Control variables
@@ -22,6 +22,7 @@ class memory_order_buffer_line_t {
         bool waiting_DRAM;
         //==========================================================================================
         emc_opcode_package_t* emc_opcode_ptr;  //emc opcode pointer 
+        bool emc_executed;
         // ====================================================================
         /// Methods
         // ====================================================================
@@ -33,11 +34,7 @@ class memory_order_buffer_line_t {
         //select packages
         static int32_t find_free(memory_order_buffer_line_t *input_array, uint32_t size_array);
         static int32_t find_old_request_state_ready(memory_order_buffer_line_t *input_array, uint32_t size_array, package_state_t state);
-        #if CIRCULAR_BUFFER
-        static int32_t is_ready_to_send(memory_order_buffer_line_t *element);
         static void printAllOrder(memory_order_buffer_line_t* input_array, uint32_t size_array,uint32_t start,uint32_t end);
-        #endif
-        static void printAll(memory_order_buffer_line_t* input_array, uint32_t size_array);
         // =====================================================================
         // Update status
         // =====================================================================

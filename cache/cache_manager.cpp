@@ -171,7 +171,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             // =====================================
             #if EMC_ACTIVE
             linha_t *linha_emc = NULL;
-            linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(mob_line->memory_address);
+            linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(mob_line->memory_address,RAM_LATENCY);
             linha_llc->linha_ptr_emc=linha_emc;
             linha_emc->linha_ptr_inf=linha_llc;
             #endif
@@ -277,17 +277,8 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
         orcs_engine.memory_controller->emc->data_cache->add_cacheAccess();
         orcs_engine.memory_controller->emc->data_cache->add_cacheMiss();
         //========================================= 
-        hit = this->data_cache[1].read(mob_line->memory_address,ttc);
-        // this->data_cache[1].add_cacheRead();
-        // ==========
-        // update inst cache miss, update inistruction llc search.
-        // Inst cache miss must be equal llc search inst
-        // ==========
+        hit = this->data_cache[1].read(mob_line->memory_address,ttc); 
 
-        #if CACHE_MANAGER_DEBUG
-            // ORCS_PRINTF("L1 MISS TTC %u\n",ttc)
-            // ORCS_PRINTF("L1 MISS LR %u\n",latency_request)
-        #endif
         if(hit == HIT){ 
             latency_request+=ttc;
             // marcando access llc emc
@@ -296,6 +287,8 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
         }else{
             orcs_engine.memory_controller->emc->add_access_LLC();
             orcs_engine.memory_controller->emc->add_access_LLC_Miss();
+            
+            latency_request += RAM_LATENCY;
 
             linha_t *linha_llc = this->data_cache[1].installLine(mob_line->memory_address,latency_request);
             linha_t *linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(mob_line->memory_address,latency_request);
@@ -304,7 +297,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             linha_emc->linha_ptr_inf = linha_llc;
             orcs_engine.memory_controller->add_requests_emc();//number of requests made by emc
             orcs_engine.memory_controller->add_requests_made();//add requests made by emc to total
-            latency_request = RAM_LATENCY;
+            
 
         }
     }

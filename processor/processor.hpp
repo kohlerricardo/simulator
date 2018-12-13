@@ -141,28 +141,26 @@ class processor_t {
 		//READ
 		// ======================
 		memory_order_buffer_line_t *memory_order_buffer_read;
-		#if CIRCULAR_BUFFER
         uint32_t memory_order_buffer_read_start;
         uint32_t memory_order_buffer_read_end;
         uint32_t memory_order_buffer_read_used;
 		memory_order_buffer_line_t* get_next_op_load();
-		memory_order_buffer_line_t* get_next_op_store();
-		#endif
+		// Pointers to retain oldests memory operations
+		memory_order_buffer_line_t *oldest_read_to_send;
 		// ======================
 		//WRITE
 		// ======================
 		memory_order_buffer_line_t *memory_order_buffer_write;
-		#if CIRCULAR_BUFFER
 		uint32_t memory_order_buffer_write_start;
         uint32_t memory_order_buffer_write_end;
         uint32_t memory_order_buffer_write_used;
-		#endif
+		memory_order_buffer_line_t* get_next_op_store();
 		// Pointers to retain oldests memory operations
-		memory_order_buffer_line_t *oldest_read_to_send;
 		memory_order_buffer_line_t *oldest_write_to_send;
 		// ======================
 		// Parallel requests
-		int32_t parallel_requests;
+		uint32_t counter_mshr_read;
+		uint32_t counter_mshr_write;
 		int32_t request_DRAM;
 		// ======================
 		//Reservation Station 
@@ -223,7 +221,12 @@ class processor_t {
 		//  ATTR
 		bool has_llc_miss; // have a LLC Miss, verify if is ROB head to add ROB Head on buffer
 		bool start_emc_module;//if must start generate dep chain
-		bool on_emc_execution;//flag to receive uops ready
+		bool lock_processor; // lock commit para não deixar completar qualquer instrução antes de o EMC parar de excutar, evitando modificar as estruturas
+		int8_t counter_activate_emc;
+		// ====================================================================
+		uint32_t counter_ambiguation_read;
+		uint32_t counter_ambiguation_write;
+		// ====================================================================
 		container_ptr_reorder_buffer_line_t rob_buffer; // Wait list to propagate registers;
 		register_remapping_table_t *rrt;
 		uint8_t counter_make_dep_chain;
@@ -240,6 +243,7 @@ class processor_t {
 		void clean_rrt();
 		void cancel_execution_emc(); //reverte status dos uops ao core
 		void make_dependence_chain(reorder_buffer_line_t* rob_line); //generate dep chain
+		void update_counter_emc(int32_t value);
 		// boolean
 		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
 		bool verify_spill_register(reorder_buffer_line_t* rob_line);// Verifying register spill to include store ops on chain
@@ -269,4 +273,6 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head);
 		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution);
 		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_execution);
+		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_read);
+		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_write);
 };
