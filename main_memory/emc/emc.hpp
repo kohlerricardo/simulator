@@ -16,6 +16,8 @@ class emc_t{
         container_ptr_emc_opcode_package_t unified_rs;
         container_ptr_emc_opcode_package_t unified_fus;
         // ==========================================================================
+        circular_buffer_t<emc_opcode_package_t> uop_wait_finish;
+        // ==========================================================================
         uint32_t memory_op_executed;
         // ==========================================================================
         // Attr uop Buffer
@@ -34,8 +36,8 @@ class emc_t{
         void update_mact_entry(uint64_t pc,int32_t value);
         uint64_t direct_ram_access;
         uint64_t incorrect_prediction_ram_access;
-         INSTANTIATE_GET_SET_ADD(uint64_t,direct_ram_access);
-         INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_ram_access);
+        INSTANTIATE_GET_SET_ADD(uint64_t,direct_ram_access);
+        INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_ram_access);
         // ==========================================================================
         // control attr 
         bool ready_to_execute;
@@ -63,6 +65,7 @@ class emc_t{
         // ==========================================================================
         //EMC Core Interact
         void emc_send_back_core(emc_opcode_package_t *emc_opcode);
+        // void emc_send_back_core();
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Hit);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Miss);

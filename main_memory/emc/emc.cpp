@@ -45,6 +45,7 @@ void emc_t::allocate()
 	this->unified_fus.reserve(EMC_UOP_BUFFER);
 	//=======================  Unified RS =======================
 	this->unified_rs.reserve(EMC_UOP_BUFFER);
+
 	// ======================= data cache =======================
 	this->data_cache = new cache_t;
 	this->data_cache->allocate(EMC_DATA_CACHE);
@@ -71,6 +72,9 @@ void emc_t::allocate()
 	// MACT Allocate
 	this->memory_access_counter_table = utils_t::template_allocate_initialize_array<int8_t>(MACT_SIZE,0);
 	this->mact_bits_mask = utils_t::get_power_of_two(MACT_SIZE);
+	//=======================  wait list all uop completes =======================
+	this->uop_wait_finish.allocate(EMC_UOP_BUFFER);
+	
 };
 // ============================================================================
 int32_t emc_t::get_position_uop_buffer(){
@@ -379,6 +383,11 @@ void emc_t::emc_commit(){
 		{
 			ERROR_ASSERT_PRINTF(uint32_t(pos_buffer) == this->uop_buffer_start, "EMC sending different position from start\n");
 			this->emc_send_back_core(&this->uop_buffer[pos_buffer]);
+			// // ===========================
+			// if(!this->uop_wait_finish.is_full()){
+			// 	this->uop_wait_finish.push_back(this->uop_buffer[pos_buffer]);
+			// }
+			// ===========================
 			this->remove_front_uop_buffer();
 		}
 		else
@@ -448,9 +457,12 @@ void emc_t::clock()
 			this->emc_execute();
 			this->emc_dispatch();
 		}else{
+			// this->emc_send_back_core();
 			this->ready_to_execute=false;
 			#if EMC_DEBUG
-				ORCS_PRINTF("\t\t EMC Unlocking Processor %lu\n",orcs_engine.get_global_cycle())
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("\t\t EMC Unlocking Processor %lu\n",orcs_engine.get_global_cycle())
+				}
 			#endif
 			orcs_engine.processor->lock_processor=false;
 		}
@@ -488,7 +500,7 @@ void emc_t::lsq_read(){
 	if (emc_mob_line != NULL){
 	#if EMC_LSQ_DEBUG
 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-			ORCS_PRINTF("Mem Op %s\n", emc_mob_line->content_to_string().c_str())
+			ORCS_PRINTF("Memory Operation Selected %s\n", emc_mob_line->content_to_string().c_str())
 		}
 	#endif
 		if (emc_mob_line->memory_operation == MEMORY_OPERATION_READ){
@@ -522,21 +534,28 @@ void emc_t::lsq_read(){
 			ERROR_ASSERT_PRINTF(this->memory_op_executed > 0,"Erro, tentando reduzir MEM_Operation executado abaixo de zero")
 			this->memory_op_executed--;
 		}
+		#if EMC_LSQ_DEBUG
+			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+				ORCS_PRINTF("Memory Operation After Send %s\n", emc_mob_line->content_to_string().c_str())
+			}
+	#endif
 	} //end if mob_line null
 };	//end method
 // ============================================================================
 void emc_t::statistics(){
 	FILE *output = stdout;
-
-	if(orcs_engine.output_file_name != NULL)
+	bool close = false;
+	if(orcs_engine.output_file_name != NULL){
+		close=true;
 		output = fopen(orcs_engine.output_file_name,"a+");
+	}
 	if (output != NULL){
 		utils_t::largestSeparator(output);
 		fprintf(output, "EMC - Enhaced Memory Controller\n");
 		utils_t::largestSeparator(output);
 		fprintf(output, "EMC_Access_LLC: %lu\n", this->get_access_LLC());
 		fprintf(output, "EMC_Access_LLC_HIT: %lu\n", this->get_access_LLC_Hit());
-		fprintf(output, "EMC_Access_LLC_HIT: %lu\n", this->get_access_LLC_Hit());
+		fprintf(output, "EMC_Access_LLC_MISS: %lu\n", this->get_access_LLC_Miss());
 		fprintf(output, "EMC_Direct_RAM_ACCESS_Predictor: %lu\n", this->get_direct_ram_access());
 		fprintf(output, "EMC_Incorrect_Prediction: %lu\n", this->get_incorrect_prediction_ram_access());
 
@@ -545,56 +564,86 @@ void emc_t::statistics(){
 		this->data_cache->statistics();
 		utils_t::largestSeparator(output);
 		}
-	fclose(output);
+	if(close) fclose(output);
 };
 // ============================================================================
+// void emc_t::emc_send_back_core(){
 void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
-	reorder_buffer_line_t *rob_line = emc_opcode->rob_ptr;
-	#if EMC_COMMIT_DEBUG
-		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-			ORCS_PRINTF("==============================\n")
-			ORCS_PRINTF("Sending %s\n\n", emc_opcode->content_to_string().c_str())
-			ORCS_PRINTF("To %s\n\n",rob_line->content_to_string().c_str())
-		}
-	#endif
-	// Atualizar opcodes de acesso a memoria
-	if(emc_opcode->uop.uop_operation==INSTRUCTION_OPERATION_INT_ALU ||
-		emc_opcode->uop.uop_operation==INSTRUCTION_OPERATION_BRANCH){
-			rob_line->uop = emc_opcode->uop;
-			rob_line->stage = emc_opcode->stage;
-			rob_line->is_poisoned = false;
-			orcs_engine.processor->solve_registers_dependency(rob_line);
-
-		}else{
-			// rob_line->uop = emc_opcode->uop;
-			*(rob_line->mob_ptr) = *(emc_opcode->mob_ptr);
-			rob_line->mob_ptr->processed = false;
-			rob_line->is_poisoned = false;
-		}
-	#if EMC_COMMIT_DEBUG
-		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-			ORCS_PRINTF("Rob Line after send %s\n", rob_line->content_to_string().c_str())
-			ORCS_PRINTF("==============================\n\n")
-		}
-	#endif
-	//Remove from reservation station
-	// 	auto itr = std::find_if(orcs_engine.processor->unified_reservation_station.begin(), orcs_engine.processor->unified_reservation_station.end(),
-	// 	[rob_line](reorder_buffer_line_t* v) {return rob_line==v;});
-	// 	if (itr != orcs_engine.processor->unified_reservation_station.cend()) {
-	// 		uint32_t distance = std::distance(orcs_engine.processor->unified_reservation_station.begin(), itr);
-	// 		std::cout << "Distance: "<<distance << "\n";
-	// 		orcs_engine.processor->unified_reservation_station.erase(itr);
-	// }
+	// #if EMC_COMMIT_DEBUG
+	// 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+	// 			ORCS_PRINTF("==============================\n")
+	// 			ORCS_PRINTF("Uop to send  %u\n",this->uop_wait_finish.get_size())
+	// 		}
+	// #endif
+	// while(!this->uop_wait_finish.is_empty()){
+	// 	#if EMC_COMMIT_DEBUG
+	// 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+	// 			ORCS_PRINTF("Get Next\n")
+	// 			ORCS_PRINTF("Uops restantes %u\n",this->uop_wait_finish.get_size())
+	// 		}
+	// 	#endif
+		// emc_opcode_package_t *emc_opcode = this->uop_wait_finish.front();
+		reorder_buffer_line_t *rob_line = emc_opcode->rob_ptr;
+		#if EMC_COMMIT_DEBUG
+			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+				ORCS_PRINTF("==============================\n")
+				ORCS_PRINTF("Sending %s\n\n", emc_opcode->content_to_string().c_str())
+				ORCS_PRINTF("To %s\n\n",rob_line->content_to_string().c_str())
+			}
+		#endif
+		// Atualizar opcodes de acesso a memoria
+		if(emc_opcode->uop.uop_operation==INSTRUCTION_OPERATION_INT_ALU ||
+			emc_opcode->uop.uop_operation==INSTRUCTION_OPERATION_BRANCH){
+				rob_line->uop = emc_opcode->uop;
+				rob_line->stage = emc_opcode->stage;
+				orcs_engine.processor->solve_registers_dependency(rob_line);
+			}else{
+				ERROR_ASSERT_PRINTF(emc_opcode->mob_ptr !=NULL, "Error,emc  memory operation without mob value")
+				ERROR_ASSERT_PRINTF(rob_line->mob_ptr !=NULL, "Error, rob memory operation without mob value")
+				if(rob_line->original_miss){
+					#if EMC_COMMIT_DEBUG
+						if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+							ORCS_PRINTF("Skipping -> Miss Original\n")
+							}
+					#endif
+					emc_opcode->mob_ptr->package_clean();
+					// this->uop_wait_finish.pop_front();
+					return;
+				}
+				*(rob_line->mob_ptr) = *(emc_opcode->mob_ptr);//copiar somente os valores de, uop_executed, ready at, status, sent, is_llc_miss
+				emc_opcode->mob_ptr->package_clean();
+				rob_line->mob_ptr->processed = false;
+				rob_line->mob_ptr->emc_executed = true;
+				rob_line->sent = rob_line->mob_ptr->sent;
+			}
+			#if EMC_COMMIT_DEBUG
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("Rob Line after send \n%s\n", rob_line->content_to_string().c_str())
+					ORCS_PRINTF("==============================\n\n")
+				}
+			#endif
+		// this->uop_wait_finish.pop_front();
 }
 void emc_t::print_structures(){
-	ORCS_PRINTF("UopBuffer used %d\n",this->uop_buffer_used)
-	for (uint32_t i = this->uop_buffer_start;; i++)
+
+	ORCS_PRINTF("\nUop Buffer used %d\n",this->uop_buffer_used)
+	ORCS_PRINTF("\n ============ Uop Buffer ===============\n")
+	uint32_t pos = this->uop_buffer_start;
+	for (uint32_t i = 0;i < this->uop_buffer_used;i++)
 	{
-		// sleep(1);
-		if(i>=EMC_UOP_BUFFER)i=0;
-		if(i==this->uop_buffer_end)break;
-		ORCS_PRINTF("%s\n",this->uop_buffer[i].content_to_string().c_str())
+		ORCS_PRINTF("\n%s\n",this->uop_buffer[pos].content_to_string().c_str())
+		pos++;
+		if(pos>=EMC_UOP_BUFFER)pos=0;
 	}
+	ORCS_PRINTF("\n ============ Load Store Queue ===============\n")
+	for (uint32_t i = 0;i < EMC_LSQ_SIZE;i++)
+	{
+		ORCS_PRINTF("\n%s\n",this->unified_lsq[i].content_to_string().c_str())
+	}
+	ORCS_PRINTF("\nWait to send buffer used %u\n",this->uop_wait_finish.get_size())
+	this->uop_wait_finish.print_all();
+
+
 
 	// memory_order_buffer_line_t::printAll(this->unified_lsq,EMC_LSQ_SIZE);
 }

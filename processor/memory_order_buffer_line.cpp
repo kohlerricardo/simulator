@@ -29,9 +29,11 @@ void memory_order_buffer_line_t::package_clean() {
         //control variables
         this->processed = false;
         this->sent=false;
+        this->sent_to_emc = false;
         this->forwarded_data=false;
         this->waiting_DRAM=false;
         this->emc_executed=false;
+        this->is_llc_miss=false;
         #if EMC_ACTIVE
         this->emc_opcode_ptr=NULL;
         #endif

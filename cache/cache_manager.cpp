@@ -87,8 +87,10 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
 };
 uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
     #if CACHE_MANAGER_DEBUG
-        ORCS_PRINTF("===================================\n")
-        ORCS_PRINTF("Global_Cycle %lu\n",orcs_engine.get_global_cycle())
+    if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+            ORCS_PRINTF("===================================\n")
+            ORCS_PRINTF("Global_Cycle %lu\n",orcs_engine.get_global_cycle())
+		}
 
     #endif
     uint32_t ttc = 0;
@@ -98,9 +100,6 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
     latency_request+=ttc;
     //L1 Hit
     if(hit==HIT){
-            #if CACHE_MANAGER_DEBUG
-                ORCS_PRINTF("L1 TTC %u\n",ttc)
-            #endif
         //========================================= 
         this->data_cache[0].add_cacheAccess();
         this->data_cache[0].add_cacheHit();
@@ -119,9 +118,6 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
         // Inst cache miss must be equal llc search inst
         // ==========
         latency_request+=ttc;
-        #if CACHE_MANAGER_DEBUG
-            ORCS_PRINTF("LLC TTC %u\n",ttc)
-        #endif
         if(hit == HIT){
             // LLC Hit
             //========================================= 
@@ -140,6 +136,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             this->data_cache[1].add_cacheAccess();
             this->data_cache[1].add_cacheMiss();
             orcs_engine.processor->has_llc_miss=true; // setting llc miss
+            mob_line->is_llc_miss=true;
             //========================================= 
             //========================================= 
             #if PREFETCHER_ACTIVE
@@ -177,11 +174,6 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             #endif
         }
     }
-    #if CACHE_MANAGER_DEBUG
-        ORCS_PRINTF("Total TTC %u\n",latency_request)
-        ORCS_PRINTF("===================================\n")
-        sleep(1);
-    #endif
     return latency_request;
 };
 uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
@@ -284,6 +276,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             // marcando access llc emc
             orcs_engine.memory_controller->emc->add_access_LLC();
             orcs_engine.memory_controller->emc->add_access_LLC_Hit();
+            mob_line->is_llc_miss=false;
         }else{
             orcs_engine.memory_controller->emc->add_access_LLC();
             orcs_engine.memory_controller->emc->add_access_LLC_Miss();
@@ -305,19 +298,18 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
 };
 
 void cache_manager_t::statistics(){
-
-    if(orcs_engine.output_file_name == NULL){
-        ORCS_PRINTF("##############  Cache Memories ##################\n")
+    bool close = false;
+    FILE *output = stdout;
+	if(orcs_engine.output_file_name != NULL){
+		output = fopen(orcs_engine.output_file_name,"a+");
+        close=true;
     }
-    else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-            if(output != NULL){
-                utils_t::largestSeparator(output);  
-                fprintf(output,"##############  Cache Memories ##################\n");
-                utils_t::largestSeparator(output);  
-            }
-            fclose(output);
-        }    
+	if (output != NULL){
+        utils_t::largestSeparator(output);  
+        fprintf(output,"##############  Cache Memories ##################\n");
+        utils_t::largestSeparator(output);  
+        }
+	if(close) fclose(output);
     // ORCS_PRINTF("############## Instruction Cache ##################\n")
     this->inst_cache->statistics();
     // ORCS_PRINTF("##############  Data Cache L1 ##################\n")

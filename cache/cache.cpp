@@ -204,18 +204,24 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 				}else if(this->level == L1){
 					ttc+=L1_DATA_LATENCY;
 					#if CACHE_MANAGER_DEBUG
-						ORCS_PRINTF("L1 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("L1 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						}
 					#endif
 				}else if(this->level == LLC){
 					ttc+=LLC_LATENCY;
 					#if CACHE_MANAGER_DEBUG
-						ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						}
 					#endif
 				}
 				else if(this->level == EMC_DATA_CACHE){
 					ttc+=EMC_CACHE_LATENCY;
 					#if CACHE_MANAGER_DEBUG
-						ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						}
 					#endif
 				}
 				return HIT;
@@ -468,34 +474,24 @@ void cache_t::shotdown(uint64_t address){
 // statistics of a level of cache
 // ====================
 void cache_t::statistics(){
-	if(orcs_engine.output_file_name == NULL){
-		ORCS_PRINTF("Cache_Level: %s\n",get_enum_cache_level_char(this->level))
-		ORCS_PRINTF("%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess())
-		ORCS_PRINTF("%s_Cache_Hits: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("%s_Cache_Miss: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("%s_Cache_Read: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("%s_Cache_Write: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()))
-		if(this->get_cacheWriteBack()!=0){
-			ORCS_PRINTF("%s_Cache_WriteBack: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()))
-		}
-	}else{
-		FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
-			utils_t::largeSeparator(output);
-			fprintf(output,"Cache_Level: %s\n",get_enum_cache_level_char(this->level));
-			fprintf(output,"%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess());
-			fprintf(output,"%s_Cache_Hits: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheHit());
-			fprintf(output,"%s_Cache_Miss: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheMiss());
-			fprintf(output,"%s_Cache_Read: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheRead());
-			fprintf(output,"%s_Cache_Write: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWrite());
-			if(this->get_cacheWriteBack()!=0){
-				fprintf(output,"%s_Cache_WriteBack: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack());
-			}
-			utils_t::largeSeparator(output);
-		}
-		fclose(output);
+	FILE *output = stdout;
+	bool close = false;
+	if(orcs_engine.output_file_name != NULL){
+		close=true;
+		output = fopen(orcs_engine.output_file_name,"a+");
 	}
-
-
-
+	if (output != NULL){
+		utils_t::largeSeparator(output);
+		fprintf(output,"Cache_Level: %s\n",get_enum_cache_level_char(this->level));
+		fprintf(output,"%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess());
+		fprintf(output,"%s_Cache_Hits: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheHit());
+		fprintf(output,"%s_Cache_Miss: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheMiss());
+		fprintf(output,"%s_Cache_Read: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheRead());
+		fprintf(output,"%s_Cache_Write: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWrite());
+		if(this->get_cacheWriteBack()!=0){
+			fprintf(output,"%s_Cache_WriteBack: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack());
+		}
+		utils_t::largeSeparator(output);
+	}
+	if(close) fclose(output);
 }

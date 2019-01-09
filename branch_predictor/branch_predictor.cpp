@@ -95,22 +95,13 @@ inline uint32_t branch_predictor_t::searchLRU(btb_t *btb){
 	return index;
 };
 void branch_predictor_t::statistics(){
-    if(orcs_engine.output_file_name == NULL){
-	utils_t::largestSeparator();
-    fprintf(stdout,"BTB Hits: %u -> %.2f\n",this->btbHits,(this->btbHits*100.0)/(float)(this->btbHits+this->btbMiss));
-    fprintf(stdout,"BTB Miss: %u -> %.2f\n\n",this->btbMiss,(this->btbMiss*100.0)/(float)(this->btbHits+this->btbMiss));
-    fprintf(stdout,"Total Branchs: %u\n",this->branches);
-    fprintf(stdout,"Total Branchs Taken: %u -> %.2f \n",this->branchTaken,((this->branchTaken*100.0)/this->branches));
-    fprintf(stdout,"Total Branchs Not Taken: %u -> %.2f\n",this->branchNotTaken,((this->branchNotTaken*100.0)/this->branches));
-    fprintf(stdout,"Correct Branchs Taken: %u -> %.2f\n",(this->branchTaken-this->branchTakenMiss),((this->branchTaken-this->branchTakenMiss)*100.0)/this->branchTaken);
- 	fprintf(stdout,"Incorrect Branchs Taken: %u -> %.2f\n",this->branchTakenMiss,((this->branchTakenMiss*100.0)/this->branchTaken));
-	fprintf(stdout,"Correct Branchs Not Taken: %u -> %.2f\n",(this->branchNotTaken-this->branchNotTakenMiss),((this->branchNotTaken-this->branchNotTakenMiss)*100.0)/this->branchNotTaken);
-    fprintf(stdout,"Incorrect Branchs Not Taken: %u -> %.2f\n",this->branchNotTakenMiss,((this->branchNotTakenMiss*100.0)/this->branchNotTaken));
-	utils_t::largestSeparator();
-	}else
-	{	
-		FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
+	bool close = false;
+	FILE *output = stdout;
+	if(orcs_engine.output_file_name != NULL){
+		output = fopen(orcs_engine.output_file_name,"a+");
+		close=true;	
+	}
+	if (output != NULL){
 			utils_t::largestSeparator(output);
 			fprintf(output,"BTB Hits: %u\n",this->btbHits);
 			fprintf(output,"BTB Miss: %u\n",this->btbMiss);
@@ -123,8 +114,7 @@ void branch_predictor_t::statistics(){
 			fprintf(output,"Incorrect Branchs Not Taken: %u\n",this->branchNotTakenMiss);
 			utils_t::largestSeparator(output);
 		}
-		fclose(output);
-	}
+	if(close) fclose(output);
 };
 uint32_t branch_predictor_t::solveBranch(opcode_package_t branchInstrucion, opcode_package_t nextInstruction){
     //==========

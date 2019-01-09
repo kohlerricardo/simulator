@@ -43,7 +43,7 @@ void reorder_buffer_line_t::package_clean() {
     this->is_poisoned=false;
     this->original_miss = false;
     this->emc_executed=false;
-    this->emc_sent=false;
+    this->sent_to_emc=false;
     this->op_on_emc_buffer=0;
     this->sent=false;
     };
@@ -67,6 +67,7 @@ std::string reorder_buffer_line_t::content_to_string() {
     content_string = content_string + " | ReadyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
     content_string = content_string + " | On Dep Chain: " + utils_t::bool_to_string(this->on_chain);
     content_string = content_string + " | Poisoned: " + utils_t::bool_to_string(this->is_poisoned);
+    content_string = content_string + " | Sent To EMC: " + utils_t::bool_to_string(this->sent_to_emc);
     content_string = content_string + " | Executed on EMC: " + utils_t::bool_to_string(this->emc_executed);
     content_string = content_string + " | Sent: " + utils_t::bool_to_string(this->sent);
     if(this->mob_ptr != NULL){
@@ -119,22 +120,4 @@ std::string reorder_buffer_line_t::print_all(reorder_buffer_line_t *input_array,
         }
     }
     return final_string;
-};
-
-// ====================================================================
-/// Generate Dep Chains to EMC
-// ====================================================================
-
-void reorder_buffer_line_t::get_deps(std::vector<reorder_buffer_line_t> *buffer){
-    if(this->wake_up_elements_counter>0){
-        for (size_t i = 0; i < ROB_SIZE; i++)
-        {
-            if(this->reg_deps_ptr_array[i]!=NULL){
-                buffer->push_back(*this->reg_deps_ptr_array[i]);
-            }
-            else{
-                break;
-                }
-        }
-    }
 };

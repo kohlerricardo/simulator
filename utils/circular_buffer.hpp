@@ -220,7 +220,7 @@ template <class CB_TYPE>
 void circular_buffer_t<CB_TYPE>::print_all() {
     for (size_t i = 0; i < this->size; i++)
     {
-        this->data[i].content_to_string();
+       ORCS_PRINTF("%s\n",this->data[i].content_to_string().c_str())
     }
 };
 

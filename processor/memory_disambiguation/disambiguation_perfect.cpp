@@ -104,16 +104,10 @@ void disambiguation_perfect_t::solve_memory_dependencies(memory_order_buffer_lin
 		}
 	}
 };
-void disambiguation_perfect_t::statistics(){
-    if(orcs_engine.output_file_name == NULL){
-    
-    ORCS_PRINTF("Total_Read_false_Positives: %lu\n", this->get_stat_disambiguation_read_false_positive())
-    ORCS_PRINTF("Total_Write_false_Positives: %lu\n", this->get_stat_disambiguation_write_false_positive())
-    ORCS_PRINTF("Total_Resolve_Address_to_Address: %lu\n",this->get_stat_address_to_address())
-    }
-    else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
+void disambiguation_perfect_t::statistics(){FILE *output = stdout;
+	if(orcs_engine.output_file_name != NULL)
+		output = fopen(orcs_engine.output_file_name,"a+");
+	if (output != NULL){
             utils_t::largeSeparator(output);
             fprintf(output,"Total_Read_false_Positives: %lu\n", this->get_stat_disambiguation_read_false_positive());
             fprintf(output,"Total_Write_false_Positives: %lu\n", this->get_stat_disambiguation_write_false_positive());
@@ -121,5 +115,4 @@ void disambiguation_perfect_t::statistics(){
             utils_t::largeSeparator(output);
         }
         fclose(output);
-    }
 };

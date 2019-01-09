@@ -176,13 +176,15 @@ Arquivo definindo os parametros do modelo de processador
 // =====================MEMORY CONFIGURATION=======================
 #define ARRAY 0
 #define CIRCULAR_BUFFER 1
-#define STORE_ONLY_ROB_HEAD 0
+
 // =====================MEMORY CONFIGURATION=======================
 
 
 
 // ===================== EMC =======================================
 #define EMC_ACTIVE 1
+#define EMC_ROB_HEAD 1
+// ===================== EMC =======================================
 //WIDHTs
 #define EMC_DISPATCH_WIDTH 2
 #define EMC_EXECUTE_WIDTH 2
@@ -215,6 +217,7 @@ Arquivo definindo os parametros do modelo de processador
 #define HEARTBEAT_CLOCKS 10000000
 // ==========DEBUGS
 #define DEBUG 0
+#define EMC_ACTIVE_DEBUG 0
 
 #if DEBUG
 #define FETCH_DEBUG 0
@@ -222,22 +225,21 @@ Arquivo definindo os parametros do modelo de processador
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 1
-#define EMC_ACTIVE_DEBUG 1
 #define MOB_DEBUG 1
 #define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
 // EMC Debugs
-#define EMC_DEBUG 0
+#define EMC_DEBUG 1
 #define EMC_DISPATCH_DEBUG 0
-#define EMC_EXECUTE_DEBUG 0
-#define EMC_LSQ_DEBUG 0
-#define EMC_COMMIT_DEBUG 0
+#define EMC_EXECUTE_DEBUG 1
+#define EMC_LSQ_DEBUG 1
+#define EMC_COMMIT_DEBUG 1
 
 #endif
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 200
+#define WAIT_CYCLE 90360000
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP
