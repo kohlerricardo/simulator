@@ -55,6 +55,13 @@ def main():
         data_array.append(get_values(fields_required,dicionario))
         data_array = sorted(data_array)
     for d in data_array:
+        # print d
+        # d.reverse()
+        # d[1]=str(int(d[0])+int(d[1]))
+        # d[2]=str(int(d[2])-int(d[0]))
+        # del d[0]
+        # d.reverse()
+        # print d
         with open(sys.argv[2],'a') as csv_file:
             spaw_writter = csv.writer(csv_file,delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
             spaw_writter.writerow(d)

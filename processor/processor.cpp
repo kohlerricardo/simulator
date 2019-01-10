@@ -1217,7 +1217,6 @@ void processor_t::execute()
 				if (orcs_engine.memory_controller->emc->uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty()){
 					this->start_emc_module = false; // disable emc module CORE
 					this->rob_buffer.clear();		// flush core buffer
-					if(orcs_engine.memory_controller->emc->uop_buffer_used >= 2){
 						orcs_engine.memory_controller->emc->ready_to_execute = true; //execute emc
 						orcs_engine.memory_controller->emc->executed = true; //print dep chain emc //comentar depois
 						#if EMC_ACTIVE_DEBUG
@@ -1225,11 +1224,7 @@ void processor_t::execute()
 							ORCS_PRINTF("Locking Processor\n")
 						}
 					#endif
-						this->lock_processor=true;
-					}else{
-						this->cancel_execution_emc();
-						this->add_cancel_emc_execution_one_op();
-					}
+					this->lock_processor=true;
 					this->clean_rrt(); //Limpa RRT;
 					break;
 				}
@@ -1768,7 +1763,6 @@ bool processor_t::isRobHead(reorder_buffer_line_t *rob_line){
 void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 	// ORCS_PRINTF("Miss Original %s\n", rob_line->content_to_string().c_str())
 	ERROR_ASSERT_PRINTF(rob_line->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD, "Error, making dependences from NON-LOAD operation\n%s\n", rob_line->content_to_string().c_str())
-	
 	while(this->rob_buffer.size()<=EMC_UOP_BUFFER){
 		int32_t next_position = this->get_next_uop_dependence();
 		if(next_position==POSITION_FAIL){
@@ -1805,7 +1799,6 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 								// neste ponto nenhuma das estruturas foram utilizadas ainda
 								this->add_cancel_emc_execution();
 								this->rob_buffer.clear();
-								this->cancel_execution_emc();
 								return;
 							}
 					}
@@ -1824,22 +1817,25 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			}
 		}
 	}
-
 	if(this->counter_activate_emc >=2){
-		this->start_emc_module=true;
-		#if EMC_ACTIVE_DEBUG
-			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-				ORCS_PRINTF("==========\n")
-				ORCS_PRINTF("Chain_made\n")
-				for (uint32_t i = 0; i < this->rob_buffer.size(); i++){
-					ORCS_PRINTF("%d -> %s\n",i,this->rob_buffer[i]->content_to_string().c_str())
+		if(this->rob_buffer.size()<2){
+			this->add_cancel_emc_execution_one_op();
+			this->rob_buffer.clear();
+		}else{
+			this->start_emc_module=true;
+			#if EMC_ACTIVE_DEBUG
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("==========\n")
+					ORCS_PRINTF("Chain_made\n")
+					for (uint32_t i = 0; i < this->rob_buffer.size(); i++){
+						ORCS_PRINTF("%d -> %s\n",i,this->rob_buffer[i]->content_to_string().c_str())
+					}
+					// INFO_PRINTF()	
+					ORCS_PRINTF("==========\n")
 				}
-				// INFO_PRINTF()	
-				ORCS_PRINTF("==========\n")
-			}
-		#endif
-		// this->rob_buffer.clear();
-		this->add_started_emc_execution();
+			#endif
+			this->add_started_emc_execution();
+		}
 	}else{
 		this->rob_buffer.clear();
 		this->add_cancel_emc_execution();

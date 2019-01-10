@@ -144,7 +144,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 
 // =====================RAM=======================
-#define RAM_LATENCY 200
+#define RAM_LATENCY 400
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
 #define MAX_PARALLEL_REQUESTS 4

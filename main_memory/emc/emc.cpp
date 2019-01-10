@@ -560,11 +560,12 @@ void emc_t::statistics(){
 		fprintf(output, "EMC_Incorrect_Prediction: %lu\n", this->get_incorrect_prediction_ram_access());
 
 		utils_t::largestSeparator(output);
+		if(close) fclose(output);
 		fprintf(output, "##############  EMC_Data_Cache ##################\n");
 		this->data_cache->statistics();
 		utils_t::largestSeparator(output);
 		}
-	if(close) fclose(output);
+
 };
 // ============================================================================
 // void emc_t::emc_send_back_core(){
