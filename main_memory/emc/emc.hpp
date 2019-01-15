@@ -42,6 +42,7 @@ class emc_t{
         // control attr 
         bool ready_to_execute;
         bool executed;
+        bool has_store;
         // ==========================================================================
         // EMC Methods
         // ==========================================================================
@@ -62,6 +63,7 @@ class emc_t{
         // ==========================================================================
         // EMC memory interact
         void lsq_read();
+        void lsq_forward(memory_order_buffer_line_t *emc_mob_line);
         // ==========================================================================
         //EMC Core Interact
         void emc_send_back_core(emc_opcode_package_t *emc_opcode);

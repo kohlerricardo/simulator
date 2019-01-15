@@ -1184,10 +1184,12 @@ void processor_t::execute()
 					this->instrucoes_inter_load_deps++;
 				}
 				if(rob_next->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
-					if(this->verify_spill_register(rob_next)){
+					if(!this->verify_spill_register(rob_next)){
 						this->rob_buffer.erase(this->rob_buffer.begin());
 						i--;
 						continue;
+					}else{
+						orcs_engine.memory_controller->emc->has_store = true;
 					}
 				}
 				#if EMC_ACTIVE_DEBUG
@@ -1213,21 +1215,20 @@ void processor_t::execute()
 					this->rob_buffer.erase(this->rob_buffer.begin());
 					i--;
 				}
-				// Verifica se o rob_buffer está vazio, ou uop buffer cheio
-				if (orcs_engine.memory_controller->emc->uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty()){
-					this->start_emc_module = false; // disable emc module CORE
-					this->rob_buffer.clear();		// flush core buffer
-						orcs_engine.memory_controller->emc->ready_to_execute = true; //execute emc
-						orcs_engine.memory_controller->emc->executed = true; //print dep chain emc //comentar depois
-						#if EMC_ACTIVE_DEBUG
-						if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-							ORCS_PRINTF("Locking Processor\n")
-						}
-					#endif
-					this->lock_processor=true;
-					this->clean_rrt(); //Limpa RRT;
-					break;
-				}
+			}
+			// Verifica se o rob_buffer está vazio, ou uop buffer cheio
+			if (orcs_engine.memory_controller->emc->uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty()){
+				this->start_emc_module = false; // disable emc module CORE
+				this->rob_buffer.clear();		// flush core buffer
+					orcs_engine.memory_controller->emc->ready_to_execute = true; //execute emc
+					orcs_engine.memory_controller->emc->executed = true; //print dep chain emc //comentar depois
+					#if EMC_ACTIVE_DEBUG
+					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+						ORCS_PRINTF("Locking Processor\n")
+					}
+				#endif
+				this->lock_processor=true;
+				this->clean_rrt(); //Limpa RRT;
 			}
 		}
 	#endif
@@ -1452,30 +1453,16 @@ uint32_t processor_t::mob_read(){
 }; //end method
 // ============================================================================
 memory_order_buffer_line_t* processor_t::get_next_op_store(){
-	// #if STORE_ONLY_ROB_HEAD
 		uint32_t i = this->memory_order_buffer_write_start;
 		if(this->memory_order_buffer_write[i].uop_executed &&
 			this->memory_order_buffer_write[i].status == PACKAGE_STATE_WAIT &&  
 			this->memory_order_buffer_write[i].sent ==false  && 
         	this->memory_order_buffer_write[i].wait_mem_deps_number <= 0 &&
-			this->memory_order_buffer_write[i].readyToGo <= orcs_engine.get_global_cycle())
+			this->memory_order_buffer_write[i].readyToGo <= orcs_engine.get_global_cycle() &&
+			this->memory_order_buffer_write[i].sent_to_emc == false)
 		{
 			return &this->memory_order_buffer_write[i];
 		}
-	// #else
-	// 	uint32_t pos = this->memory_order_buffer_write_start;
-	// 	for(uint32_t i = 0 ; i < this->memory_order_buffer_write_used; i++){
-	// 		if(this->memory_order_buffer_write[pos].uop_executed && 
-	// 			this->memory_order_buffer_write[pos].status == PACKAGE_STATE_WAIT && 
-	// 			this->memory_order_buffer_write[pos].sent==false && 
-	// 			this->memory_order_buffer_write[pos].wait_mem_deps_number <= 0 &&
-	// 			this->memory_order_buffer_write[pos].readyToGo <= orcs_engine.get_global_cycle()){	
-	// 				return &this->memory_order_buffer_write[pos];
-	// 			}
-	// 		pos++;
-	// 		if( pos >= MOB_WRITE) pos=0;
-	// 	}
-	// #endif
 	return NULL;
 };
 // ============================================================================
@@ -1516,17 +1503,6 @@ uint32_t processor_t::mob_write(){
 					return FAIL;
 				}
 			#endif
-		// #if STORE_ONLY_ROB_HEAD
-		// 	if(!this->isRobHead(this->oldest_write_to_send->rob_ptr)){
-		// 		#if MOB_DEBUG
-		// 			if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
-		// 				ORCS_PRINTF("Testing if was ROB Head\n")
-		// 				ORCS_PRINTF("NOT ROB Head %s\n",this->oldest_write_to_send->content_to_string().c_str())
-		// 			}		
-		// 		#endif
-		// 		return FAIL;
-		// 	}
-		// #endif
 		uint32_t ttc = 0;
 		#if MOB_DEBUG
 			if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
@@ -1788,11 +1764,11 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 				}
 				if(next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
-				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD ){
-				// ||next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD|| //){
+				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
 					//verify memory ambiguation
 					if(
-						// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE || 
+						next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE || 
 						next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 							if(this->verify_ambiguation(next_operation->reg_deps_ptr_array[i]->mob_ptr)){
 								// cancel chain execution
@@ -2011,10 +1987,19 @@ Verify register spill to include stores on chain;
 */
 bool processor_t::verify_spill_register(reorder_buffer_line_t *rob_line){
 	bool spill = false;
-	for (size_t i = 0; i < MOB_READ; i++)
-	{
-		if (!(this->memory_order_buffer_read[i].memory_address ^ rob_line->mob_ptr->memory_address))
-		{
+	// for (size_t i = 0; i < MOB_READ; i++)
+	// {
+	// 	if (this->memory_order_buffer_read[i].memory_address == rob_line->mob_ptr->memory_address &&
+	// 		this->memory_order_buffer_read[i].uop_number > rob_line->uop.uop_number){
+	// 		spill = true;
+	// 		break;
+	// 	}
+	// }
+	for (size_t i = 0; i < this->rob_buffer.size(); i++){
+		if (this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD && 
+			this->rob_buffer[i]->mob_ptr->memory_address == rob_line->mob_ptr->memory_address &&
+			this->rob_buffer[i]->mob_ptr->memory_size == rob_line->mob_ptr->memory_size &&
+			this->rob_buffer[i]->uop.uop_number > rob_line->uop.uop_number){
 			spill = true;
 			break;
 		}

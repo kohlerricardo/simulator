@@ -224,13 +224,13 @@ Arquivo definindo os parametros do modelo de processador
 #define DECODE_DEBUG 0
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
-#define EXECUTE_DEBUG 1
-#define MOB_DEBUG 1
-#define COMMIT_DEBUG 1
+#define EXECUTE_DEBUG 0
+#define MOB_DEBUG 0
+#define COMMIT_DEBUG 0
 #define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
 // EMC Debugs
-#define EMC_DEBUG 1
+#define EMC_DEBUG 0
 #define EMC_DISPATCH_DEBUG 0
 #define EMC_EXECUTE_DEBUG 1
 #define EMC_LSQ_DEBUG 1
@@ -240,6 +240,6 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 90360000
+#define WAIT_CYCLE 158673400
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP
