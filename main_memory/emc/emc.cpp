@@ -383,11 +383,6 @@ void emc_t::emc_commit(){
 		{
 			ERROR_ASSERT_PRINTF(uint32_t(pos_buffer) == this->uop_buffer_start, "EMC sending different position from start\n");
 			this->emc_send_back_core(&this->uop_buffer[pos_buffer]);
-			// // ===========================
-			// if(!this->uop_wait_finish.is_full()){
-			// 	this->uop_wait_finish.push_back(this->uop_buffer[pos_buffer]);
-			// }
-			// ===========================
 			this->remove_front_uop_buffer();
 		}
 		else
@@ -433,8 +428,7 @@ void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
 	}
 };
 // ============================================================================
-void emc_t::clock()
-{
+void emc_t::clock(){
 	#if EMC_DEBUG
 	if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 		ORCS_PRINTF("================================= EMC ====================================\n")
