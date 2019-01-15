@@ -13,6 +13,8 @@ class emc_opcode_package_t{
         // ============================================================================
         emc_opcode_package_t();
         ~emc_opcode_package_t();
+        emc_opcode_package_t(const emc_opcode_package_t &package); //Copy constructor 
+        emc_opcode_package_t& operator=(const emc_opcode_package_t &other); //atribuição =
         void package_clean();
         std::string content_to_string();
         // ============================================================================

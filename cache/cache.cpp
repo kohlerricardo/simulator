@@ -204,18 +204,24 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 				}else if(this->level == L1){
 					ttc+=L1_DATA_LATENCY;
 					#if CACHE_MANAGER_DEBUG
-						ORCS_PRINTF("L1 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("L1 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						}
 					#endif
 				}else if(this->level == LLC){
 					ttc+=LLC_LATENCY;
 					#if CACHE_MANAGER_DEBUG
-						ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						}
 					#endif
 				}
 				else if(this->level == EMC_DATA_CACHE){
 					ttc+=EMC_CACHE_LATENCY;
 					#if CACHE_MANAGER_DEBUG
-						ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						}
 					#endif
 				}
 				return HIT;
@@ -286,18 +292,18 @@ uint32_t cache_t::write(uint64_t address){
 // @address - address to install a line
 // @return - pointer to line  
 // ==================
-linha_t* cache_t::installLine(uint64_t address){
+linha_t* cache_t::installLine(uint64_t address,uint64_t latency){
 	uint32_t idx = this->idxSetCalculation(address);
 	uint32_t tag = this->tagSetCalculation(address);
 	for (size_t i = 0; i < this->nLines; i++)
 	{
 		if(this->sets[idx].linhas[i].valid==0){
 			this->sets[idx].linhas[i].tag = tag;
-			this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle()+RAM_LATENCY;
+			this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle()+latency;
 			this->sets[idx].linhas[i].valid = 1;
 			this->sets[idx].linhas[i].dirty = 0;
 			this->sets[idx].linhas[i].prefetched = 0;
-			this->sets[idx].linhas[i].readyAt = orcs_engine.get_global_cycle()+RAM_LATENCY;
+			this->sets[idx].linhas[i].readyAt = orcs_engine.get_global_cycle()+latency;
 			// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[i].readyAt)
 			return &this->sets[idx].linhas[i];
 			ORCS_PRINTF("passando do ponto\n")
@@ -319,11 +325,11 @@ linha_t* cache_t::installLine(uint64_t address){
 		}
 	#endif
 	this->sets[idx].linhas[line].tag = tag;
-	this->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle()+RAM_LATENCY;
+	this->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle()+latency;
 	this->sets[idx].linhas[line].valid = 1;	
 	this->sets[idx].linhas[line].dirty = 0;	
 	this->sets[idx].linhas[line].prefetched = 0;	
-	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+RAM_LATENCY;
+	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+latency;
 	// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[line].readyAt)
 	return &this->sets[idx].linhas[line];
 };
@@ -383,14 +389,14 @@ void cache_t::returnLine(uint64_t address,cache_t *cache){
 	for (size_t i = 0; i < this->nLines; i++)
 	{
 		if(this->sets[idx].linhas[i].tag==tag){
-			this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
+			this->sets[idx].linhas[i].lru=orcs_engine.get_global_cycle();
 			line = i;
 			break;
 		}
 	}
 	ERROR_ASSERT_PRINTF(line!=POSITION_FAIL,"Error, linha LLC não encontrada para retorno")
 	linha_t *linha_l1 = NULL;
-	linha_l1 = cache->installLine(address);
+	linha_l1 = cache->installLine(address,LLC_LATENCY);
 	this->sets[idx].linhas[line].linha_ptr_inf=linha_l1;
 	linha_l1->linha_ptr_sup = &this->sets[idx].linhas[line];
 	//copia dados da linha superior
@@ -468,34 +474,24 @@ void cache_t::shotdown(uint64_t address){
 // statistics of a level of cache
 // ====================
 void cache_t::statistics(){
-	if(orcs_engine.output_file_name == NULL){
-		ORCS_PRINTF("Cache_Level: %s\n",get_enum_cache_level_char(this->level))
-		ORCS_PRINTF("%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess())
-		ORCS_PRINTF("%s_Cache_Hits: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheHit(),float((this->get_cacheHit()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("%s_Cache_Miss: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheMiss(),float((this->get_cacheMiss()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("%s_Cache_Read: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheRead(),float((this->get_cacheRead()*100.0)/this->get_cacheAccess()))
-		ORCS_PRINTF("%s_Cache_Write: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWrite(),float((this->get_cacheWrite()*100.0)/this->get_cacheAccess()))
-		if(this->get_cacheWriteBack()!=0){
-			ORCS_PRINTF("%s_Cache_WriteBack: %lu %.4f\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack(),float((this->get_cacheWriteBack()*100.0)/this->get_changeLine()))
-		}
-	}else{
-		FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
-			utils_t::largeSeparator(output);
-			fprintf(output,"Cache_Level: %s\n",get_enum_cache_level_char(this->level));
-			fprintf(output,"%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess());
-			fprintf(output,"%s_Cache_Hits: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheHit());
-			fprintf(output,"%s_Cache_Miss: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheMiss());
-			fprintf(output,"%s_Cache_Read: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheRead());
-			fprintf(output,"%s_Cache_Write: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWrite());
-			if(this->get_cacheWriteBack()!=0){
-				fprintf(output,"%s_Cache_WriteBack: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack());
-			}
-			utils_t::largeSeparator(output);
-		}
-		fclose(output);
+	FILE *output = stdout;
+	bool close = false;
+	if(orcs_engine.output_file_name != NULL){
+		close=true;
+		output = fopen(orcs_engine.output_file_name,"a+");
 	}
-
-
-
+	if (output != NULL){
+		utils_t::largeSeparator(output);
+		fprintf(output,"Cache_Level: %s\n",get_enum_cache_level_char(this->level));
+		fprintf(output,"%s_Cache_Access: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheAccess());
+		fprintf(output,"%s_Cache_Hits: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheHit());
+		fprintf(output,"%s_Cache_Miss: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheMiss());
+		fprintf(output,"%s_Cache_Read: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheRead());
+		fprintf(output,"%s_Cache_Write: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWrite());
+		if(this->get_cacheWriteBack()!=0){
+			fprintf(output,"%s_Cache_WriteBack: %lu\n",get_enum_cache_level_char(this->level),this->get_cacheWriteBack());
+		}
+		utils_t::largeSeparator(output);
+	}
+	if(close) fclose(output);
 }

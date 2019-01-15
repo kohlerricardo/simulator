@@ -115,5 +115,17 @@ enum status_stride_prefetcher_t{
 };
 const char *get_enum_status_stride_prefetcher_char(status_stride_prefetcher_t type);
 // ============================================================================
+/// Enumerates the types of hash function
+enum hash_function_t {
+    HASH_FUNCTION_XOR_SIMPLE,
+    HASH_FUNCTION_INPUT1_ONLY,
+    HASH_FUNCTION_INPUT2_ONLY,
+    HASH_FUNCTION_INPUT1_2BITS,
+    HASH_FUNCTION_INPUT1_4BITS,
+    HASH_FUNCTION_INPUT1_8BITS,
+    HASH_FUNCTION_INPUT1_16BITS,
+    HASH_FUNCTION_INPUT1_32BITS
+};
+const char *get_enum_hash_function_char(hash_function_t type);
 // ============================================================================
 #endif

@@ -8,7 +8,6 @@ RM = rm -f
 
 FLAGS =   -ggdb3 -Wall -Wextra -Werror -std=c++11 -lefence -O3
 LDFLAGS = -ggdb3
-
 ########################################################################
 ##FOLDERS
 FD_PACKAGE = package

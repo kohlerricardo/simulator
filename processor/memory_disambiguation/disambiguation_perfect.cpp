@@ -15,8 +15,7 @@ void disambiguation_perfect_t::make_memory_dependencies(memory_order_buffer_line
 		for (uint16_t i = orcs_engine.processor->memory_order_buffer_write_start;; i++){
 			if(i == orcs_engine.processor->memory_order_buffer_write_end)break;
 			if(i >= MOB_WRITE) i=0;
-			if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_write[i].memory_address)&&
-				(mob_line->package_age > orcs_engine.processor->memory_order_buffer_write[i].package_age)){
+			if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_write[i].memory_address)){
 					mob_line->wait_mem_deps_number++;
 					for(size_t j = 0; j < ROB_SIZE; j++){
 						if(orcs_engine.processor->memory_order_buffer_write[i].mem_deps_ptr_array[j]==NULL){
@@ -34,8 +33,7 @@ void disambiguation_perfect_t::make_memory_dependencies(memory_order_buffer_line
 		for (uint16_t i = orcs_engine.processor->memory_order_buffer_read_start;; i++){
 			if(i == orcs_engine.processor->memory_order_buffer_read_end)break;
 			if(i >= MOB_READ) i=0;
-			if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_read[i].memory_address)&&
-				(mob_line->package_age > orcs_engine.processor->memory_order_buffer_read[i].package_age)){
+			if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_read[i].memory_address)){
 					mob_line->wait_mem_deps_number++;
 					for(size_t j = 0; j < ROB_SIZE; j++){
 						if(orcs_engine.processor->memory_order_buffer_read[i].mem_deps_ptr_array[j]==NULL){
@@ -50,8 +48,7 @@ void disambiguation_perfect_t::make_memory_dependencies(memory_order_buffer_line
 		for (uint16_t i = orcs_engine.processor->memory_order_buffer_write_start;; i++){
 					if(i == orcs_engine.processor->memory_order_buffer_write_end)break;
 					if(i >= MOB_WRITE) i=0;
-					if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_write[i].memory_address)&&
-						(mob_line->package_age > orcs_engine.processor->memory_order_buffer_write[i].package_age)){
+					if((mob_line->memory_address == orcs_engine.processor->memory_order_buffer_write[i].memory_address)){
 							mob_line->wait_mem_deps_number++;
 							for(size_t j = 0; j < ROB_SIZE; j++){
 								if(orcs_engine.processor->memory_order_buffer_write[i].mem_deps_ptr_array[j]==NULL){
@@ -107,16 +104,10 @@ void disambiguation_perfect_t::solve_memory_dependencies(memory_order_buffer_lin
 		}
 	}
 };
-void disambiguation_perfect_t::statistics(){
-    if(orcs_engine.output_file_name == NULL){
-    
-    ORCS_PRINTF("Total_Read_false_Positives: %lu\n", this->get_stat_disambiguation_read_false_positive())
-    ORCS_PRINTF("Total_Write_false_Positives: %lu\n", this->get_stat_disambiguation_write_false_positive())
-    ORCS_PRINTF("Total_Resolve_Address_to_Address: %lu\n",this->get_stat_address_to_address())
-    }
-    else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
+void disambiguation_perfect_t::statistics(){FILE *output = stdout;
+	if(orcs_engine.output_file_name != NULL)
+		output = fopen(orcs_engine.output_file_name,"a+");
+	if (output != NULL){
             utils_t::largeSeparator(output);
             fprintf(output,"Total_Read_false_Positives: %lu\n", this->get_stat_disambiguation_read_false_positive());
             fprintf(output,"Total_Write_false_Positives: %lu\n", this->get_stat_disambiguation_write_false_positive());
@@ -124,5 +115,4 @@ void disambiguation_perfect_t::statistics(){
             utils_t::largeSeparator(output);
         }
         fclose(output);
-    }
 };

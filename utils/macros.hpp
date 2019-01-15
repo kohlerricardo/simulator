@@ -37,6 +37,10 @@
                               exit(EXIT_FAILURE);\
                           }
 
+#define INFO_PRINTF(...){\
+                        ORCS_PRINTF("INFO : EVENT OCUURED AT Cycle: %" PRIu64 "\n", orcs_engine.get_global_cycle());\
+                        exit(EXIT_SUCCESS);\
+                        }
 // ============================================================================
 /// MACROS to create get_ and set_ methods for variables.
 // ============================================================================

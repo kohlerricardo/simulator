@@ -26,13 +26,14 @@ class reorder_buffer_line_t {
         bool operator==(const reorder_buffer_line_t &reorder_buffer_line);
         
         // ==============================================
-        uop_package_t uop;                          /// uOP stored
-        processor_stage_t stage;                    /// Stage of the uOP
+        uop_package_t uop; //*                         /// uOP stored
+        processor_stage_t stage; //*                   /// Stage of the uOP
         /// Register Dependencies Control
         uint32_t wait_reg_deps_number;                  /// Must wait BEFORE execution
         reorder_buffer_line_t* *reg_deps_ptr_array;     /// Elements to wake-up AFTER execution
         uint32_t wake_up_elements_counter;              /// Counter of elements to wakeup
         memory_order_buffer_line_t* mob_ptr;            /// mob pointer to memory request 
+        bool sent;                                      /// Control flag to remove robs entry
         // ====================================================================
         /// Methods
         // ====================================================================
@@ -49,12 +50,9 @@ class reorder_buffer_line_t {
         bool on_chain;
         bool is_poisoned;
         bool original_miss;
-        bool emc_executed;
+        bool emc_executed; //*
+        bool sent_to_emc;      // Flag EMC-Sent to remove from reservation stations
         uint32_t op_on_emc_buffer;
         // ====================================================================
-        void get_deps(std::vector<reorder_buffer_line_t> *buffer);
-
-
-
         void print_dependences();
 };

@@ -161,8 +161,11 @@ void disambiguation_hashed_t::solve_memory_dependencies(memory_order_buffer_line
 		}
 
 		/// There is an unsolved dependency
-		mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number--;
+		if(mob_line->mem_deps_ptr_array[j]->emc_executed==true){
 
+		}else{
+			mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number--;
+		}
 		if (ADDRESS_TO_ADDRESS == 1)
 		{
 			if (mob_line->mem_deps_ptr_array[j]->uop_executed == true &&
@@ -173,7 +176,16 @@ void disambiguation_hashed_t::solve_memory_dependencies(memory_order_buffer_line
 			{
 				this->add_stat_address_to_address();
 				mob_line->mem_deps_ptr_array[j]->status = PACKAGE_STATE_READY;
+				mob_line->mem_deps_ptr_array[j]->sent = true;
+				mob_line->mem_deps_ptr_array[j]->rob_ptr->sent = true;
 				mob_line->mem_deps_ptr_array[j]->readyAt = orcs_engine.get_global_cycle() + REGISTER_FORWARD;
+				mob_line->mem_deps_ptr_array[j]->forwarded_data=true;
+				#if MOB_DEBUG
+					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+						ORCS_PRINTF("Forwarded To : %s\n",mob_line->mem_deps_ptr_array[j]->content_to_string().c_str())
+					}
+				#endif
+
 			}
 		}
 		/// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
@@ -182,22 +194,19 @@ void disambiguation_hashed_t::solve_memory_dependencies(memory_order_buffer_line
 };
 
 void disambiguation_hashed_t::statistics(){
-    if(orcs_engine.output_file_name == NULL){
-    
-    ORCS_PRINTF("Total_Read_false_Positives: %lu\n", this->get_stat_disambiguation_read_false_positive())
-    ORCS_PRINTF("Total_Write_false_Positives: %lu\n", this->get_stat_disambiguation_write_false_positive())
-    ORCS_PRINTF("Total_Resolve_Address_to_Address: %lu\n",this->get_stat_address_to_address())
-    }
-    else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
+	bool close = false;
+	FILE *output = stdout;
+	if(orcs_engine.output_file_name != NULL){
+		output = fopen(orcs_engine.output_file_name,"a+");
+		close=true;
+	}
+	if (output != NULL){
             utils_t::largeSeparator(output);
             fprintf(output,"Total_Read_false_Positives: %lu\n", this->get_stat_disambiguation_read_false_positive());
             fprintf(output,"Total_Write_false_Positives: %lu\n", this->get_stat_disambiguation_write_false_positive());
             fprintf(output,"Total_Resolve_Address_to_Address: %lu\n",this->get_stat_address_to_address());
             utils_t::largeSeparator(output);
         }
-        fclose(output);
-    }
+    if(close) fclose(output);
 };
 // ============================================================================

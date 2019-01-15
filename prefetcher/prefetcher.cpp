@@ -31,23 +31,24 @@ void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache)
         uint32_t status = cache->read(newAddress,sacrifice);
         if(status == MISS){
             this->add_totalPrefetched();
-            linha_t *linha = cache->installLine(newAddress);
+            linha_t *linha = cache->installLine(newAddress,RAM_LATENCY);
+            #if EMC_ACTIVE
+                linha_t *linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(newAddress,RAM_LATENCY);
+                linha_emc->linha_ptr_inf = linha;
+                linha->linha_ptr_emc=linha_emc; 
+            #endif
             linha->prefetched =1; 
         }
     }
 };
 void prefetcher_t::statistics(){
-    
-    if(orcs_engine.output_file_name == NULL){
-    ORCS_PRINTF("##############  PREFETCHER ##################\n")
-    ORCS_PRINTF("Total Prefetches: %u\n", this->get_totalPrefetched())
-    ORCS_PRINTF("Useful Prefetches: %u -> %.4f \n", this->get_usefulPrefetches(),(this->get_usefulPrefetches()*100.0)/this->get_totalPrefetched())
-    ORCS_PRINTF("Late Prefetches: %u -> %.4f \n",this->get_latePrefetches(),((this->get_latePrefetches()*100.0)/this->get_totalPrefetched()))
-    ORCS_PRINTF("MediaAtraso: %.3f\n",(float)this->get_totalCycleLate()/(float)this->get_latePrefetches())
+    bool close = false;
+    FILE *output = stdout;
+	if(orcs_engine.output_file_name != NULL){
+		output = fopen(orcs_engine.output_file_name,"a+");
+        close=true;
     }
-    else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
+	if (output != NULL){
             utils_t::largeSeparator(output);
             fprintf(output,"##############  PREFETCHER ##################\n");
             fprintf(output,"Total Prefetches: %u\n", this->get_totalPrefetched());
@@ -56,6 +57,5 @@ void prefetcher_t::statistics(){
             fprintf(output,"MediaAtraso: %.4f\n",(float)this->get_totalCycleLate()/(float)this->get_latePrefetches());
             utils_t::largeSeparator(output);
         }
-        fclose(output);
-    }
+	if(close) fclose(output);
 }; 

@@ -78,11 +78,11 @@ Arquivo definindo os parametros do modelo de processador
 #define FETCH_BUFFER 18
 #define DECODE_BUFFER 28
 #define RAT_SIZE 260
-#define ROB_SIZE 384
+#define ROB_SIZE 168
 #define UNIFIED_RS 54
 //MOB
-#define MOB_READ 192
-#define MOB_WRITE 108
+#define MOB_READ 64
+#define MOB_WRITE 36
 
 
 // ===========BRANCH PREDICTOR=============
@@ -136,7 +136,7 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 4 * MEGA
+#define LLC_SIZE 128*KILO
 #define LLC_ASSOCIATIVITY 8
 #define LLC_LATENCY 12
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
@@ -144,7 +144,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 
 // =====================RAM=======================
-#define RAM_LATENCY 200
+#define RAM_LATENCY 400
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
 #define MAX_PARALLEL_REQUESTS 4
@@ -173,8 +173,18 @@ Arquivo definindo os parametros do modelo de processador
 #define REGISTER_FORWARD 1
 // =====================MEMORY DESAMBIGUATION=======================
 
+// =====================MEMORY CONFIGURATION=======================
+#define ARRAY 0
+#define CIRCULAR_BUFFER 1
+
+// =====================MEMORY CONFIGURATION=======================
+
+
+
 // ===================== EMC =======================================
-#define EMC_ACTIVE 0
+#define EMC_ACTIVE 1
+#define EMC_ROB_HEAD 1
+// ===================== EMC =======================================
 //WIDHTs
 #define EMC_DISPATCH_WIDTH 2
 #define EMC_EXECUTE_WIDTH 2
@@ -196,8 +206,10 @@ Arquivo definindo os parametros do modelo de processador
 #define EMC_CACHE_ASSOCIATIVITY 4
 #define EMC_CACHE_LATENCY 1
 #define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
-// SPECIAL CODES
-#define CANCEL_CHAIN_EXECUTION -2
+// Access Predictor
+#define MACT_SIZE 256
+#define MACT_THRESHOLD 3
+#define MACT_SHIFT 4
 // ===================== EMC =======================================
 // =====================CHECKS=======================
 #define SANITY_CHECK 0
@@ -205,20 +217,21 @@ Arquivo definindo os parametros do modelo de processador
 #define HEARTBEAT_CLOCKS 10000000
 // ==========DEBUGS
 #define DEBUG 0
+#define EMC_ACTIVE_DEBUG 0
 
 #if DEBUG
 #define FETCH_DEBUG 0
 #define DECODE_DEBUG 0
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
-#define EXECUTE_DEBUG 0
+#define EXECUTE_DEBUG 1
 #define MOB_DEBUG 1
 #define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
 // EMC Debugs
 #define EMC_DEBUG 1
-#define EMC_DISPATCH_DEBUG 1
+#define EMC_DISPATCH_DEBUG 0
 #define EMC_EXECUTE_DEBUG 1
 #define EMC_LSQ_DEBUG 1
 #define EMC_COMMIT_DEBUG 1
@@ -227,6 +240,6 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 8500
+#define WAIT_CYCLE 90360000
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP

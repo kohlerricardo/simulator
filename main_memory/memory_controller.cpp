@@ -20,21 +20,13 @@ void memory_controller_t::allocate(){
 };
 // ============================================================================
 void memory_controller_t::statistics(){
-    if(orcs_engine.output_file_name == NULL){
-        utils_t::largestSeparator();
-        ORCS_PRINTF("Memory Controller\n")
-        utils_t::largestSeparator();
-        ORCS_PRINTF("Requests_Made %lu\n",this->get_requests_made())
-        ORCS_PRINTF("Requests_from_LLC %lu\n",this->get_requests_llc())
-        ORCS_PRINTF("Requests_from_EMC %lu\n",this->get_requests_emc())
-
-        utils_t::largestSeparator();
-#if EMC_ACTIVE
-        this->emc->statistics();
-#endif
-    }else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
+    FILE *output = stdout;
+    bool close = false;
+	if(orcs_engine.output_file_name != NULL){
+        close=true;
+		output = fopen(orcs_engine.output_file_name,"a+");
+    }
+	if (output != NULL){
         utils_t::largestSeparator(output);
         fprintf(output,"#Memory Controller\n");
         utils_t::largestSeparator(output);
@@ -42,11 +34,11 @@ void memory_controller_t::statistics(){
         fprintf(output,"Requests_from_LLC: %lu\n",this->get_requests_llc());
         fprintf(output,"Requests_from_EMC: %lu\n",this->get_requests_emc());
         utils_t::largestSeparator(output);
-#if EMC_ACTIVE
-        this->emc->statistics();
-#endif
+	    if(close) fclose(output);
+        #if EMC_ACTIVE
+            this->emc->statistics();
+        #endif
         }
-    }
 };
 // ============================================================================
 void memory_controller_t::clock(){

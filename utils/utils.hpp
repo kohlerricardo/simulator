@@ -161,4 +161,5 @@ class utils_t {
         static void smallSeparator(FILE *file);
         static void largeSeparator(FILE *file);
         static void largestSeparator(FILE *file);
+        static uint64_t hash_function(hash_function_t type, uint64_t input1, uint64_t input2, uint64_t bit_size);
 };

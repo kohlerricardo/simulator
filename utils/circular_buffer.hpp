@@ -144,7 +144,6 @@ int32_t circular_buffer_t<CB_TYPE>::push_back(const CB_TYPE& new_element) {
         virtual_position = this->size;
         this->size++;
         this->data[end_index] = new_element;
-
         this->end_index++;
         if (this->end_index >= this->capacity)
             this->end_index = 0;
@@ -221,7 +220,7 @@ template <class CB_TYPE>
 void circular_buffer_t<CB_TYPE>::print_all() {
     for (size_t i = 0; i < this->size; i++)
     {
-        this->data[i].content_to_string();
+       ORCS_PRINTF("%s\n",this->data[i].content_to_string().c_str())
     }
 };
 

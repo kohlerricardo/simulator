@@ -84,6 +84,12 @@ std::string get_status_execution(){
     ////////
     double percentage_complete = 100.0 * (static_cast<double>(fetched_opcodes) / static_cast<double>(total_opcodes));
     //    
+    // Get total uops decoded, uops coppleted
+    uint64_t uops_decoded = orcs_engine.processor->renameCounter;
+    uint64_t uop_completed = orcs_engine.processor->commit_uop_counter;
+    snprintf(report,sizeof(report),"Uops Completed/uops decoded: %lu of %lu\n",uop_completed,uops_decoded);
+    final_report+=report;
+    ////////
     snprintf(report,sizeof(report),"Total Progress %4.2lf%%\n",percentage_complete);
     final_report+=report;
     // IPC parcial

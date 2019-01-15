@@ -26,8 +26,14 @@ void memory_order_buffer_line_t::package_clean() {
         this->memory_operation = MEMORY_OPERATION_FREE;
         this->readyToGo = orcs_engine.get_global_cycle();
         this->wait_mem_deps_number = 0;
-        this->waiting_dram = false;
-        this->package_age=orcs_engine.get_global_cycle();
+        //control variables
+        this->processed = false;
+        this->sent=false;
+        this->sent_to_emc = false;
+        this->forwarded_data=false;
+        this->waiting_DRAM=false;
+        this->emc_executed=false;
+        this->is_llc_miss=false;
         #if EMC_ACTIVE
         this->emc_opcode_ptr=NULL;
         #endif
@@ -41,14 +47,18 @@ std::string memory_order_buffer_line_t::content_to_string() {
         return content_string;
     }
     content_string = content_string + " |Exec:" + utils_t::uint64_to_string(this->opcode_address);
+    content_string = content_string + " |Uop Number:" + utils_t::uint64_to_string(this->uop_number);
     content_string = content_string + " |Executed:" + utils_t::bool_to_string(this->uop_executed);
     content_string = content_string + " |Mem. Operation:" +  get_enum_memory_operation_char(this->memory_operation);
     content_string = content_string + " |Mem. Address:" +  utils_t::uint64_to_string(this->memory_address);
     content_string = content_string + " |Status:" +  get_enum_package_state_char(this->status);
-    content_string = content_string + " |Mem Deps:" + utils_t::int32_to_string(this->wait_mem_deps_number);
+    content_string = content_string + " |Wait Mem Deps:" + utils_t::int32_to_string(this->wait_mem_deps_number);
     content_string = content_string + " |Ready At:" +  utils_t::uint64_to_string(this->readyAt);
     content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo);
-    content_string = content_string + " |Age:"+utils_t::uint64_to_string(this->package_age);
+    content_string = content_string + " |Sent:"+utils_t::bool_to_string(this->sent);
+    content_string = content_string + " |Processed:"+utils_t::bool_to_string(this->processed);
+    content_string = content_string + " |Waiting_DRAM:"+utils_t::bool_to_string(this->waiting_DRAM);
+    content_string = content_string + " |Forwarded_data:"+utils_t::bool_to_string(this->forwarded_data);
     return content_string;
 };
 
@@ -104,10 +114,13 @@ void memory_order_buffer_line_t::updatePackageFree(uint32_t stallTime){
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
 };
 // =========================================================================
-// Print all strutcure of mob
+// Print all strutcure of mob array
 // =========================================================================
-void memory_order_buffer_line_t::printAll(memory_order_buffer_line_t* input_array, uint32_t size_array){
-    for (uint32_t i = 0; i < size_array; i++){
-        ORCS_PRINTF("%s\n",input_array[i].content_to_string().c_str())
+void memory_order_buffer_line_t::printAllOrder(memory_order_buffer_line_t* input_array, uint32_t size_array,uint32_t start, uint32_t used){
+    uint32_t pos = start;
+    for (uint32_t i = 0; i< used; i++){
+		ORCS_PRINTF("%s\n",input_array[pos].content_to_string().c_str())
+        pos++;
+		if(pos>=size_array)pos=0;
     }
-}
+};
