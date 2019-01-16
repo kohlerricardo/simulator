@@ -238,6 +238,7 @@ class processor_t {
 		uint32_t cancel_emc_execution;
 		uint32_t cancel_emc_execution_one_op;
 		uint32_t started_emc_execution;
+		uint32_t total_instruction_sent_emc;
 		// ====================================================================
 		//  Methods
 		// void
@@ -277,4 +278,5 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_execution);
 		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_read);
 		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_write);
+		INSTANTIATE_GET_SET_ADD(uint32_t,total_instruction_sent_emc);
 };

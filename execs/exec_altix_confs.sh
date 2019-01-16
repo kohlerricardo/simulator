@@ -1,27 +1,31 @@
 #!/bin/bash
 
-ROOT=`pwd`
+ROOT='/home/ricardo'
 EXEC="orcs -t"
 TRACE_FOLDER="traces/"
 BENCHMARK_FOLDER="spec_cpu2006/"
-cd ${ROOT}'/'${TRACE_FOLDER}${BENCHMARK_FOLDER}
+cd ${ROOT}'/bin/'${TRACE_FOLDER}${BENCHMARK_FOLDER}
 LIST_BENCHS=`ls `
 cd ${ROOT}
-ORCS_D=("C1_ROB_168_LLC_4M_RAM_200" 
-        "C2_ROB_384_LLC_4M_RAM_200"
-        "C3_ROB_168_LLC_512K_RAM_200"
-        "C4_ROB_168_LLC_4M_RAM_800"
-        "C5_ROB_384_LLC_512K_RAM_200"
-        "C6_ROB_384_LLC_512K_RAM_800")
+ORCS_D=(limit_op_rh.d all_op_rh.d limit_op_all_miss.d all_op_all_miss.d)
 # mkdir ${ORCS_D}
 # mkdir ${SINUCA_D}
-for jj in ${ORCS_D[@]}
+# for i in ${ORCS_D[@]}
+# do
+# cd /home/ricardo/${i}
+# make clean && make -j 4 all
+# done
+# cd -
+for jj in ${LIST_BENCHS[@]}
 do
-        mkdir ${jj}'.d'
-        for i in ${LIST_BENCHS[@]}
+        for ((i=0;i<${#ORCS_D[@]};i+=4))
         do  
+        # mkdir ${i}'.d'
         # echo "${ROOT}'/'${jj}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} -f ${jj}.d'/'${i}.txt "
-        byobu new-window "${ROOT}'/'${jj}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} -f ${jj}.d'/'${i}.txt "
+        ${ROOT}'/'${ORCS_D[i]}'/'./${EXEC} '/home/ricardo/bin/'${TRACE_FOLDER}${BENCHMARK_FOLDER}${jj}'/'${jj} -f '/home/ricardo/bin/'${ORCS_D[i]}'/'${jj}.txt& 
+        ${ROOT}'/'${ORCS_D[i+1]}'/'./${EXEC} '/home/ricardo/bin/'${TRACE_FOLDER}${BENCHMARK_FOLDER}${jj}'/'${jj} -f '/home/ricardo/bin/'${ORCS_D[i+1]}'/'${jj}.txt&
+        ${ROOT}'/'${ORCS_D[i+2]}'/'./${EXEC} '/home/ricardo/bin/'${TRACE_FOLDER}${BENCHMARK_FOLDER}${jj}'/'${jj} -f '/home/ricardo/bin/'${ORCS_D[i+2]}'/'${jj}.txt&
+        ${ROOT}'/'${ORCS_D[i+3]}'/'./${EXEC} '/home/ricardo/bin/'${TRACE_FOLDER}${BENCHMARK_FOLDER}${jj}'/'${jj} -f '/home/ricardo/bin/'${ORCS_D[i+3]}'/'${jj}.txt 
         #   { time ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} -f ${ORCS_D}'/'${i}.txt ; } 2>> ${ORCS_D}'/'${i}.txt &
         done
 done

@@ -1172,6 +1172,7 @@ void processor_t::execute()
 		// Contando numero de loads dependentes nas cadeias elegiveis para execução
 			this->instrucoes_inter_load_deps = 0;
 		// ======================================================================
+			uint32_t instruction_dispatched_emc = 0;
 			for(uint32_t i=0;i<this->rob_buffer.size();i++){
 				bool renamed_emc=false;
 				reorder_buffer_line_t *rob_next = this->rob_buffer.front();	
@@ -1209,6 +1210,7 @@ void processor_t::execute()
 					rob_next->is_poisoned=true;
 					rob_next->sent_to_emc=true;
 					renamed_emc=true;
+					instruction_dispatched_emc++;
 				}
 				////////////////////////////////////////
 				if(renamed_emc==true){
@@ -1227,6 +1229,7 @@ void processor_t::execute()
 						ORCS_PRINTF("Locking Processor\n")
 					}
 				#endif
+				this->total_instruction_sent_emc+=instruction_dispatched_emc;
 				this->lock_processor=true;
 				this->clean_rrt(); //Limpa RRT;
 			}
@@ -2147,6 +2150,7 @@ void processor_t::statistics(){
 				fprintf(output, "started_emc_execution: %d\n", this->get_started_emc_execution());
 				fprintf(output, "canceled_emc_execution: %d\n", this->get_cancel_emc_execution());
 				fprintf(output, "canceled_emc_execution_one_op: %d\n", this->get_cancel_emc_execution_one_op());
+				fprintf(output, "total_instruction_sent_emc: %d\n", this->get_total_instruction_sent_emc());
 			#endif
 			}
 	if(close) fclose(output);
