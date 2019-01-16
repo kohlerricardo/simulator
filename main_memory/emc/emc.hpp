@@ -5,6 +5,21 @@ class emc_t{
         uint64_t access_LLC;
         uint64_t access_LLC_Hit;
         uint64_t access_LLC_Miss;
+    //=============
+	//Statistics Commit
+	//=============
+	uint64_t stat_inst_int_alu_completed;
+	uint64_t stat_inst_mul_alu_completed;
+	uint64_t stat_inst_div_alu_completed;
+	uint64_t stat_inst_int_fp_completed;
+	uint64_t stat_inst_mul_fp_completed;
+	uint64_t stat_inst_div_fp_completed;
+	uint64_t stat_inst_nop_completed;
+	uint64_t stat_inst_load_completed;
+	uint64_t stat_inst_store_completed;
+	uint64_t stat_inst_branch_completed;
+	uint64_t stat_inst_other_completed;
+
     public:
 
         // ==========================================================================
@@ -24,11 +39,20 @@ class emc_t{
         uint32_t uop_buffer_start;
         uint32_t uop_buffer_end;
         uint32_t uop_buffer_used;
-        // ==========================================================================
-        // EMC FUs for execution
-        uint64_t *fu_int_alu;
-        uint64_t *fu_mem_load;
-        uint64_t *fu_mem_store;
+        // ======================
+		// Funcional Unitis - FUs
+		// ======================
+		// Integer FUs
+		uint64_t *fu_int_alu;
+		uint64_t *fu_int_mul;
+		uint64_t *fu_int_div;
+		// Floating Points FUs
+		uint64_t *fu_fp_alu;
+		uint64_t *fu_fp_mul;
+		uint64_t *fu_fp_div;
+		// Memory FUs
+		uint64_t *fu_mem_load;
+		uint64_t *fu_mem_store;
         // ==========================================================================
         // Structures to predictor
         int8_t *memory_access_counter_table;
@@ -71,10 +95,27 @@ class emc_t{
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Hit);
         INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Miss);
+        
+        // ====================================================================
+		// Statistics inst completed
+		// ====================================================================
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_branch_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_alu_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_fp_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_alu_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_fp_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_alu_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_fp_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_load_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_store_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_nop_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_other_completed);
+
         // ==========================================================================
         // EMC Debug Methods
         // ==========================================================================
         void print_structures();
+
 };
 
 #endif // !EMC_H

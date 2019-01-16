@@ -57,6 +57,8 @@ std::string memory_order_buffer_line_t::content_to_string() {
     content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo);
     content_string = content_string + " |Sent:"+utils_t::bool_to_string(this->sent);
     content_string = content_string + " |Processed:"+utils_t::bool_to_string(this->processed);
+    content_string = content_string + " |Sent To EMC:"+utils_t::bool_to_string(this->sent_to_emc);
+    content_string = content_string + " |Executed at EMC:"+utils_t::bool_to_string(this->emc_executed);
     content_string = content_string + " |Waiting_DRAM:"+utils_t::bool_to_string(this->waiting_DRAM);
     content_string = content_string + " |Forwarded_data:"+utils_t::bool_to_string(this->forwarded_data);
     return content_string;

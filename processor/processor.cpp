@@ -1762,10 +1762,12 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 				if(this->already_exists(next_operation->reg_deps_ptr_array[i])){
 					continue;
 				}
+			#if !ALL_UOPS
 				if(next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD|| //){
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+			#endif
 					//verify memory ambiguation
 					if(
 						next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE || 
@@ -1785,7 +1787,9 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 					// 	ORCS_PRINTF("==========\n")
 					// #endif
 					next_operation->reg_deps_ptr_array[i]->op_on_emc_buffer++;
+				#if !ALL_UOPS
 				}
+				#endif
 			}
 			next_operation->on_chain=true;
 			if(!next_operation->original_miss){

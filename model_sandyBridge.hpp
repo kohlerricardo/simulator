@@ -183,7 +183,8 @@ Arquivo definindo os parametros do modelo de processador
 
 // ===================== EMC =======================================
 #define EMC_ACTIVE 1
-#define EMC_ROB_HEAD 0
+#define EMC_ROB_HEAD 1
+#define ALL_UOPS 1
 // ===================== EMC =======================================
 //WIDHTs
 #define EMC_DISPATCH_WIDTH 2
@@ -191,12 +192,34 @@ Arquivo definindo os parametros do modelo de processador
 #define EMC_COMMIT_WIDTH 2
 // Latencies
 #define EMC_DISPATCH_LATENCY 1
-#define EMC_INTEGER_LATENCY 1
+#define EMC_EXECUTE_LATENCY 0
 #define EMC_COMMIT_LATENCY 1
+
 //pipelines
-#define EMC_WAIT_NEXT_INTEGER 1
-//Sizes
+#define EMC_WAIT_NEXT_INTEGER_ALU 1
+#define EMC_WAIT_NEXT_INTEGER_MUL 1
+#define EMC_WAIT_NEXT_INTEGER_DIV 32
+#define EMC_WAIT_NEXT_FP_ALU 1
+#define EMC_WAIT_NEXT_FP_MUL 1
+#define EMC_WAIT_NEXT_FP_DIV 10
+#define EMC_WAIT_NEXT_MEM_LOAD 1
+#define EMC_WAIT_NEXT_MEM_STORE 1
+//Functional Units QTDE
 #define EMC_INTEGER_ALU 2
+#define EMC_INTEGER_MUL 1
+#define EMC_INTEGER_DIV 1
+#define EMC_FP_ALU 1
+#define EMC_FP_MUL 1
+#define EMC_FP_DIV 1
+//Latencies
+#define EMC_INTEGER_LATENCY_ALU 1
+#define EMC_INTEGER_LATENCY_MUL 3
+#define EMC_INTEGER_LATENCY_DIV 32
+//Latencies FP
+#define EMC_FP_LATENCY_ALU 3
+#define EMC_FP_LATENCY_MUL 5
+#define EMC_FP_LATENCY_DIV 10
+// Structures
 #define EMC_UNIFIED_RS 8
 #define EMC_UOP_BUFFER 16
 #define EMC_REGISTERS 16
@@ -224,13 +247,13 @@ Arquivo definindo os parametros do modelo de processador
 #define DECODE_DEBUG 0
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
-#define EXECUTE_DEBUG 0
-#define MOB_DEBUG 0
-#define COMMIT_DEBUG 0
+#define EXECUTE_DEBUG 1
+#define MOB_DEBUG 1
+#define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
 // EMC Debugs
-#define EMC_DEBUG 0
+#define EMC_DEBUG 1
 #define EMC_DISPATCH_DEBUG 0
 #define EMC_EXECUTE_DEBUG 1
 #define EMC_LSQ_DEBUG 1
@@ -240,6 +263,6 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 158673400
+#define WAIT_CYCLE 276366
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP

@@ -5,10 +5,18 @@ emc_t::emc_t()
 	this->uop_buffer = NULL;
 	//allocate lsq
 	this->unified_lsq = NULL;
-	//allocate structures to fus
+	// ========================================
 	this->fu_int_alu = NULL;
+	this->fu_int_div = NULL;
+	this->fu_int_mul = NULL;
+	// ========================================
+	this->fu_fp_mul = NULL;
+	this->fu_fp_div = NULL;
+	this->fu_fp_alu = NULL;
+	// ========================================
 	this->fu_mem_load = NULL;
 	this->fu_mem_store = NULL;
+	// ========================================
 	// Data Cache
 	this->data_cache = NULL;
 	//MACT
@@ -21,10 +29,18 @@ emc_t::~emc_t()
 	//deletting data cache
 	if (this->data_cache != NULL)
 		delete this->data_cache;
-	// deleting fus
+	// ========================================
 	utils_t::template_delete_array<uint64_t>(this->fu_int_alu);
+	utils_t::template_delete_array<uint64_t>(this->fu_int_mul);
+	utils_t::template_delete_array<uint64_t>(this->fu_int_div);
+	// ========================================
+	utils_t::template_delete_array<uint64_t>(this->fu_fp_alu);
+	utils_t::template_delete_array<uint64_t>(this->fu_fp_mul);
+	utils_t::template_delete_array<uint64_t>(this->fu_fp_div);
+	// ========================================
 	utils_t::template_delete_array<uint64_t>(this->fu_mem_load);
 	utils_t::template_delete_array<uint64_t>(this->fu_mem_store);
+	// ========================================
 	// deleting deps array
 	for (size_t i = 0; i < EMC_UOP_BUFFER; i++)
 	{
@@ -62,6 +78,13 @@ void emc_t::allocate()
 	this->unified_lsq = utils_t::template_allocate_array<memory_order_buffer_line_t>(EMC_LSQ_SIZE);
 	// ======================= allocate structures to fus =======================
 	this->fu_int_alu = utils_t::template_allocate_initialize_array<uint64_t>(EMC_INTEGER_ALU, 0);
+	this->fu_int_mul = utils_t::template_allocate_initialize_array<uint64_t>(EMC_INTEGER_MUL, 0);
+	this->fu_int_div = utils_t::template_allocate_initialize_array<uint64_t>(EMC_INTEGER_DIV, 0);
+	// ========================================
+	this->fu_fp_alu = utils_t::template_allocate_initialize_array<uint64_t>(EMC_FP_ALU, 0);
+	this->fu_fp_mul = utils_t::template_allocate_initialize_array<uint64_t>(EMC_FP_MUL, 0);
+	this->fu_fp_div = utils_t::template_allocate_initialize_array<uint64_t>(EMC_FP_DIV, 0);
+	// ========================================
 	this->fu_mem_load = utils_t::template_allocate_initialize_array<uint64_t>(LOAD_UNIT, 0);
 	this->fu_mem_store = utils_t::template_allocate_initialize_array<uint64_t>(STORE_UNIT, 0);
 	// ======================= Memory Ops executed =======================
@@ -113,25 +136,29 @@ void emc_t::emc_dispatch(){
 		ORCS_PRINTF("Cycle %lu\n",orcs_engine.get_global_cycle())
 		}
 	#endif
-	uint32_t uop_dispatched = 0;
-	uint32_t fu_int_alu = 0;
-	uint32_t fu_mem_load = 0;
-	uint32_t fu_mem_store = 0;
+		//control variables
+		uint32_t uop_dispatched = 0;
+		/// Control the total dispatched per FU
+		uint32_t fu_int_alu = 0;
+		uint32_t fu_int_mul = 0;
+		uint32_t fu_int_div = 0;
 
-	for (uint32_t i = 0; i < this->unified_rs.size() && i < EMC_UNIFIED_RS; i++)
-	{
-		emc_opcode_package_t *emc_opcode = this->unified_rs[i];
+		uint32_t fu_fp_alu = 0;
+		uint32_t fu_fp_mul = 0;
+		uint32_t fu_fp_div = 0;
 
-		
-		if (uop_dispatched >= EMC_DISPATCH_WIDTH)
-		{
+		uint32_t fu_mem_load = 0;
+		uint32_t fu_mem_store = 0;
+
+	for (uint32_t i = 0; i < this->unified_rs.size() && i < EMC_UNIFIED_RS; i++){
+		emc_opcode_package_t *emc_opcode = this->unified_rs[i];		
+		if (uop_dispatched >= EMC_DISPATCH_WIDTH){
 			break;
 		}
 		if(emc_opcode == NULL){
 			break;
 		}
-		if ((emc_opcode->rob_ptr !=NULL)&&(emc_opcode->rob_ptr->original_miss == true))
-		{
+		if ((emc_opcode->rob_ptr !=NULL)&&(emc_opcode->rob_ptr->original_miss == true)){
 			this->unified_rs.erase(this->unified_rs.begin() + i);
 			i--;
 			continue;
@@ -143,8 +170,7 @@ void emc_t::emc_dispatch(){
 				ORCS_PRINTF("EMC Trying dispatch %s\n", emc_opcode->content_to_string().c_str())
 			}
 	#endif
-		if ((emc_opcode->uop.readyAt <= orcs_engine.get_global_cycle()) && (emc_opcode->wait_reg_deps_number == 0))
-		{
+		if ((emc_opcode->uop.readyAt <= orcs_engine.get_global_cycle()) && (emc_opcode->wait_reg_deps_number == 0)){
 			ERROR_ASSERT_PRINTF(emc_opcode->stage == PROCESSOR_STAGE_RENAME, "Error, EMC uop not renamed\n")
 			bool dispatched = false;
 			switch (emc_opcode->uop.uop_operation){
@@ -162,11 +188,107 @@ void emc_t::emc_dispatch(){
 						{
 							if (this->fu_int_alu[k] <= orcs_engine.get_global_cycle())
 							{
-								this->fu_int_alu[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_INT_ALU;
+								this->fu_int_alu[k] = orcs_engine.get_global_cycle() + EMC_WAIT_NEXT_INTEGER_ALU;
 								fu_int_alu++;
 								dispatched = true;
 								emc_opcode->stage = PROCESSOR_STAGE_EXECUTION;
-								emc_opcode->uop.updatePackageReady(LATENCY_INTEGER_ALU);
+								emc_opcode->uop.updatePackageReady(EMC_INTEGER_LATENCY_ALU);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Integer Multiplication
+				case INSTRUCTION_OPERATION_INT_MUL:
+					if (fu_int_mul < EMC_INTEGER_MUL)
+					{
+						for (uint8_t k = 0; k < EMC_INTEGER_MUL; k++)
+						{
+							if (this->fu_int_mul[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_int_mul[k] = orcs_engine.get_global_cycle() + EMC_WAIT_NEXT_INTEGER_MUL;
+								fu_int_mul++;
+								dispatched = true;
+								emc_opcode->stage = PROCESSOR_STAGE_EXECUTION;
+								emc_opcode->uop.updatePackageReady(EMC_INTEGER_LATENCY_MUL);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Integer division
+				case INSTRUCTION_OPERATION_INT_DIV:
+					if (fu_int_div < EMC_INTEGER_DIV)
+					{
+						for (uint8_t k = 0; k < EMC_INTEGER_DIV; k++)
+						{
+							if (this->fu_int_div[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_int_div[k] = orcs_engine.get_global_cycle() + EMC_WAIT_NEXT_INTEGER_DIV;
+								fu_int_div++;
+								dispatched = true;
+								emc_opcode->stage = PROCESSOR_STAGE_EXECUTION;
+								emc_opcode->uop.updatePackageReady(EMC_INTEGER_LATENCY_DIV);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Floating point ALU operation
+				case INSTRUCTION_OPERATION_FP_ALU:
+					if (fu_fp_alu < EMC_FP_ALU)
+					{
+						for (uint8_t k = 0; k < EMC_FP_ALU; k++)
+						{
+							if (this->fu_fp_alu[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_fp_alu[k] = orcs_engine.get_global_cycle() + EMC_WAIT_NEXT_FP_ALU;
+								fu_fp_alu++;
+								dispatched = true;
+								emc_opcode->stage = PROCESSOR_STAGE_EXECUTION;
+								emc_opcode->uop.updatePackageReady(EMC_FP_LATENCY_ALU);
+								break;
+							}
+						}
+					}
+					break;
+				// ====================================================
+				// Floating Point Multiplication
+				case INSTRUCTION_OPERATION_FP_MUL:
+					if (fu_fp_mul < EMC_FP_MUL)
+					{
+						for (uint8_t k = 0; k < EMC_FP_MUL; k++)
+						{
+							if (this->fu_fp_mul[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_fp_mul[k] = orcs_engine.get_global_cycle() + EMC_WAIT_NEXT_FP_MUL;
+								fu_fp_mul++;
+								dispatched = true;
+								emc_opcode->stage = PROCESSOR_STAGE_EXECUTION;
+								emc_opcode->uop.updatePackageReady(EMC_FP_LATENCY_MUL);
+								break;
+							}
+						}
+					}
+					break;
+
+				// ====================================================
+				// Floating Point Division
+				case INSTRUCTION_OPERATION_FP_DIV:
+					if (fu_fp_div < EMC_FP_DIV)
+					{
+						for (uint8_t k = 0; k < EMC_FP_DIV; k++)
+						{
+							if (this->fu_fp_div[k] <= orcs_engine.get_global_cycle())
+							{
+								this->fu_fp_div[k] = orcs_engine.get_global_cycle() + EMC_WAIT_NEXT_FP_DIV;
+								fu_fp_div++;
+								dispatched = true;
+								emc_opcode->stage = PROCESSOR_STAGE_EXECUTION;
+								emc_opcode->uop.updatePackageReady(EMC_FP_LATENCY_DIV);
 								break;
 							}
 						}
@@ -181,7 +303,7 @@ void emc_t::emc_dispatch(){
 						{
 							if (this->fu_mem_load[k] <= orcs_engine.get_global_cycle())
 							{
-								this->fu_mem_load[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_MEM_LOAD;
+								this->fu_mem_load[k] = orcs_engine.get_global_cycle() + EMC_WAIT_NEXT_MEM_LOAD;
 								fu_mem_load++;
 								dispatched = true;
 								emc_opcode->stage = PROCESSOR_STAGE_EXECUTION;
@@ -200,7 +322,7 @@ void emc_t::emc_dispatch(){
 						{
 							if (this->fu_mem_store[k] <= orcs_engine.get_global_cycle())
 							{
-								this->fu_mem_store[k] = orcs_engine.get_global_cycle() + WAIT_NEXT_MEM_STORE;
+								this->fu_mem_store[k] = orcs_engine.get_global_cycle() + EMC_WAIT_NEXT_MEM_STORE;
 								fu_mem_store++;
 								dispatched = true;
 								emc_opcode->stage = PROCESSOR_STAGE_EXECUTION;
@@ -210,19 +332,14 @@ void emc_t::emc_dispatch(){
 						}
 					}
 					break;
+				// ====================================================
 				case INSTRUCTION_OPERATION_BARRIER:
 				case INSTRUCTION_OPERATION_HMC_ROA:
 				case INSTRUCTION_OPERATION_HMC_ROWA:
-				case INSTRUCTION_OPERATION_INT_MUL:
-				case INSTRUCTION_OPERATION_INT_DIV:
-				case INSTRUCTION_OPERATION_FP_ALU:
-				case INSTRUCTION_OPERATION_FP_MUL:
-				case INSTRUCTION_OPERATION_FP_DIV:
 					ERROR_PRINTF("Invalid instruction being dispatched.\n");
 					break;
 				} //end switch case
-			if (dispatched == true)
-			{
+			if (dispatched == true){
 				#if EMC_DISPATCH_DEBUG
 					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 						ORCS_PRINTF("EMC Dispatched %s\n", emc_opcode->content_to_string().c_str())
@@ -293,15 +410,20 @@ void emc_t::emc_execute(){
 			ERROR_ASSERT_PRINTF(emc_package->stage == PROCESSOR_STAGE_EXECUTION, "FU with Package not in execution stage")
 			switch (emc_package->uop.uop_operation)
 			{
-			// =============================================================
-			// BRANCHES
 			case INSTRUCTION_OPERATION_BRANCH:
 			// INTEGERS ===============================================
 			case INSTRUCTION_OPERATION_INT_ALU:
+			case INSTRUCTION_OPERATION_INT_MUL:
+			case INSTRUCTION_OPERATION_INT_DIV:
+			// FLOAT POINT ===============================================
+			case INSTRUCTION_OPERATION_FP_ALU:
+			case INSTRUCTION_OPERATION_FP_MUL:
+			case INSTRUCTION_OPERATION_FP_DIV:
+			// OTHER OPS=============================================================
 			case INSTRUCTION_OPERATION_NOP:
 			case INSTRUCTION_OPERATION_OTHER:{
 				emc_package->stage = PROCESSOR_STAGE_COMMIT;
-				emc_package->uop.updatePackageReady(1);
+				emc_package->uop.updatePackageReady(EMC_COMMIT_LATENCY);
 				this->solve_emc_dependencies(emc_package);
 				uop_total_executed++;
 				/// Remove from the Functional Units
@@ -318,7 +440,7 @@ void emc_t::emc_execute(){
 				orcs_engine.processor->memory_read_executed++;
 				//
 				emc_package->mob_ptr->uop_executed = true;
-				emc_package->uop.updatePackageReady(EXECUTE_LATENCY);
+				emc_package->uop.updatePackageReady(EMC_EXECUTE_LATENCY);
 				uop_total_executed++;
 				/// Remove from the Functional Units
 				this->unified_fus.erase(this->unified_fus.begin() + i);
@@ -332,7 +454,7 @@ void emc_t::emc_execute(){
 				//Atualizando operacoes executadas, pois senão trava o envio de operacoes store
 				orcs_engine.processor->memory_write_executed++;
 				emc_package->mob_ptr->uop_executed = true;
-				emc_package->uop.updatePackageReady(EXECUTE_LATENCY);
+				emc_package->uop.updatePackageReady(EMC_EXECUTE_LATENCY);
 				uop_total_executed++;
 				/// Remove from the Functional Units
 				this->unified_fus.erase(this->unified_fus.begin() + i);
@@ -344,13 +466,6 @@ void emc_t::emc_execute(){
 			case INSTRUCTION_OPERATION_BARRIER:
 			case INSTRUCTION_OPERATION_HMC_ROA:
 			case INSTRUCTION_OPERATION_HMC_ROWA:
-			// INT OPs ===============================================
-			case INSTRUCTION_OPERATION_INT_MUL:
-			case INSTRUCTION_OPERATION_INT_DIV:
-			// FLOAT POINT ===============================================
-			case INSTRUCTION_OPERATION_FP_ALU:
-			case INSTRUCTION_OPERATION_FP_MUL:
-			case INSTRUCTION_OPERATION_FP_DIV:
 				ERROR_PRINTF("Invalid instruction Executed.\n");
 			break;
 			} //end switch
@@ -381,6 +496,68 @@ void emc_t::emc_commit(){
 			this->uop_buffer[pos_buffer].uop.status == PACKAGE_STATE_READY &&
 			this->uop_buffer[pos_buffer].uop.readyAt <= orcs_engine.get_global_cycle())
 		{
+			switch (this->uop_buffer[pos_buffer].uop.uop_operation){
+			// INTEGERS ALU
+			case INSTRUCTION_OPERATION_INT_ALU:
+				this->add_stat_inst_int_alu_completed();
+				break;
+
+			// INTEGERS MUL
+			case INSTRUCTION_OPERATION_INT_MUL:
+				this->add_stat_inst_mul_alu_completed();
+				break;
+
+			// INTEGERS DIV
+			case INSTRUCTION_OPERATION_INT_DIV:
+				this->add_stat_inst_div_alu_completed();
+				break;
+
+			// FLOAT POINT ALU
+			case INSTRUCTION_OPERATION_FP_ALU:
+				this->add_stat_inst_int_fp_completed();
+				break;
+
+			// FLOAT POINT MUL
+			case INSTRUCTION_OPERATION_FP_MUL:
+				this->add_stat_inst_mul_fp_completed();
+				break;
+
+			// FLOAT POINT DIV
+			case INSTRUCTION_OPERATION_FP_DIV:
+				this->add_stat_inst_div_fp_completed();
+				break;
+
+			// MEMORY OPERATIONS - READ
+			case INSTRUCTION_OPERATION_MEM_LOAD:{
+				this->add_stat_inst_load_completed();
+				break;
+			}
+			// MEMORY OPERATIONS - WRITE
+			case INSTRUCTION_OPERATION_MEM_STORE:
+				this->add_stat_inst_store_completed();
+				break;
+				// BRANCHES	
+
+			case INSTRUCTION_OPERATION_BRANCH:
+				this->add_stat_inst_branch_completed();
+				break;
+
+			// NOP
+			case INSTRUCTION_OPERATION_NOP:
+				this->add_stat_inst_nop_completed();
+				break;
+
+			// NOT IDENTIFIED
+			case INSTRUCTION_OPERATION_OTHER:
+				this->add_stat_inst_other_completed();
+				break;
+
+			case INSTRUCTION_OPERATION_BARRIER:
+			case INSTRUCTION_OPERATION_HMC_ROWA:
+			case INSTRUCTION_OPERATION_HMC_ROA:
+				ERROR_PRINTF("Invalid instruction BARRIER| HMC ROA | HMC ROWA.\n");
+				break;
+		}
 			ERROR_ASSERT_PRINTF(uint32_t(pos_buffer) == this->uop_buffer_start, "EMC sending different position from start\n");
 			this->emc_send_back_core(&this->uop_buffer[pos_buffer]);
 			this->remove_front_uop_buffer();
@@ -560,8 +737,20 @@ void emc_t::statistics(){
 		fprintf(output, "EMC_Access_LLC_MISS: %lu\n", this->get_access_LLC_Miss());
 		fprintf(output, "EMC_Direct_RAM_ACCESS_Predictor: %lu\n", this->get_direct_ram_access());
 		fprintf(output, "EMC_Incorrect_Prediction: %lu\n", this->get_incorrect_prediction_ram_access());
-
 		utils_t::largestSeparator(output);
+		fprintf(output,"INSTRUCTION_OPERATION_INT_ALU %lu\n",this->get_stat_inst_int_alu_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_INT_MUL %lu\n",this->get_stat_inst_mul_alu_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_INT_DIV %lu\n",this->get_stat_inst_div_alu_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_FP_ALU %lu\n",this->get_stat_inst_int_fp_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_FP_MUL %lu\n",this->get_stat_inst_mul_fp_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_FP_DIV %lu\n",this->get_stat_inst_div_fp_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_MEM_LOAD %lu\n",this->get_stat_inst_load_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_MEM_STORE %lu\n",this->get_stat_inst_store_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_BRANCH %lu\n",this->get_stat_inst_branch_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_NOP %lu\n",this->get_stat_inst_nop_completed());
+		fprintf(output,"INSTRUCTION_OPERATION_OTHER %lu\n",this->get_stat_inst_other_completed());
+		utils_t::largeSeparator();
+		
 		if(close) fclose(output);
 		fprintf(output, "##############  EMC_Data_Cache ##################\n");
 		this->data_cache->statistics();
@@ -581,13 +770,21 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 			}
 		#endif
 		// Atualizar opcodes de acesso a memoria
-		if(emc_opcode->uop.uop_operation==INSTRUCTION_OPERATION_INT_ALU ||
-			emc_opcode->uop.uop_operation==INSTRUCTION_OPERATION_BRANCH){
+		if(emc_opcode->uop.uop_operation  == INSTRUCTION_OPERATION_BRANCH ||
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU||
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_INT_MUL||
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_INT_DIV||
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_FP_ALU||
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_FP_MUL||
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_FP_DIV||
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_OTHER||
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_NOP
+			){
 				rob_line->uop = emc_opcode->uop;
 				rob_line->stage = emc_opcode->stage;
 				orcs_engine.processor->solve_registers_dependency(rob_line);
 			}else{
-				ERROR_ASSERT_PRINTF(emc_opcode->mob_ptr !=NULL, "Error,emc  memory operation without mob value")
+				ERROR_ASSERT_PRINTF(emc_opcode->mob_ptr !=NULL, "Error,emc  memory operation without mob value %s\n",emc_opcode->content_to_string().c_str())
 				ERROR_ASSERT_PRINTF(rob_line->mob_ptr !=NULL, "Error, rob memory operation without mob value")
 				if(rob_line->original_miss){
 					#if EMC_COMMIT_DEBUG
