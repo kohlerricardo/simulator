@@ -785,7 +785,7 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 				orcs_engine.processor->solve_registers_dependency(rob_line);
 			}else{
 				ERROR_ASSERT_PRINTF(emc_opcode->mob_ptr !=NULL, "Error,emc  memory operation without mob value %s\n",emc_opcode->content_to_string().c_str())
-				ERROR_ASSERT_PRINTF(rob_line->mob_ptr !=NULL, "Error, rob memory operation without mob value")
+				ERROR_ASSERT_PRINTF(rob_line->mob_ptr !=NULL, "Error, rob memory operation without mob value %s\n",rob_line->content_to_string().c_str())
 				if(rob_line->original_miss){
 					#if EMC_COMMIT_DEBUG
 						if(orcs_engine.get_global_cycle()>WAIT_CYCLE){

@@ -1230,7 +1230,9 @@ void processor_t::execute()
 					}
 				#endif
 				this->total_instruction_sent_emc+=instruction_dispatched_emc;
-				this->lock_processor=true;
+				#if LOCKING_COMMIT
+					this->lock_processor=true;
+				#endif
 				this->clean_rrt(); //Limpa RRT;
 			}
 		}
@@ -1570,10 +1572,11 @@ void processor_t::commit(){
 
 	/// Commit the packages
 	for (uint32_t i = 0; i < COMMIT_WIDTH; i++){
-		
-		if(this->lock_processor){
-			break;
-		}
+		#if LOCKING_COMMIT
+			if(this->lock_processor){
+				break;
+			}
+		#endif
 		pos_buffer = this->robStart;
 		if (this->robUsed != 0 &&
 			this->reorderBuffer[pos_buffer].stage == PROCESSOR_STAGE_COMMIT &&
@@ -1581,6 +1584,11 @@ void processor_t::commit(){
 			this->reorderBuffer[pos_buffer].uop.readyAt <= orcs_engine.get_global_cycle())
 		{
 
+		#if !LOCKING_COMMIT
+		if(this->verify_uop_on_emc(&this->reorderBuffer[pos_buffer])){
+			break;
+		}
+		#endif
 			this->commit_uop_counter++;
 			#if EMC_ACTIVE
 				if( (this->reorderBuffer[pos_buffer].mob_ptr != NULL) && 
@@ -1593,8 +1601,7 @@ void processor_t::commit(){
 					}
 				}
 			#endif
-			switch (this->reorderBuffer[pos_buffer].uop.uop_operation)
-			{
+			switch (this->reorderBuffer[pos_buffer].uop.uop_operation){
 				// INTEGERS ALU
 				case INSTRUCTION_OPERATION_INT_ALU:
 					this->add_stat_inst_int_alu_completed();
@@ -1734,6 +1741,21 @@ void processor_t::solve_registers_dependency(reorder_buffer_line_t *rob_line){
 		}
 };
 // ============================================================================
+bool processor_t::verify_uop_on_emc(reorder_buffer_line_t *rob_line){
+	uint16_t pos = orcs_engine.memory_controller->emc->uop_buffer_start;
+	uint16_t end = orcs_engine.memory_controller->emc->uop_buffer_used;
+	bool is_present = false;
+	for (uint16_t i = 0; i < end; i++){
+		if(rob_line->uop.uop_number == orcs_engine.memory_controller->emc->uop_buffer[pos].uop.uop_number){
+			is_present = true;
+			break;
+		}
+		pos++;
+		if(pos>=EMC_UOP_BUFFER)pos=0;
+	}
+	return is_present;
+};
+// ============================================================================
 bool processor_t::isRobHead(reorder_buffer_line_t *rob_line){
 	// ORCS_PRINTF("rob_line: %p , rob Head: %p\n",rob_line,&this->reorderBuffer[robStart])
 	return (rob_line == &this->reorderBuffer[robStart]);
@@ -1806,6 +1828,7 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			this->rob_buffer.clear();
 		}else{
 			this->start_emc_module=true;
+			this->verify_dependent_loads();
 			#if EMC_ACTIVE_DEBUG
 				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 					ORCS_PRINTF("==========\n")
@@ -2017,11 +2040,18 @@ bool processor_t::verify_spill_register(reorder_buffer_line_t *rob_line){
 // @return true if no loads operation is gt 1
 bool processor_t::verify_dependent_loads(){
 	uint8_t loads = 1;
+
 	for (uint32_t i = 1; i < this->rob_buffer.size(); i++)
 	{
 		if(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
-			loads++;
-		}
+						loads++;
+						this->numero_load_deps++;
+						this->instrucoes_inter_load_deps++;
+						this->soma_instrucoes_deps+=this->instrucoes_inter_load_deps;
+						this->instrucoes_inter_load_deps=0;
+					}else{
+						this->instrucoes_inter_load_deps++;
+					}
 	}
 	
 	return (loads > 1) ? true : false; //if compacto

@@ -254,8 +254,9 @@ class processor_t {
 		// =================================================================================
 		bool verify_dependent_loads(); // verifica se ha loads dependentes -> para execucao
 		bool already_exists(reorder_buffer_line_t *candidate);//verifica se já existe a instrução na cadeia
-		uint32_t count_registers_rrt(uop_package_t uop);
 		bool verify_ambiguation(memory_order_buffer_line_t *mob_line);
+		bool verify_uop_on_emc(reorder_buffer_line_t *rob_line);
+		uint32_t count_registers_rrt(uop_package_t uop);
 		// =================================================================================
 		// integer
 		int32_t renameEMC(reorder_buffer_line_t *rob_line);//Renaming entry to EMC
