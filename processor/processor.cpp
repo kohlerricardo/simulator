@@ -1828,7 +1828,7 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			this->rob_buffer.clear();
 		}else{
 			this->start_emc_module=true;
-			this->verify_dependent_loads();
+			// this->verify_dependent_loads();
 			#if EMC_ACTIVE_DEBUG
 				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 					ORCS_PRINTF("==========\n")

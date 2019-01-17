@@ -12,7 +12,7 @@ LIST_BENCHS=(astar.CINT.PP200M bwaves.CFP.PP200M bzip2.CINT.PP200M cactusADM.CFP
             namd.CFP.PP200M omnetpp.CINT.PP200M perlbench.CINT.PP200M povray.CFP.PP200M sjeng.CINT.PP200M soplex.CFP.PP200M
             sphinx3.CFP.PP200M tonto.CFP.PP200M wrf.CFP.PP200M xalancbmk.CINT.PP200M zeusmp.CFP.PP200M)
 cd ${ROOT}
-ORCS_D='orcs.d'
+ORCS_D='C3'
 mkdir ${ORCS_D}
 # mkdir ${SINUCA_D}
 # for i in ${LIST_BENCHS[@]}

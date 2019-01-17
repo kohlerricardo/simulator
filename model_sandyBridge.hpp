@@ -184,7 +184,7 @@ Arquivo definindo os parametros do modelo de processador
 // ===================== EMC =======================================
 #define EMC_ACTIVE 1
 #define EMC_ROB_HEAD 0
-#define ALL_UOPS 0
+#define ALL_UOPS 1
 #define LOCKING_COMMIT 0
 // ===================== EMC =======================================
 //WIDHTs
