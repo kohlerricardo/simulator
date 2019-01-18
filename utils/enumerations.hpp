@@ -24,11 +24,11 @@ enum cache_status_t{
  * Enum cache Level
 */
 enum cacheLevel_t{
-    INST_CACHE,
-    L1,
-    L2,
-    LLC,
-    EMC_DATA_CACHE
+    L1=0,
+    L2=1,
+    LLC=2,
+    INST_CACHE=3,
+    EMC_DATA_CACHE=4
 };
 //get char operation
 const char* get_enum_cache_level_char(cacheLevel_t type);

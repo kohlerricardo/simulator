@@ -11,22 +11,26 @@ class linha_t
         uint32_t prefetched;
         uint32_t valid;
         uint64_t readyAt;
-        linha_t* linha_ptr_sup;
-        linha_t* linha_ptr_inf;
+        linha_t* linha_ptr_l1;
+        linha_t* linha_ptr_l2;
+        linha_t* linha_ptr_llc;
+
         linha_t* linha_ptr_emc;
         linha_t(){
             this->clean_line();
         }
         ~linha_t(){
             // deleting pointes
-            if(this->linha_ptr_inf != NULL) delete &linha_ptr_inf;
-            if(this->linha_ptr_sup != NULL) delete &linha_ptr_sup;
+            if(this->linha_ptr_l1 != NULL) delete &linha_ptr_l1;
+            if(this->linha_ptr_l2 != NULL) delete &linha_ptr_l2;
+            if(this->linha_ptr_llc != NULL) delete &linha_ptr_llc;
             #if EMC_ACTIVE
             if(this->linha_ptr_emc != NULL) delete &linha_ptr_emc;
             #endif
             // Nulling pointers
-            this->linha_ptr_inf = NULL;
-            this->linha_ptr_sup = NULL;
+            this->linha_ptr_l1 = NULL;
+            this->linha_ptr_l2 = NULL;
+            this->linha_ptr_llc = NULL;
             #if EMC_ACTIVE
             this->linha_ptr_emc = NULL;
             #endif
@@ -38,8 +42,9 @@ class linha_t
             this->prefetched = 0;
             this->valid = 0;
             this->readyAt = 0;
-            this->linha_ptr_inf = NULL;
-            this->linha_ptr_sup = NULL;
+            this->linha_ptr_l1 = NULL;
+            this->linha_ptr_l2 = NULL;
+            this->linha_ptr_llc = NULL;
             #if EMC_ACTIVE
             this->linha_ptr_emc = NULL;
             #endif

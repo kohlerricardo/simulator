@@ -112,7 +112,7 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 // ATTR COMMON
 #define LINE_SIZE 64
-#define CACHE_LEVELS 2
+#define CACHE_LEVELS 3
 #define INSTRUCTION_ENABLED 1
 #define OFFSET_SIZE 6
 // ==================== LEVEL 1 =====================
@@ -130,9 +130,9 @@ Arquivo definindo os parametros do modelo de processador
 #define L1_INST_SETS (L1_INST_SIZE/LINE_SIZE)/L1_INST_ASSOCIATIVITY
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
-#define L2_SIZE 256*KILO
+#define L2_SIZE 64*KILO
 #define L2_ASSOCIATIVITY 4
-#define L2_LATENCY 12
+#define L2_LATENCY 8
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
@@ -182,7 +182,7 @@ Arquivo definindo os parametros do modelo de processador
 
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 1
+#define EMC_ACTIVE 0
 #define EMC_ROB_HEAD 0
 #define ALL_UOPS 1
 #define LOCKING_COMMIT 0

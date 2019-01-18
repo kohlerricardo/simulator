@@ -208,7 +208,15 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 							ORCS_PRINTF("L1 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
 						}
 					#endif
-				}else if(this->level == LLC){
+				}else if(this->level == L2){
+					ttc+=L2_LATENCY;
+					#if CACHE_MANAGER_DEBUG
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("L1 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+						}
+					#endif
+				}
+				else if(this->level == LLC){
 					ttc+=LLC_LATENCY;
 					#if CACHE_MANAGER_DEBUG
 						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
@@ -254,7 +262,7 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 			}else if(this->level == L2){
 				ttc+=L2_LATENCY;
 			}else if(this->level == EMC_DATA_CACHE){
-				ttc+=L2_LATENCY;
+				ttc+=EMC_CACHE_LATENCY;
 			}else{
 				ttc+=LLC_LATENCY;
 			}
@@ -271,7 +279,6 @@ uint32_t cache_t::write(uint64_t address){
 	// this->add_cacheAccess();
 			for (size_t i = 0; i < this->nLines; i++){
 				if(this->sets[idx].linhas[i].tag == tag){
-					// this->add_cacheHit();
 					line = i;
 					break;
 				}
@@ -330,7 +337,6 @@ linha_t* cache_t::installLine(uint64_t address,uint64_t latency){
 	this->sets[idx].linhas[line].dirty = 0;	
 	this->sets[idx].linhas[line].prefetched = 0;	
 	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+latency;
-	// ORCS_PRINTF("address %lu ready at %lu\n",address,this->sets[idx].linhas[line].readyAt)
 	return &this->sets[idx].linhas[line];
 };
 // ===================
@@ -354,19 +360,37 @@ inline uint32_t cache_t::searchLru(cacheSet_t *set){
 //====================
 inline void cache_t::writeBack(linha_t *linha){
 	if(this->level == L1){
-		ERROR_ASSERT_PRINTF(linha->linha_ptr_sup!=NULL,"Erro, Linha sem referencia a nivel mais alto ")
-		//Access pointer to copy status.
-		linha->linha_ptr_sup->dirty = linha->dirty;//DIRTY
-		linha->linha_ptr_sup->lru = orcs_engine.get_global_cycle();//LRU
-		linha->linha_ptr_sup->readyAt = linha->readyAt;//READY_AT
+		ERROR_ASSERT_PRINTF(linha->linha_ptr_l2!=NULL,"Erro, Linha sem referencia a nivel L2 ")
+		ERROR_ASSERT_PRINTF(linha->linha_ptr_llc!=NULL,"Erro, Linha sem referencia a LLC ")
+		//Copy Status to L2
+		linha->linha_ptr_l2->dirty = linha->dirty;//DIRTY
+		linha->linha_ptr_l2->lru = orcs_engine.get_global_cycle();//LRU
+		linha->linha_ptr_l2->readyAt = linha->readyAt;//READY_AT
+		//Copy Status to LLC
+		linha->linha_ptr_llc->dirty = linha->dirty;//DIRTY
+		linha->linha_ptr_llc->lru = orcs_engine.get_global_cycle();//LRU
+		linha->linha_ptr_llc->readyAt = linha->readyAt;//READY_AT
+
 		// Nulling Pointers
-		linha->linha_ptr_sup->linha_ptr_inf = NULL;//Pointer to Lower Level
+		linha->linha_ptr_l2->linha_ptr_l1 = NULL;//Pointer to Lower Level
+		linha->linha_ptr_llc->linha_ptr_l1 = NULL;//Pointer to Lower Level
 		// invalidando a linha recem feita WB. 
 		linha->clean_line();
-	}else{
-		if(linha->linha_ptr_inf !=NULL){
-			linha->linha_ptr_inf->clean_line();//invalidando linha Lower level
+	}else if(this->level==L2){
+		ERROR_ASSERT_PRINTF(linha->linha_ptr_llc!=NULL,"Erro, Linha sem referencia a LLC ")
+		if(linha->linha_ptr_l1 != NULL){
+			if(linha->linha_ptr_l1->dirty==1){
+				linha->linha_ptr_l1->linha_ptr_llc->dirty = linha->linha_ptr_l1->dirty;//DIRTY
+				linha->linha_ptr_l1->linha_ptr_llc->lru = orcs_engine.get_global_cycle();//LRU
+				linha->linha_ptr_l1->linha_ptr_llc->readyAt = linha->linha_ptr_l1->readyAt;//READY_AT
+			}
+			linha->linha_ptr_l1->clean_line();
 		}
+		//Copy Status to LLC
+		linha->linha_ptr_llc->dirty = linha->dirty;//DIRTY
+		linha->linha_ptr_llc->lru = orcs_engine.get_global_cycle();//LRU
+		linha->linha_ptr_llc->readyAt = linha->readyAt;//READY_AT
+		// ========================================
 		#if EMC_ACTIVE
 		if(linha->linha_ptr_emc !=NULL){
 			linha->linha_ptr_emc->clean_line();//limpando linha de cache do emc, mantem coerencia
@@ -376,7 +400,6 @@ inline void cache_t::writeBack(linha_t *linha){
 	}
 };
 //====================
-//move line to
 // @1 address - endereco do dado
 // @2 nivel de cache alvo da mudanca
 // @3 *retorno 
