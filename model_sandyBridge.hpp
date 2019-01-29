@@ -131,7 +131,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
 #define L2_SIZE 64*KILO
-#define L2_ASSOCIATIVITY 4
+#define L2_ASSOCIATIVITY 8
 #define L2_LATENCY 8
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
@@ -185,7 +185,7 @@ Arquivo definindo os parametros do modelo de processador
 #define EMC_ACTIVE 0
 #define EMC_ROB_HEAD 0
 #define ALL_UOPS 1
-#define LOCKING_COMMIT 0
+#define LOCKING_COMMIT 1
 // ===================== EMC =======================================
 //WIDHTs
 #define EMC_DISPATCH_WIDTH 2

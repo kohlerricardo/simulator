@@ -37,6 +37,7 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
         this->inst_cache->add_cacheHit();
         this->add_instructionSearched();    
     }else{   
+        ttc = 0;
         // READ L2 CACHE TO FIND INSTRUCTION;
         // =========================
         this->inst_cache->add_cacheAccess();
@@ -54,6 +55,7 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
             //========================================= 
             this->data_cache[L2].returnLine(instructionAddress,this->inst_cache);
         }else{
+            ttc = 0;
             // L2 MISS
             //========================================= 
             this->data_cache[L2].add_cacheAccess();
@@ -69,7 +71,8 @@ uint32_t cache_manager_t::searchInstruction(uint64_t instructionAddress){
             this->data_cache[LLC].add_cacheAccess();
             this->data_cache[LLC].add_cacheHit();
             //========================================= 
-            this->data_cache[LLC].returnLine(instructionAddress,this->inst_cache);
+            this->data_cache[LLC].returnLine(instructionAddress,&this->data_cache[L2]);
+            this->data_cache[L2].returnLine(instructionAddress,this->inst_cache);
             }else{
                 //request to Memory Controller
                 ttc = orcs_engine.memory_controller->requestDRAM();
@@ -127,6 +130,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
         //========================================= 
     }
     else{
+        ttc = 0;
         // L1 MISS
         //========================================= 
         this->data_cache[L1].add_cacheAccess();
@@ -144,17 +148,20 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             //========================================= 
             this->data_cache[L2].returnLine(mob_line->memory_address,&this->data_cache[L1]);
         }else{
+            ttc = 0;
             // L2 MISS
-            this->add_readMiss();
             //========================================= 
             this->data_cache[L2].add_cacheAccess();
             this->data_cache[L2].add_cacheMiss();
             hit = this->data_cache[LLC].read(mob_line->memory_address,ttc);
             latency_request+=ttc;
+            this->data_cache[LLC].add_cacheRead();
             if(hit == HIT){
                 this->data_cache[LLC].add_cacheAccess();
                 this->data_cache[LLC].add_cacheHit();
-                this->data_cache[LLC].returnLine(mob_line->memory_address,&this->data_cache[L1]);
+
+                this->data_cache[LLC].returnLine(mob_line->memory_address,&this->data_cache[L2]);
+                this->data_cache[L2].returnLine(mob_line->memory_address,&this->data_cache[L1]);
                 //========================================= 
                 #if PREFETCHER_ACTIVE
                     this->prefetcher->prefecht(mob_line,&this->data_cache[LLC]);
@@ -198,10 +205,6 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 // settign LLC
                 linha_llc->linha_ptr_l1=linha_l1;
                 linha_llc->linha_ptr_l2=linha_l2;
-                //NULLING POINTERS <LEAK MEMORY>
-                linha_l1 = NULL;
-                linha_l2 = NULL;
-                linha_llc = NULL;
                 // =====================================
                 //EMC
                 // =====================================
@@ -211,6 +214,10 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 linha_llc->linha_ptr_emc=linha_emc;
                 linha_emc->linha_ptr_llc=linha_llc;
                 #endif
+                //NULLING POINTERS <LEAK MEMORY>
+                linha_l1 = NULL;
+                linha_l2 = NULL;
+                linha_llc = NULL;
             }
         }
     }
@@ -234,21 +241,23 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
         #endif
         this->data_cache[L1].write(mob_line->memory_address); 
     }else{   
+        ttc = 0;
         // L1 MISS
         //========================================= 
         this->data_cache[L1].add_cacheAccess();
         this->data_cache[L1].add_cacheMiss();
         //========================================= 
         hit = this->data_cache[L2].read(mob_line->memory_address,ttc);
+        latency_request+=ttc;
         if(hit == HIT){
             //========================================= 
             this->data_cache[L2].add_cacheAccess();
             this->data_cache[L2].add_cacheHit();
             //========================================= 
-            latency_request+=ttc;
             this->data_cache[L2].returnLine(mob_line->memory_address,&this->data_cache[L1]);
             this->data_cache[L1].write(mob_line->memory_address);
         }else{
+            ttc = 0;
             // L2 MISS
             //========================================= 
             this->data_cache[L2].add_cacheAccess();
@@ -256,16 +265,20 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
             //========================================= 
             // search LLC
             hit = this->data_cache[LLC].read(mob_line->memory_address,ttc);
+            latency_request+=ttc;
             if(hit == HIT){
                 //========================================= 
                 this->data_cache[LLC].add_cacheAccess();
                 this->data_cache[LLC].add_cacheHit();
-                latency_request+=ttc;
                 //========================================= 
-                this->data_cache[LLC].returnLine(mob_line->memory_address,&this->data_cache[L1]);
+                this->data_cache[LLC].returnLine(mob_line->memory_address,&this->data_cache[L2]);
+                this->data_cache[L2].returnLine(mob_line->memory_address,&this->data_cache[L1]);
+                //Writing Data
                 this->data_cache[L1].write(mob_line->memory_address);
             }else{
                 //llc miss
+                this->data_cache[LLC].add_cacheAccess();
+                this->data_cache[LLC].add_cacheMiss();
                 ttc = orcs_engine.memory_controller->requestDRAM();
                 orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
                 latency_request +=ttc;
@@ -332,11 +345,11 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             
             latency_request += RAM_LATENCY;
 
-            linha_t *linha_llc = this->data_cache[1].installLine(mob_line->memory_address,latency_request);
+            linha_t *linha_llc = this->data_cache[LLC].installLine(mob_line->memory_address,latency_request);
             linha_t *linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(mob_line->memory_address,latency_request);
             // linking emc and llc
             linha_llc->linha_ptr_emc = linha_emc;
-            linha_emc->linha_llc = linha_llc;
+            linha_emc->linha_ptr_llc = linha_llc;
             orcs_engine.memory_controller->add_requests_emc();//number of requests made by emc
             orcs_engine.memory_controller->add_requests_made();//add requests made by emc to total
         }
@@ -360,9 +373,11 @@ void cache_manager_t::statistics(){
     // ORCS_PRINTF("############## Instruction Cache ##################\n")
     this->inst_cache->statistics();
     // ORCS_PRINTF("##############  Data Cache L1 ##################\n")
-    this->data_cache[0].statistics();
+    this->data_cache[L1].statistics();
     // ORCS_PRINTF("##############  LLC Cache ##################\n")
-    this->data_cache[1].statistics();
+    this->data_cache[L2].statistics();
+    // ORCS_PRINTF("##############  LLC Cache ##################\n")
+    this->data_cache[LLC].statistics();
     // Prefetcher
     #if PREFETCHER_ACTIVE
     this->prefetcher->statistics();

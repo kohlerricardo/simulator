@@ -143,7 +143,10 @@ void cache_t::allocate(cacheLevel_t level){
 			for (size_t i = 0; i < EMC_CACHE_SETS; i++)
 			{
 				this->sets[i].linhas = new linha_t[EMC_CACHE_ASSOCIATIVITY];
-
+				for ( uint j = 0; j < this->nLines; j++)
+				{
+					this->sets[i].linhas[j].clean_line();
+				}
 			}
 			this->set_cacheAccess(0);
 			this->set_cacheHit(0);
@@ -192,10 +195,10 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 			// =====================================================
 			if(this->sets[idx].linhas[i].readyAt<=orcs_engine.get_global_cycle()){
 				#if PREFETCHER_ACTIVE
-				if (this->sets[idx].linhas[i].prefetched == 1){
-					orcs_engine.cacheManager->prefetcher->add_usefulPrefetches();
-					this->sets[idx].linhas[i].prefetched =0;
-				}
+					if (this->sets[idx].linhas[i].prefetched == 1){
+						orcs_engine.cacheManager->prefetcher->add_usefulPrefetches();
+						this->sets[idx].linhas[i].prefetched =0;
+					}
 				#endif
 				this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
 				//add cache hit
@@ -212,7 +215,7 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 					ttc+=L2_LATENCY;
 					#if CACHE_MANAGER_DEBUG
 						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
-							ORCS_PRINTF("L1 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+							ORCS_PRINTF("L2 Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
 						}
 					#endif
 				}
@@ -228,7 +231,7 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 					ttc+=EMC_CACHE_LATENCY;
 					#if CACHE_MANAGER_DEBUG
 						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
-							ORCS_PRINTF("LLC Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
+							ORCS_PRINTF("EMC_Data_Cache Ready At %lu\n",this->sets[idx].linhas[i].readyAt)
 						}
 					#endif
 				}
@@ -385,18 +388,36 @@ inline void cache_t::writeBack(linha_t *linha){
 				linha->linha_ptr_l1->linha_ptr_llc->readyAt = linha->linha_ptr_l1->readyAt;//READY_AT
 			}
 			linha->linha_ptr_l1->clean_line();
+		}else{
+			//Copy Status from L2 to LLC
+			linha->linha_ptr_llc->dirty = linha->dirty;//DIRTY
+			linha->linha_ptr_llc->lru = orcs_engine.get_global_cycle();//LRU
+			linha->linha_ptr_llc->readyAt = linha->readyAt;//READY_AT
 		}
-		//Copy Status to LLC
-		linha->linha_ptr_llc->dirty = linha->dirty;//DIRTY
-		linha->linha_ptr_llc->lru = orcs_engine.get_global_cycle();//LRU
-		linha->linha_ptr_llc->readyAt = linha->readyAt;//READY_AT
 		// ========================================
+		// Nulling pointers
+		linha->linha_ptr_llc->linha_ptr_l1=NULL;
+		linha->linha_ptr_llc->linha_ptr_l2=NULL;
+		// Clean line
+		linha->clean_line();
+	}
+	else if(this->level == LLC){
+		// verify if has L1 reference
+		if(linha->linha_ptr_l1 != NULL){
+			// Invalidate L1 line
+			linha->linha_ptr_l1->clean_line();
+		}
+		// verify if has L2 reference
+		if(linha->linha_ptr_l2 != NULL){
+			// Invalidate L2 line
+			linha->linha_ptr_l2->clean_line();
+		}
+		// verify if has EMC_DATA_CACHE reference
 		#if EMC_ACTIVE
 		if(linha->linha_ptr_emc !=NULL){
 			linha->linha_ptr_emc->clean_line();//limpando linha de cache do emc, mantem coerencia
 		}
 		#endif
-		linha->clean_line();
 	}
 };
 //====================
@@ -406,8 +427,8 @@ inline void cache_t::writeBack(linha_t *linha){
 //====================
 void cache_t::returnLine(uint64_t address,cache_t *cache){
 	uint32_t idx = this->idxSetCalculation(address);
-	int32_t line=POSITION_FAIL;
 	uint32_t tag = this->tagSetCalculation(address);
+	int32_t line=POSITION_FAIL;
 	// pega a linha desta cache
 	for (size_t i = 0; i < this->nLines; i++)
 	{
@@ -417,80 +438,33 @@ void cache_t::returnLine(uint64_t address,cache_t *cache){
 			break;
 		}
 	}
-	ERROR_ASSERT_PRINTF(line!=POSITION_FAIL,"Error, linha LLC não encontrada para retorno")
-	linha_t *linha_l1 = NULL;
-	linha_l1 = cache->installLine(address,LLC_LATENCY);
-	this->sets[idx].linhas[line].linha_ptr_inf=linha_l1;
-	linha_l1->linha_ptr_sup = &this->sets[idx].linhas[line];
-	//copia dados da linha superior
-	linha_l1->dirty = linha_l1->linha_ptr_sup->dirty;
-	linha_l1->lru = linha_l1->linha_ptr_sup->lru;
-	linha_l1->prefetched = linha_l1->linha_ptr_sup->prefetched;
-	linha_l1->readyAt = orcs_engine.get_global_cycle();
-};
-//====================
-//move line to
-// @1 address - endereco do dado
-// @2 nivel de cache alvo da mudanca
-// @3 linha a ser movida
-// @return index da linha movida
-//====================
-uint32_t cache_t::moveLineTo(uint64_t address,cache_t *cache, linha_t *linha){
-	//calcula endereco na nivel acima
-	//cache representa nivel acima
-	uint32_t idx = cache->idxSetCalculation(address); //cache idx level up
-	uint32_t tag = cache->tagSetCalculation(address);
-	uint32_t line=0;
-	//busca se ja existe linha naquele nivel.
-	for (size_t i = 0; i < cache->nLines; i++)
-	{	
-		//existindo linha, so copia do outro nivel de cache
-		if(cache->sets[idx].linhas[i].tag == tag){
-			std::memcpy(&cache->sets[idx].linhas[i],linha,sizeof(linha_t));
-			cache->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
-			return i;
-		}
-	}
-	//Busca se há alguma linha invalida
-	for (size_t i = 0; i < cache->nLines; i++)
-	{	
-		//existindo linha, so copia do outro nivel de cache
-		if(cache->sets[idx].linhas[i].valid == 0){
-			std::memcpy(&cache->sets[idx].linhas[i],linha,sizeof(linha_t));
-			cache->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
-			return i;
-		}
-	}
-	// não há invalido, e não tem livre, buscando lru
-	line = cache->searchLru(&cache->sets[idx]);
-	// se sujo, faz WB
-	if(cache->sets[idx].linhas[line].dirty==1){
-		cache->writeBack(&cache->sets[idx].linhas[line]);
-		cache->add_cacheWriteBack();
-	}	
-	std::memcpy(&cache->sets[idx].linhas[line],linha,sizeof(linha_t));
-	cache->sets[idx].linhas[line].tag = tag;
-	cache->sets[idx].linhas[line].lru = orcs_engine.get_global_cycle();
-	return line;
-	// this->printLine(&cache->sets[idx].linhas[line]);
-};
+	ERROR_ASSERT_PRINTF(line!=POSITION_FAIL,"Error, linha não encontrada para retorno")
+	linha_t *linha_return = NULL;
+	if(this->level == LLC){
+		ERROR_ASSERT_PRINTF(cache->level == L2,"Error, returning from LLC to Non L2 Level")
+		linha_return = cache->installLine(address,LLC_LATENCY);
+		this->sets[idx].linhas[line].linha_ptr_l2 = linha_return;
+		linha_return->linha_ptr_llc = &this->sets[idx].linhas[line];
 
-// ==========================================
-// @address endereco para realizar o shotdown da 
-// linha de cache no level 1 quando coerente
-// ==========================================
-void cache_t::shotdown(uint64_t address){
-	uint32_t tag = this->tagSetCalculation(address);
-	uint32_t idx = this->idxSetCalculation(address);
-	for(size_t i = 0; i < this->nLines; i++){
-		if(this->sets[idx].linhas[i].tag == tag){
-	#if DEBUG	
-				printf("shoting down Line %u -> %lu\n ",idx,i);
-				this->printLine(&this->sets[idx].linhas[i]);
-	#endif
-			this->sets[idx].linhas[i].valid = 0;
-			break;
-		}
+		// Copying infos
+		linha_return->dirty = linha_return->linha_ptr_llc->dirty;
+		linha_return->lru = linha_return->linha_ptr_llc->lru;
+		linha_return->prefetched = linha_return->linha_ptr_llc->prefetched;
+		linha_return->readyAt = orcs_engine.get_global_cycle();
+
+	}
+	if(this->level == L2){
+		ERROR_ASSERT_PRINTF((cache->level == L1)||(cache->level == INST_CACHE),"Error, returning from L2 to Non L1 Level")
+		linha_return = cache->installLine(address,L2_LATENCY);
+		this->sets[idx].linhas[line].linha_ptr_l1 = linha_return;
+		linha_return->linha_ptr_llc = this->sets[idx].linhas[line].linha_ptr_llc;
+		linha_return->linha_ptr_l2 = &this->sets[idx].linhas[line];
+
+		// Copying infos
+		linha_return->dirty = linha_return->linha_ptr_l2->dirty;
+		linha_return->lru = linha_return->linha_ptr_l2->lru;
+		linha_return->prefetched = linha_return->linha_ptr_l2->prefetched;
+		linha_return->readyAt = orcs_engine.get_global_cycle();
 	}
 };
 // ====================

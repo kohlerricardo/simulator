@@ -36,7 +36,6 @@ class cache_t
         // ============================================================================
         void statistics();
         void allocate(cacheLevel_t level);//allocate data structure
-        void shotdown(uint64_t address);//shotdown line inclusive cache
         void writeBack(linha_t *line); //makes writeback of line
         void returnLine(uint64_t address,cache_t *cache);//return line from lower cache level
         // ============================================================================
@@ -46,7 +45,6 @@ class cache_t
         uint32_t tagSetCalculation(uint64_t address);//makes tag from address
         uint32_t searchLru(cacheSet_t *set);//searh LRU to substitue
         linha_t* installLine(uint64_t address,uint64_t latency);//install line of cache |mem_controller -> caches|
-        uint32_t moveLineTo(uint64_t address,cache_t *cache,linha_t *linha);// move line to a upper or lower cache level
         uint32_t read(uint64_t address,uint32_t &ttc);
         uint32_t write(uint64_t address);
         //getters setters
