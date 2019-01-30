@@ -20,7 +20,8 @@ class memory_order_buffer_line_t {
         bool sent; //*
         bool forwarded_data;
         bool waiting_DRAM;
-        bool is_llc_miss; //*
+        bool is_llc_miss;
+        uint32_t processor_id; //*
         //==========================================================================================
         emc_opcode_package_t* emc_opcode_ptr;  //emc opcode pointer 
         bool emc_executed;

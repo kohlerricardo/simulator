@@ -54,6 +54,7 @@ class processor_t {
 		// ====================================================================
 		/// Attributes
 		// ====================================================================
+		uint32_t processor_id;
 		//control Branches
 		bool hasBranch;
 		opcode_package_t previousBranch;
@@ -81,6 +82,7 @@ class processor_t {
 	    void clock();
 		void statistics();
 		void printConfiguration();
+		void set_processor_id(uint32_t processor_id);
 		// ====================================================================
 		// ROB RELATED	
 		void update_registers(reorder_buffer_line_t *robLine);

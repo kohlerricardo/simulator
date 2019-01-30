@@ -6,6 +6,12 @@ Arquivo definindo os parametros do modelo de processador
 #ifndef _SANDYBRIDGE_HPP_
 #define _SANDYBRIDGE_HPP_
 // =========== PROCESSOR =============
+#define NUMBER_OF_PROCESSORS 1  // Numero de cores
+#define SIZE_OF_L1_CACHES_ARRAY 1     // Numero de caches L1
+#define SIZE_OF_L2_CACHES_ARRAY 1     // Numero de caches L2
+#define SIZE_OF_LLC_CACHES_ARRAY 1    // Numero de caches LLC
+
+// =========== PIPELINE STAGES =============
 #define FETCH_WIDTH 6
 #define DECODE_WIDTH 5
 #define RENAME_WIDTH 5
@@ -130,21 +136,21 @@ Arquivo definindo os parametros do modelo de processador
 #define L1_INST_SETS (L1_INST_SIZE/LINE_SIZE)/L1_INST_ASSOCIATIVITY
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
-#define L2_SIZE 64*KILO
+#define L2_SIZE 256*KILO
 #define L2_ASSOCIATIVITY 8
-#define L2_LATENCY 8
+#define L2_LATENCY 6
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 128*KILO
+#define LLC_SIZE 20*MEGA
 #define LLC_ASSOCIATIVITY 8
-#define LLC_LATENCY 12
+#define LLC_LATENCY 9
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
 
 // =====================RAM=======================
-#define RAM_LATENCY 400
+#define RAM_LATENCY 200
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
 #define MAX_PARALLEL_REQUESTS 4

@@ -81,6 +81,7 @@ void processor_t::allocate()
 	//======================================================================
 	// Initializating variables
 	//======================================================================
+	this->processor_id = 0;
 	this->traceIsOver = false;
 	this->hasBranch = false;
 	this->insertError = false;
@@ -357,7 +358,7 @@ void processor_t::fetch(){
 			uint32_t stallWrongBranch = orcs_engine.branchPredictor->solveBranch(this->previousBranch, operation);
 			this->set_stall_wrong_branch(orcs_engine.get_global_cycle() + stallWrongBranch);
 			this->hasBranch = false;
-			uint32_t ttc = orcs_engine.cacheManager->searchInstruction(operation.opcode_address);
+			uint32_t ttc = orcs_engine.cacheManager->searchInstruction(this->processor_id,operation.opcode_address);
 			// ORCS_PRINTF("ready after wrong branch %lu\n",this->get_stall_wrong_branch()+ttc)
 			operation.updatePackageReady(stallWrongBranch + ttc);
 			updated = true;
@@ -382,7 +383,7 @@ void processor_t::fetch(){
 		}
 		if (!updated)
 		{
-			uint32_t ttc = orcs_engine.cacheManager->searchInstruction(operation.opcode_address);
+			uint32_t ttc = orcs_engine.cacheManager->searchInstruction(this->processor_id,operation.opcode_address);
 			this->fetchBuffer.back()->updatePackageReady(FETCH_LATENCY + ttc);
 		}
 	}
@@ -831,6 +832,7 @@ void processor_t::rename(){
 			this->reorderBuffer[pos_rob].mob_ptr->status = PACKAGE_STATE_WAIT;
 			this->reorderBuffer[pos_rob].mob_ptr->readyToGo = orcs_engine.get_global_cycle() + RENAME_LATENCY + DISPATCH_LATENCY;
 			this->reorderBuffer[pos_rob].mob_ptr->uop_number = this->reorderBuffer[pos_rob].uop.uop_number;
+			this->reorderBuffer[pos_rob].mob_ptr->processor_id = this->processor_id;
 		}
 		else if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE)
 		{
@@ -844,6 +846,7 @@ void processor_t::rename(){
 			this->reorderBuffer[pos_rob].mob_ptr->status = PACKAGE_STATE_WAIT;
 			this->reorderBuffer[pos_rob].mob_ptr->readyToGo = orcs_engine.get_global_cycle() + RENAME_LATENCY + DISPATCH_LATENCY;
 			this->reorderBuffer[pos_rob].mob_ptr->uop_number = this->reorderBuffer[pos_rob].uop.uop_number;
+			this->reorderBuffer[pos_rob].mob_ptr->processor_id = this->processor_id;
 		}
 		//linking rob and mob
 		if (this->reorderBuffer[pos_rob].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD ||
@@ -2285,6 +2288,10 @@ void processor_t::printStructures(){
 	// ==============================================================
 	sleep(2);
 }
+// ============================================================================
+void processor_t::set_processor_id(uint32_t processor_id){
+	this->processor_id = processor_id;
+};
 // ============================================================================
 void processor_t::clock(){
 	#if DEBUG

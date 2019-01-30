@@ -121,7 +121,11 @@ int main(int argc, char **argv) {
     //==================
     //Processor
     //==================
-    orcs_engine.processor->allocate();
+    for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
+    {
+        orcs_engine.processor[i].allocate();
+        orcs_engine.processor[i].set_processor_id(i);        
+    }
     //==================
     //Branch Predictor
     //==================
@@ -146,7 +150,10 @@ int main(int argc, char **argv) {
             }
         #endif
         orcs_engine.memory_controller->clock();
-        orcs_engine.processor->clock();
+        for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
+        {
+            orcs_engine.processor[i].clock();
+        }
         
         orcs_engine.global_cycle++;
     }
@@ -159,7 +166,7 @@ int main(int argc, char **argv) {
     orcs_engine.memory_controller->statistics();
 
     ORCS_PRINTF("Deleting Processor\n")
-    delete orcs_engine.processor;
+    delete[] orcs_engine.processor;
     ORCS_PRINTF("Deleting Branch predictor\n")
     delete orcs_engine.branchPredictor;
     ORCS_PRINTF("Deleting Cache manager\n")

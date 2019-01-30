@@ -34,6 +34,7 @@ void memory_order_buffer_line_t::package_clean() {
         this->waiting_DRAM=false;
         this->emc_executed=false;
         this->is_llc_miss=false;
+        this->processor_id = 0;
         #if EMC_ACTIVE
         this->emc_opcode_ptr=NULL;
         #endif
