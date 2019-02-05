@@ -355,7 +355,7 @@ void processor_t::fetch(){
 		if (this->hasBranch)
 		{
 			//solve
-			uint32_t stallWrongBranch = orcs_engine.branchPredictor->solveBranch(this->previousBranch, operation);
+			uint32_t stallWrongBranch = orcs_engine.branchPredictor[this->processor_id].solveBranch(this->previousBranch, operation);
 			this->set_stall_wrong_branch(orcs_engine.get_global_cycle() + stallWrongBranch);
 			this->hasBranch = false;
 			uint32_t ttc = orcs_engine.cacheManager->searchInstruction(this->processor_id,operation.opcode_address);
@@ -370,7 +370,7 @@ void processor_t::fetch(){
 		//============================
 		if (operation.opcode_operation == INSTRUCTION_OPERATION_BRANCH)
 		{
-			orcs_engine.branchPredictor->branches++;
+			orcs_engine.branchPredictor[this->processor_id].branches++;
 			this->previousBranch = operation;
 			this->hasBranch = true;
 		}

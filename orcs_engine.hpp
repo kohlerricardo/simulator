@@ -5,9 +5,13 @@ class orcs_engine_t {
 
     public:
         /// Program input
-        char *arg_trace_file_name;
+        std::vector<std::string> arg_trace_file_name;
         /// Control the Global Cycle
         uint64_t global_cycle;
+        // =======================================
+        // Number of cores
+        // =======================================
+        uint32_t number_of_cores;
         // =======================================
         // output File name
         // =======================================

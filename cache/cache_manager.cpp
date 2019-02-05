@@ -206,7 +206,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             }else{
                 this->LLC_data_cache[index_llc].add_cacheAccess();
                 this->LLC_data_cache[index_llc].add_cacheMiss();
-                orcs_engine.processor->has_llc_miss=true; // setting llc miss
+                orcs_engine.processor[mob_line->processor_id].has_llc_miss=true; // setting llc miss
                 mob_line->is_llc_miss=true;
                 //========================================= 
                 //request to Memory Controller
@@ -215,7 +215,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 mob_line->waiting_DRAM=true;                        //Settind wait DRAM
                 latency_request +=ttc;                              // Add latency from RAM
                 // ====================
-                orcs_engine.processor->request_DRAM++;
+                orcs_engine.processor[mob_line->processor_id].request_DRAM++;
                 // ====================
                 //========================================= 
                 #if PREFETCHER_ACTIVE

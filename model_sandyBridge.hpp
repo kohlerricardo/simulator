@@ -6,8 +6,8 @@ Arquivo definindo os parametros do modelo de processador
 #ifndef _SANDYBRIDGE_HPP_
 #define _SANDYBRIDGE_HPP_
 // =========== PROCESSOR =============
-#define NUMBER_OF_PROCESSORS 1  // Numero de cores
-#define SIZE_OF_L1_CACHES_ARRAY 1     // Numero de caches L1
+#define NUMBER_OF_PROCESSORS 2  // Numero de cores
+#define SIZE_OF_L1_CACHES_ARRAY 2     // Numero de caches L1
 #define SIZE_OF_L2_CACHES_ARRAY 1     // Numero de caches L2
 #define SIZE_OF_LLC_CACHES_ARRAY 1    // Numero de caches LLC
 
@@ -254,8 +254,8 @@ Arquivo definindo os parametros do modelo de processador
 #define DECODE_DEBUG 0
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
-#define EXECUTE_DEBUG 0
-#define MOB_DEBUG 0
+#define EXECUTE_DEBUG 1
+#define MOB_DEBUG 1
 #define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
@@ -270,6 +270,6 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 20500
+#define WAIT_CYCLE 200
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP
