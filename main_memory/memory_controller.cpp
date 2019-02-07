@@ -14,9 +14,14 @@ memory_controller_t::~memory_controller_t() = default;
 // @allocate objects to EMC
 void memory_controller_t::allocate(){
     #if EMC_ACTIVE
-    this->emc = new emc_t;
-    this->emc->allocate();
+    this->emc = new emc_t[NUMBER_OF_PROCESSORS];
+    for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
+    {
+        this->emc[i].allocate();
+        
+    }
     #endif
+    this->emc_active = 0;
 };
 // ============================================================================
 void memory_controller_t::statistics(){
@@ -43,7 +48,10 @@ void memory_controller_t::statistics(){
 // ============================================================================
 void memory_controller_t::clock(){
     #if EMC_ACTIVE
-       this->emc->clock();
+        for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
+        {
+            this->emc[i].clock();        
+        }
     #endif
 
 };

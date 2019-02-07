@@ -642,6 +642,8 @@ void emc_t::clock(){
 					ORCS_PRINTF("\t\t EMC Unlocking Processor %lu\n",orcs_engine.get_global_cycle())
 				}
 			#endif
+			ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > 0,"Erro, tentando reduzir EMCs ativos menor que zero\n")
+			orcs_engine.memory_controller->emc_active--;
 			orcs_engine.processor->lock_processor=false;
 		}
 	}
@@ -693,7 +695,7 @@ void emc_t::lsq_read(){
 			// ==========================================
 			uint32_t ttc = 0;
 			ttc = orcs_engine.cacheManager->search_EMC_Data(emc_mob_line); //enviar que é do emc
-			if(ttc<RAM_LATENCY){
+			if(ttc>RAM_LATENCY){
 				this->add_incorrect_prediction_ram_access();
 				this->update_mact_entry(emc_mob_line->opcode_address,-1);
 			}

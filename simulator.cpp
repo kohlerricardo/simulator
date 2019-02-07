@@ -103,9 +103,12 @@ std::string get_status_execution(){
     double percentage_complete = 100.0 * (static_cast<double>(ActualLength) / static_cast<double>(FullLength));
     snprintf(report,sizeof(report),"Total Progress %8.4lf%%\n",percentage_complete);
     final_report+=report;
+    // IPC parcial
+    snprintf(report,sizeof(report),"Global IPC(%1.6lf)\n", static_cast<double>(ActualLength) / static_cast<double>(orcs_engine.get_global_cycle()));
+    final_report+=report;    
     //    
     double seconds_remaining = (100*(seconds_spent / percentage_complete)) - seconds_spent;
-        snprintf(report,sizeof(report), "ETC(%02.0f:%02.0f:%02.0f)\n",
+        snprintf(report,sizeof(report), "Global ETC(%02.0f:%02.0f:%02.0f)\n",
                                                 floor(seconds_remaining / 3600.0),
                                                 floor(fmod(seconds_remaining, 3600.0) / 60.0),
                                                 fmod(seconds_remaining, 60.0));
@@ -119,12 +122,18 @@ std::string get_status_execution(){
         // Get benchmark name 
         snprintf(report,sizeof(report),"Benchmark %s\n",orcs_engine.arg_trace_file_name[cpu].c_str());
         final_report+=report;
+
+        ActualLength = orcs_engine.trace_reader[cpu].get_fetch_instructions();
+        FullLength = orcs_engine.trace_reader[cpu].get_trace_opcode_max() + 1;
         // get actual cicle
         snprintf(report,sizeof(report),"Actual Cycle %lu\n",orcs_engine.get_global_cycle());
+        final_report+=report;
+        snprintf(report,sizeof(report),"Opcodes Processed: %lu of %lu\n",ActualLength,FullLength);
         final_report+=report;
         // Get  status opcodes total, executed -> calculate percent / CORE
         uint64_t total_opcodes = orcs_engine.trace_reader[cpu].get_trace_opcode_max();
         uint64_t fetched_opcodes = orcs_engine.trace_reader[cpu].get_fetch_instructions();
+
         snprintf(report,sizeof(report),"Uops Fetched/Uops Total: %lu of %lu\n",fetched_opcodes,total_opcodes);
         final_report+=report;
         // Get total uops decoded, uops coppleted
@@ -164,6 +173,7 @@ int main(int argc, char **argv) {
         //trace_reader
         //==================
         orcs_engine.trace_reader[i].allocate((char*)orcs_engine.arg_trace_file_name[i].c_str());
+        orcs_engine.trace_reader[i].set_processor_id(i);
         // Allocate structures to all cores
         //==================
         //Processor
@@ -188,7 +198,7 @@ int main(int argc, char **argv) {
 
 
     /// Start CLOCK for all the components
-    while (orcs_engine.simulator_alive) {
+    while (orcs_engine.get_simulation_alive()) {
         #if HEARTBEAT
             if(orcs_engine.get_global_cycle()%HEARTBEAT_CLOCKS==0){
                 ORCS_PRINTF("%s\n",get_status_execution().c_str())
@@ -204,14 +214,51 @@ int main(int argc, char **argv) {
         
         orcs_engine.global_cycle++;
     }
-    // to be prinf
+    // *****************************************************************************************
 	ORCS_PRINTF("End of Simulation\n")
-	orcs_engine.trace_reader->statistics();
-    orcs_engine.processor->statistics();
-    orcs_engine.branchPredictor->statistics();
-    orcs_engine.cacheManager->statistics();
-    orcs_engine.memory_controller->statistics();
+	ORCS_PRINTF("Writting FILE\n")
+    uint64_t FullLength = 0;
+    for (uint32_t cpu = 0; cpu < NUMBER_OF_PROCESSORS; cpu++){
+        FullLength += orcs_engine.trace_reader[cpu].get_trace_opcode_max() + 1; 
+    }
+    FILE *output = stdout;
+    bool close = false;
+    if(orcs_engine.output_file_name != NULL){
+        output = fopen(orcs_engine.output_file_name,"a+");
+        close=true;
+    }
+    if (output != NULL){
+        fprintf(output,"Global Statistics\n");
+        utils_t::largeSeparator(output);
+        fprintf(output,"Global Cycle %lu\n",orcs_engine.get_global_cycle());
+        fprintf(output,"Global IPC %2.6lf\n", static_cast<double>(FullLength) / static_cast<double>(orcs_engine.get_global_cycle()));
+        utils_t::largeSeparator(output);
+    }
+    if(close) fclose(output);
+    for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
+    {
+        bool close = false;
+        if(orcs_engine.output_file_name != NULL){
+            output = fopen(orcs_engine.output_file_name,"a+");
+            close=true;
+        }
+        if (output != NULL){
+            utils_t::largeSeparator(output);
+            fprintf(output,"Statistics of Core %d\n",i);
+            if(close)fclose(output);
+            orcs_engine.trace_reader[i].statistics();
+            orcs_engine.processor[i].statistics();
+            orcs_engine.branchPredictor[i].statistics();
+            orcs_engine.cacheManager->statistics(i);
+            utils_t::largeSeparator(output);
+        }
+    }
+    orcs_engine.memory_controller->statistics();    
+    ORCS_PRINTF("Writed FILE\n")
+    // *****************************************************************************************
 
+    ORCS_PRINTF("Deleting Trace Reader\n")
+    delete[] orcs_engine.trace_reader;
     ORCS_PRINTF("Deleting Processor\n")
     delete[] orcs_engine.processor;
     ORCS_PRINTF("Deleting Branch predictor\n")

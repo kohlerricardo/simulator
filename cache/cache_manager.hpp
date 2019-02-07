@@ -18,7 +18,7 @@ class cache_manager_t{
         ~cache_manager_t();
         void allocate();
         void clock();//for prefetcher
-        void statistics();
+        void statistics(uint32_t core_id);
         uint32_t searchInstruction(uint32_t processor_id,uint64_t instructionAddress);
         uint32_t searchData(memory_order_buffer_line_t *mob_line);
         uint32_t writeData(memory_order_buffer_line_t *mob_line);

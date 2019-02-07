@@ -429,7 +429,7 @@ int32_t cache_manager_t::generate_index_array(uint32_t processor_id,cacheLevel_t
     }
     return POSITION_FAIL;
 };
-void cache_manager_t::statistics(){
+void cache_manager_t::statistics(uint32_t core_id){
     bool close = false;
     FILE *output = stdout;
 	if(orcs_engine.output_file_name != NULL){
@@ -443,13 +443,13 @@ void cache_manager_t::statistics(){
         }
 	if(close) fclose(output);
     // ORCS_PRINTF("############## Instruction Cache ##################\n")
-    this->inst_cache[0].statistics();
+    this->inst_cache[this->generate_index_array(core_id,INST_CACHE)].statistics();
     // ORCS_PRINTF("##############  Data Cache L1 ##################\n")
-    this->L1_data_cache[0].statistics();
+    this->L1_data_cache[this->generate_index_array(core_id,L1)].statistics();
     // ORCS_PRINTF("##############  LLC Cache ##################\n")
-    this->L2_data_cache[0].statistics();
+    this->L2_data_cache[this->generate_index_array(core_id,L2)].statistics();
     // ORCS_PRINTF("##############  LLC Cache ##################\n")
-    this->LLC_data_cache[0].statistics();
+    this->LLC_data_cache[this->generate_index_array(core_id,LLC)].statistics();
     // Prefetcher
     #if PREFETCHER_ACTIVE
     this->prefetcher->statistics();

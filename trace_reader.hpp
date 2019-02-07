@@ -24,6 +24,8 @@ class trace_reader_t {
         char **line_dynamic;
         char **line_memory;
     public:
+        uint64_t processor_id;
+        uint64_t address_translation;
         // ====================================================================
         /// Methods
         // ====================================================================
@@ -43,6 +45,7 @@ class trace_reader_t {
         bool trace_fetch(opcode_package_t *m);
         INSTANTIATE_GET_SET(uint64_t,fetch_instructions);
         INSTANTIATE_GET_SET(uint64_t,trace_opcode_max);
+        INSTANTIATE_GET_SET(uint64_t,processor_id);
         uint64_t get_trace_size();///get total of opcodes
 };
 

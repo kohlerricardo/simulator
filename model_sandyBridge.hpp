@@ -189,8 +189,9 @@ Arquivo definindo os parametros do modelo de processador
 
 // ===================== EMC =======================================
 #define EMC_ACTIVE 0
-#define EMC_ROB_HEAD 0
-#define ALL_UOPS 1
+#define EMC_PARALLEL_ACTIVATE 1
+#define EMC_ROB_HEAD 1
+#define ALL_UOPS 0
 #define LOCKING_COMMIT 1
 // ===================== EMC =======================================
 //WIDHTs
@@ -238,7 +239,7 @@ Arquivo definindo os parametros do modelo de processador
 #define EMC_CACHE_SETS (EMC_CACHE_SIZE/LINE_SIZE)/EMC_CACHE_ASSOCIATIVITY
 // Access Predictor
 #define MACT_SIZE 256
-#define MACT_THRESHOLD 3
+#define MACT_THRESHOLD 4
 #define MACT_SHIFT 4
 // ===================== EMC =======================================
 // =====================CHECKS=======================

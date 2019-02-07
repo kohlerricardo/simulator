@@ -85,6 +85,7 @@ void processor_t::allocate()
 	this->traceIsOver = false;
 	this->hasBranch = false;
 	this->insertError = false;
+	this->snapshoted = false;
 	this->fetchCounter = 1;
 	this->decodeCounter = 1;
 	this->renameCounter = 1;
@@ -174,10 +175,11 @@ void processor_t::allocate()
 	// Initializating EMC control variables
 	//======================================================================
 	this->start_emc_module = false;
+	this->lock_processor = false;
+	this->unable_start = false;
 	this->instrucoes_inter_load_deps = 0;
 	this->soma_instrucoes_deps = 0;
 	this->numero_load_deps = 0;
-	this->lock_processor = false;
 	this->counter_ambiguation_read = 0;
 	this->counter_ambiguation_write = 0;
 	this->counter_activate_emc = 0;
@@ -339,7 +341,7 @@ void processor_t::fetch(){
 		//=============================
 		//Get new Opcode
 		//=============================
-		if (!orcs_engine.trace_reader->trace_fetch(&operation))
+		if (!orcs_engine.trace_reader[this->processor_id].trace_fetch(&operation))
 		{
 			this->traceIsOver = true;
 			break;
@@ -1171,6 +1173,11 @@ void processor_t::execute()
 	
 	#if EMC_ACTIVE
 		if (this->start_emc_module){	
+			if(orcs_engine.memory_controller->emc_active >= EMC_PARALLEL_ACTIVATE){
+				this->start_emc_module=false;
+				this->rob_buffer.clear();
+				this->unable_start=true;
+			}
 		// ======================================================================
 		// Contando numero de loads dependentes nas cadeias elegiveis para execução
 			this->instrucoes_inter_load_deps = 0;
@@ -1193,7 +1200,7 @@ void processor_t::execute()
 						i--;
 						continue;
 					}else{
-						orcs_engine.memory_controller->emc->has_store = true;
+						orcs_engine.memory_controller->emc[this->processor_id].has_store = true;
 					}
 				}
 				#if EMC_ACTIVE_DEBUG
@@ -1222,22 +1229,26 @@ void processor_t::execute()
 				}
 			}
 			// Verifica se o rob_buffer está vazio, ou uop buffer cheio
-			if (orcs_engine.memory_controller->emc->uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty()){
+			if ((orcs_engine.memory_controller->emc[this->processor_id].uop_buffer_used >= EMC_UOP_BUFFER || this->rob_buffer.empty()) &&
+				 this->unable_start == false){
 				this->start_emc_module = false; // disable emc module CORE
 				this->rob_buffer.clear();		// flush core buffer
-					orcs_engine.memory_controller->emc->ready_to_execute = true; //execute emc
-					orcs_engine.memory_controller->emc->executed = true; //print dep chain emc //comentar depois
+					orcs_engine.memory_controller->emc[this->processor_id].ready_to_execute = true; //execute emc
+					orcs_engine.memory_controller->emc[this->processor_id].executed = true; //print dep chain emc //comentar depois
 					#if EMC_ACTIVE_DEBUG
 					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 						ORCS_PRINTF("Locking Processor\n")
 					}
 				#endif
+				ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > EMC_PARALLEL_ACTIVATE,"Error, tentando executar mais EMCs em paralelo que o permitido\n ")
+				orcs_engine.memory_controller->emc_active++;
 				this->total_instruction_sent_emc+=instruction_dispatched_emc;
 				#if LOCKING_COMMIT
 					this->lock_processor=true;
 				#endif
 				this->clean_rrt(); //Limpa RRT;
 			}
+			this->unable_start=false;
 		}
 	#endif
 
@@ -1745,11 +1756,11 @@ void processor_t::solve_registers_dependency(reorder_buffer_line_t *rob_line){
 };
 // ============================================================================
 bool processor_t::verify_uop_on_emc(reorder_buffer_line_t *rob_line){
-	uint16_t pos = orcs_engine.memory_controller->emc->uop_buffer_start;
-	uint16_t end = orcs_engine.memory_controller->emc->uop_buffer_used;
+	uint16_t pos = orcs_engine.memory_controller->emc[this->processor_id].uop_buffer_start;
+	uint16_t end = orcs_engine.memory_controller->emc[this->processor_id].uop_buffer_used;
 	bool is_present = false;
 	for (uint16_t i = 0; i < end; i++){
-		if(rob_line->uop.uop_number == orcs_engine.memory_controller->emc->uop_buffer[pos].uop.uop_number){
+		if(rob_line->uop.uop_number == orcs_engine.memory_controller->emc[this->processor_id].uop_buffer[pos].uop.uop_number){
 			is_present = true;
 			break;
 		}
@@ -1880,33 +1891,33 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 		// get position on emc lsq
 		// ===========================================================
 		memory_order_buffer_line_t *lsq;
-		int32_t pos_lsq = memory_order_buffer_line_t::find_free(orcs_engine.memory_controller->emc->unified_lsq, EMC_LSQ_SIZE);
+		int32_t pos_lsq = memory_order_buffer_line_t::find_free(orcs_engine.memory_controller->emc[this->processor_id].unified_lsq, EMC_LSQ_SIZE);
 		if(pos_lsq == POSITION_FAIL){
 			return POSITION_FAIL;
 		};
-		lsq = &orcs_engine.memory_controller->emc->unified_lsq[pos_lsq];
+		lsq = &orcs_engine.memory_controller->emc[this->processor_id].unified_lsq[pos_lsq];
 		// ===========================================================
 		
 		// ===========================================================
 		// get position on uop buffer
 		// ===========================================================
-		int32_t pos_emc = orcs_engine.memory_controller->emc->get_position_uop_buffer();
+		int32_t pos_emc = orcs_engine.memory_controller->emc[this->processor_id].get_position_uop_buffer();
 		if(pos_emc==POSITION_FAIL){
 			return POSITION_FAIL;
 		}
-		emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc->uop_buffer[pos_emc];
+		emc_opcode_package_t *emc_package = &orcs_engine.memory_controller->emc[this->processor_id].uop_buffer[pos_emc];
 
 		// ===========================================================
 		// IF CAME HERE, CONGRATULATIONS. NEXT STEP
 		// ===========================================================
 		// Add the entry of uopbuffer on reservation station of EMC
-		orcs_engine.memory_controller->emc->unified_rs.push_back(emc_package);
+		orcs_engine.memory_controller->emc[this->processor_id].unified_rs.push_back(emc_package);
 		// Fill EMC package with info
 		emc_package->package_clean();		//clean package 
 		emc_package->uop = rob_line->uop;	//copy uop to info operation
 		emc_package->rob_ptr = rob_line;	//pointer to rob entry to return
 		if (rob_line->mob_ptr != NULL){		//is memory uop
-			orcs_engine.memory_controller->emc->unified_lsq[pos_lsq] = *(rob_line->mob_ptr);	//copy infos of memory access
+			orcs_engine.memory_controller->emc[this->processor_id].unified_lsq[pos_lsq] = *(rob_line->mob_ptr);	//copy infos of memory access
 			if(rob_line->original_miss){ //if original memory miss, reduce latency
 				emc_package->uop.readyAt = emc_package->uop.readyAt-(L1_DATA_LATENCY+LLC_LATENCY);
 				lsq->readyAt=lsq->readyAt-(L1_DATA_LATENCY+LLC_LATENCY);
@@ -2091,28 +2102,28 @@ void processor_t::cancel_execution_emc(){
 	for (uint8_t i = 0; i < EMC_UOP_BUFFER; i++)
 	{
 
-		if (orcs_engine.memory_controller->emc->uop_buffer[i].rob_ptr != NULL)
+		if (orcs_engine.memory_controller->emc[this->processor_id].uop_buffer[i].rob_ptr != NULL)
 		{
-			orcs_engine.memory_controller->emc->uop_buffer[i].rob_ptr->on_chain = false;
+			orcs_engine.memory_controller->emc[this->processor_id].uop_buffer[i].rob_ptr->on_chain = false;
 		}
-		if (orcs_engine.memory_controller->emc->uop_buffer[i].rob_ptr != NULL)
+		if (orcs_engine.memory_controller->emc[this->processor_id].uop_buffer[i].rob_ptr != NULL)
 		{
-			orcs_engine.memory_controller->emc->uop_buffer[i].rob_ptr->is_poisoned = false;
+			orcs_engine.memory_controller->emc[this->processor_id].uop_buffer[i].rob_ptr->is_poisoned = false;
 		}
-			orcs_engine.memory_controller->emc->unified_lsq[i].package_clean();
-			orcs_engine.memory_controller->emc->uop_buffer[i].package_clean();
+			orcs_engine.memory_controller->emc[this->processor_id].unified_lsq[i].package_clean();
+			orcs_engine.memory_controller->emc[this->processor_id].uop_buffer[i].package_clean();
 
 	}
 	//zerando controles
-	orcs_engine.memory_controller->emc->uop_buffer_end = 0;
-	orcs_engine.memory_controller->emc->uop_buffer_start= 0;
-	orcs_engine.memory_controller->emc->uop_buffer_used = 0;
+	orcs_engine.memory_controller->emc[this->processor_id].uop_buffer_end = 0;
+	orcs_engine.memory_controller->emc[this->processor_id].uop_buffer_start= 0;
+	orcs_engine.memory_controller->emc[this->processor_id].uop_buffer_used = 0;
 	//pointers containers RS e Unified FUS
-	orcs_engine.memory_controller->emc->unified_fus.clear();
-	orcs_engine.memory_controller->emc->unified_rs.clear();
+	orcs_engine.memory_controller->emc[this->processor_id].unified_fus.clear();
+	orcs_engine.memory_controller->emc[this->processor_id].unified_rs.clear();
 
 	//conferindo estruturas -> comentar futuramente
-	// orcs_engine.memory_controller->emc->print_structures();
+	// orcs_engine.memory_controller->emc[this->processor_id].print_structures();
 };
 // ============================================================================
 bool processor_t::already_exists(reorder_buffer_line_t *candidate){
@@ -2152,25 +2163,22 @@ void processor_t::statistics(){
 	}
 	if (output != NULL){
 		utils_t::largestSeparator(output);
-		fprintf(output, "Total_Cycle: %lu\n", orcs_engine.get_global_cycle());
+		fprintf(output, "Total_Cycle: %lu\n", this->get_ended_cycle());
 		utils_t::largeSeparator(output);
 		fprintf(output, "Stage_Opcode_and_Uop_Counters\n");
 		utils_t::largeSeparator(output);
 		fprintf(output, "Stage_Fetch: %lu\n", this->fetchCounter);
 		fprintf(output, "Stage_Decode: %lu\n", this->decodeCounter);
 		fprintf(output, "Stage_Rename: %lu\n", this->renameCounter);
-		fprintf(output, "Register_writes: %lu\n", this->get_registerWrite());
 		fprintf(output, "Stage_Commit: %lu\n", this->commit_uop_counter);
 		utils_t::largestSeparator(output);
-		fprintf(output, "======================== MEMORY DESAMBIGUATION ===========================\n");
-		utils_t::largestSeparator(output);
-		this->desambiguator->statistics();
 			#if MAX_PARALLEL_REQUESTS
 				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_READ: %lu\n", this->get_times_reach_parallel_requests_read());
 				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_WRITE: %lu\n", this->get_times_reach_parallel_requests_write());
 			#endif
 		utils_t::largestSeparator(output);
-		fprintf(output, "Instruction_Per_Cycle: %.4f\n", float(this->fetchCounter) / float(orcs_engine.get_global_cycle()));
+		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", this->get_instruction_per_cycle());
+		utils_t::largestSeparator(output);
 			#if EMC_ACTIVE
 				fprintf(output, "\n======================== EMC INFOS ===========================\n");
 				utils_t::largeSeparator(output);
@@ -2184,9 +2192,11 @@ void processor_t::statistics(){
 				fprintf(output, "canceled_emc_execution: %d\n", this->get_cancel_emc_execution());
 				fprintf(output, "canceled_emc_execution_one_op: %d\n", this->get_cancel_emc_execution_one_op());
 				fprintf(output, "total_instruction_sent_emc: %d\n", this->get_total_instruction_sent_emc());
+				fprintf(output, "avg_inst_sent_emc: %.4f\n",static_cast<double> (this->get_total_instruction_sent_emc())/static_cast<double> (this->get_started_emc_execution()));
 			#endif
 			}
-	if(close) fclose(output);
+		if(close) fclose(output);
+		this->desambiguator->statistics();
 };
 // ============================================================================
 void processor_t::printConfiguration(){
@@ -2238,7 +2248,7 @@ void processor_t::printConfiguration(){
 // ============================================================================
 void processor_t::printStructures(){
 	ORCS_PRINTF("Periodic Check -  Structures at %lu\n", orcs_engine.get_global_cycle())
-	ORCS_PRINTF("Fetched Opcodes %lu of %lu\n", orcs_engine.trace_reader->get_fetch_instructions(), orcs_engine.trace_reader->get_trace_opcode_max())
+	ORCS_PRINTF("Fetched Opcodes %lu of %lu\n", orcs_engine.trace_reader[this->processor_id].get_fetch_instructions(), orcs_engine.trace_reader[this->processor_id].get_trace_opcode_max())
 	utils_t::largestSeparator();
 	ORCS_PRINTF("Front end Buffers\n")
 	utils_t::largeSeparator();
@@ -2289,10 +2299,6 @@ void processor_t::printStructures(){
 	sleep(2);
 }
 // ============================================================================
-void processor_t::set_processor_id(uint32_t processor_id){
-	this->processor_id = processor_id;
-};
-// ============================================================================
 void processor_t::clock(){
 	#if DEBUG
 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
@@ -2339,7 +2345,11 @@ void processor_t::clock(){
 
 	if (!this->isBusy())
 	{
-		orcs_engine.simulator_alive = false;
+		if(!this->snapshoted){
+			this->set_instruction_per_cycle(float(this->fetchCounter) / float(orcs_engine.get_global_cycle()));
+			this->set_ended_cycle(orcs_engine.get_global_cycle());
+			this->snapshoted=true;
+		}
 	}
 	#if DEBUG
 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
@@ -2351,7 +2361,7 @@ void processor_t::clock(){
 		if (orcs_engine.get_global_cycle() % CLOCKS_TO_CHECK == 0)
 		{
 			this->printStructures();
-			// ORCS_PRINTF("Opcodes Processed %lu",orcs_engine.trace_reader->get_fetch_instructions())
+			// ORCS_PRINTF("Opcodes Processed %lu",orcs_engine.trace_reader[this->processor_id].get_fetch_instructions())
 		}
 	#endif
 };

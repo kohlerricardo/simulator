@@ -22,4 +22,11 @@ void orcs_engine_t::allocate() {
 	this->cacheManager = new cache_manager_t;
 	this->memory_controller = new memory_controller_t;
 };
-
+bool orcs_engine_t::get_simulation_alive(){
+	for(uint16_t cpu=0;cpu<NUMBER_OF_PROCESSORS;cpu++){
+		if (this->processor[cpu].isBusy()) {
+            return OK;
+        }
+	}
+	return FAIL;
+};

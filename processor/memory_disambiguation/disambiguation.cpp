@@ -34,28 +34,24 @@ void desambiguation_t::solve_memory_dependences(memory_order_buffer_line_t *mob_
     this->disambiguator->solve_memory_dependencies(mob_line);
 };
 void desambiguation_t::statistics(){
-    if(orcs_engine.output_file_name == NULL){
-        #if PERFECT
-            ORCS_PRINTF("Disambiguation method: PERFECT\n")
-            this->disambiguator->statistics();
-        #endif
-        #if HASHED
-            ORCS_PRINTF("Disambiguation method: HASHED\n")
-            this->disambiguator->statistics();
-        #endif
+    bool close = false;
+    FILE *output = stdout;
+	if(orcs_engine.output_file_name != NULL){
+		output = fopen(orcs_engine.output_file_name,"a+");
+        close=true;
     }
-    else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
+	if (output != NULL){
+        fprintf(output, "======================== MEMORY DESAMBIGUATION ===========================\n");
+        utils_t::largestSeparator(output);
         #if PERFECT
             fprintf(output,"Disambiguation method: PERFECT\n");
+            if(close)fclose(output);
             this->disambiguator->statistics();
         #endif
         #if HASHED
             fprintf(output,"Disambiguation method: HASHED\n");
+            if(close)fclose(output);
             this->disambiguator->statistics();
         #endif
-        }
-        fclose(output);
     }
 };

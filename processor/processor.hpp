@@ -30,6 +30,8 @@ class processor_t {
 	uint64_t stat_address_to_address;
 	uint64_t times_reach_parallel_requests_read;
 	uint64_t times_reach_parallel_requests_write;
+	float_t instruction_per_cycle;
+	uint64_t ended_cycle;
 	//=============
 	//Statistics Commit
 	//=============
@@ -65,6 +67,7 @@ class processor_t {
 		// Control
 		// ====================================================================
 		bool traceIsOver;
+		bool snapshoted;
 		uint64_t fetchCounter;
 		uint64_t decodeCounter;
 		uint64_t renameCounter;
@@ -82,7 +85,6 @@ class processor_t {
 	    void clock();
 		void statistics();
 		void printConfiguration();
-		void set_processor_id(uint32_t processor_id);
 		// ====================================================================
 		// ROB RELATED	
 		void update_registers(reorder_buffer_line_t *robLine);
@@ -185,9 +187,11 @@ class processor_t {
 		//container to accelerate  execution
 		container_ptr_reorder_buffer_line_t unified_functional_units;
 
+		INSTANTIATE_GET_SET(uint32_t,processor_id);
 		// ====================================================================
 		// Statistics
 		// ====================================================================
+
 		INSTANTIATE_GET_SET_ADD(uint64_t,registerWrite);
 		/////
 		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_FetchBuffer);
@@ -202,6 +206,8 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_address_to_address);
 		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_read);
 		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_write);
+		INSTANTIATE_GET_SET_ADD(float_t,instruction_per_cycle);
+		INSTANTIATE_GET_SET_ADD(uint64_t,ended_cycle);
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================
@@ -224,6 +230,7 @@ class processor_t {
 		bool has_llc_miss; // have a LLC Miss, verify if is ROB head to add ROB Head on buffer
 		bool start_emc_module;//if must start generate dep chain
 		bool lock_processor; // lock commit para não deixar completar qualquer instrução antes de o EMC parar de excutar, evitando modificar as estruturas
+		bool unable_start;
 		int8_t counter_activate_emc;
 		// ====================================================================
 		uint32_t counter_ambiguation_read;

@@ -114,6 +114,9 @@ void trace_reader_t::allocate(char *trace_file) {
     this->trace_opcode_max=0;
     this->trace_opcode_max=this->get_trace_size();
     // ====================================================================
+    ///translation Address
+    this->address_translation =  this->get_processor_id() << 56;
+    // ====================================================================  
 
 };
 /// Get the total number of opcodes
@@ -474,23 +477,26 @@ bool trace_reader_t::trace_fetch(opcode_package_t *m) {
     /// Add SiNUCA information
     // =================================================================
     *m = NewOpcode;
-
+    m->opcode_address |= this->address_translation;
     // =========================================================================
     /// If it is LOAD/STORE -> Fetch new MEMORY inside the memory file
     // =========================================================================
     bool mem_is_read;
     if (m->is_read) {
         trace_next_memory(&m->read_address, &m->read_size, &mem_is_read);
+        m->read_address |= this->address_translation; 
         ERROR_ASSERT_PRINTF(mem_is_read == true, "Expecting a read from memory trace\n");
     }
 
     if (m->is_read2) {
         trace_next_memory(&m->read2_address, &m->read2_size, &mem_is_read);
+        m->read2_address |= this->address_translation; 
         ERROR_ASSERT_PRINTF(mem_is_read == true, "Expecting a read2 from memory trace\n");
     }
 
     if (m->is_write) {
         trace_next_memory(&m->write_address, &m->write_size, &mem_is_read);
+        m->write_address |= this->address_translation; 
         ERROR_ASSERT_PRINTF(mem_is_read == false, "Expecting a write from memory trace\n");
     }
 
@@ -500,21 +506,19 @@ bool trace_reader_t::trace_fetch(opcode_package_t *m) {
 
 // =====================================================================
 void trace_reader_t::statistics() {
-    if(orcs_engine.output_file_name == NULL){
-        utils_t::largestSeparator();
-        ORCS_PRINTF("trace_reader_t\n");
-        ORCS_PRINTF("fetch_instructions:%lu\n", this->fetch_instructions);
-    }
-    else{
-        FILE *output = fopen(orcs_engine.output_file_name,"a+");
-		if(output != NULL){
+    bool close = false;
+	FILE *output = stdout;
+	if(orcs_engine.output_file_name != NULL){
+		output = fopen(orcs_engine.output_file_name,"a+");
+		close=true;
+	}
+	if (output != NULL){
 			utils_t::largestSeparator(output);
             fprintf(output,"trace_reader_t\n");
             fprintf(output,"fetch_instructions: %lu\n", this->fetch_instructions);
             utils_t::largestSeparator(output);
         }
-        fclose(output);
-    }
+        if(close) fclose(output);
 };
 
 

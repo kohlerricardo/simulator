@@ -43,6 +43,7 @@ class orcs_engine_t {
 		// ====================================================================
 		orcs_engine_t();
 		void allocate();
+		bool get_simulation_alive();
         uint64_t get_global_cycle() {
             return this->global_cycle;
         };
