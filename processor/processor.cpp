@@ -808,6 +808,7 @@ void processor_t::rename(){
 		this->reorderBuffer[pos_rob].stage = PROCESSOR_STAGE_RENAME;
 		this->reorderBuffer[pos_rob].uop.updatePackageReady(RENAME_LATENCY + DISPATCH_LATENCY);
 		this->reorderBuffer[pos_rob].mob_ptr = mob_line;
+		this->reorderBuffer[pos_rob].processor_id = this->processor_id;
 		// =======================
 		// Making registers dependences
 		// =======================
@@ -1173,11 +1174,11 @@ void processor_t::execute()
 	
 	#if EMC_ACTIVE
 		if (this->start_emc_module){	
-			if(orcs_engine.memory_controller->emc_active >= EMC_PARALLEL_ACTIVATE){
-				this->start_emc_module=false;
-				this->rob_buffer.clear();
-				this->unable_start=true;
-			}
+			// if(orcs_engine.memory_controller->emc_active >= EMC_PARALLEL_ACTIVATE){
+			// 	this->start_emc_module=false;
+			// 	this->rob_buffer.clear();
+			// 	this->unable_start=true;
+			// }
 		// ======================================================================
 		// Contando numero de loads dependentes nas cadeias elegiveis para execução
 			this->instrucoes_inter_load_deps = 0;
@@ -1240,8 +1241,8 @@ void processor_t::execute()
 						ORCS_PRINTF("Locking Processor\n")
 					}
 				#endif
-				ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > EMC_PARALLEL_ACTIVATE,"Error, tentando executar mais EMCs em paralelo que o permitido\n ")
-				orcs_engine.memory_controller->emc_active++;
+				// ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > EMC_PARALLEL_ACTIVATE,"Error, tentando executar mais EMCs em paralelo que o permitido\n ")
+				// orcs_engine.memory_controller->emc_active++;
 				this->total_instruction_sent_emc+=instruction_dispatched_emc;
 				#if LOCKING_COMMIT
 					this->lock_processor=true;
@@ -2302,7 +2303,7 @@ void processor_t::printStructures(){
 void processor_t::clock(){
 	#if DEBUG
 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-			ORCS_PRINTF("============================PROCESSOR===============================\n")
+			ORCS_PRINTF("============================PROCESSOR %u===============================\n",this->processor_id)
 			ORCS_PRINTF("Cycle %lu\n",orcs_engine.get_global_cycle())
 		}
 	#endif

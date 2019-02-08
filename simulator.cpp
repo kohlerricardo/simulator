@@ -167,13 +167,21 @@ int main(int argc, char **argv) {
     process_argv(argc, argv);
     /// Call all the allocate's
     orcs_engine.allocate();
+    //==================
+    //Cache Manager
+    //==================
+    orcs_engine.cacheManager->allocate();
+    //==================
+    //Memory Controller
+    //==================
+    orcs_engine.memory_controller->allocate();
 
     for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++){
         //==================
         //trace_reader
         //==================
-        orcs_engine.trace_reader[i].allocate((char*)orcs_engine.arg_trace_file_name[i].c_str());
         orcs_engine.trace_reader[i].set_processor_id(i);
+        orcs_engine.trace_reader[i].allocate((char*)orcs_engine.arg_trace_file_name[i].c_str());
         // Allocate structures to all cores
         //==================
         //Processor
@@ -184,15 +192,10 @@ int main(int argc, char **argv) {
         //Branch Predictor
         //==================
         orcs_engine.branchPredictor[i].allocate();
+        // Setting id emc
+        orcs_engine.memory_controller->emc[i].set_processor_id(i);
+
     }
-    //==================
-    //Cache Manager
-    //==================
-    orcs_engine.cacheManager->allocate();
-    //==================
-    //Memory Controller
-    //==================
-    orcs_engine.memory_controller->allocate();
     //initializate simulator
     orcs_engine.simulator_alive = true;
 

@@ -53,6 +53,7 @@ class reorder_buffer_line_t {
         bool emc_executed; //*
         bool sent_to_emc;      // Flag EMC-Sent to remove from reservation stations
         uint32_t op_on_emc_buffer;
+        uint32_t processor_id;
         // ====================================================================
         void print_dependences();
 };

@@ -18,10 +18,8 @@ void memory_controller_t::allocate(){
     for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
     {
         this->emc[i].allocate();
-        
     }
     #endif
-    this->emc_active = 0;
 };
 // ============================================================================
 void memory_controller_t::statistics(){
@@ -41,7 +39,10 @@ void memory_controller_t::statistics(){
         utils_t::largestSeparator(output);
 	    if(close) fclose(output);
         #if EMC_ACTIVE
-            this->emc->statistics();
+        for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
+        {
+            this->emc[i].statistics();
+        }
         #endif
         }
 };

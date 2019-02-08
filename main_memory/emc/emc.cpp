@@ -401,11 +401,11 @@ void emc_t::emc_execute(){
 		}
 		if (emc_package->uop.readyAt <= orcs_engine.get_global_cycle())
 		{
-	#if EMC_EXECUTE_DEBUG
-		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-			ORCS_PRINTF("EMC Trying Execute %s\n", emc_package->content_to_string().c_str())
-		}
-	#endif
+			#if EMC_EXECUTE_DEBUG
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("EMC Trying Execute %s\n", emc_package->content_to_string().c_str())
+				}
+			#endif
 			ERROR_ASSERT_PRINTF(emc_package->uop.status == PACKAGE_STATE_READY, "FU with Package not in ready state")
 			ERROR_ASSERT_PRINTF(emc_package->stage == PROCESSOR_STAGE_EXECUTION, "FU with Package not in execution stage")
 			switch (emc_package->uop.uop_operation)
@@ -437,7 +437,7 @@ void emc_t::emc_execute(){
 				ERROR_ASSERT_PRINTF(emc_package->mob_ptr != NULL, "Read with a NULL pointer to MOB")
 				this->memory_op_executed++;
 				//Atualizando operacoes executadas, pois senão trava o envio de operacoes load
-				orcs_engine.processor->memory_read_executed++;
+				orcs_engine.processor[emc_package->mob_ptr->processor_id].memory_read_executed++;
 				//
 				emc_package->mob_ptr->uop_executed = true;
 				emc_package->uop.updatePackageReady(EMC_EXECUTE_LATENCY);
@@ -452,7 +452,7 @@ void emc_t::emc_execute(){
 				ERROR_ASSERT_PRINTF(emc_package->mob_ptr != NULL, "Write with a NULL pointer to MOB")
 				this->memory_op_executed++;
 				//Atualizando operacoes executadas, pois senão trava o envio de operacoes store
-				orcs_engine.processor->memory_write_executed++;
+				orcs_engine.processor[emc_package->mob_ptr->processor_id].memory_write_executed++;
 				emc_package->mob_ptr->uop_executed = true;
 				emc_package->uop.updatePackageReady(EMC_EXECUTE_LATENCY);
 				uop_total_executed++;
@@ -639,12 +639,12 @@ void emc_t::clock(){
 			this->ready_to_execute=false;
 			#if EMC_DEBUG
 				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-					ORCS_PRINTF("\t\t EMC Unlocking Processor %lu\n",orcs_engine.get_global_cycle())
+					ORCS_PRINTF("\t\t EMC %u Unlocking Processor %lu\n",this->processor_id,orcs_engine.get_global_cycle())
 				}
 			#endif
-			ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > 0,"Erro, tentando reduzir EMCs ativos menor que zero\n")
-			orcs_engine.memory_controller->emc_active--;
-			orcs_engine.processor->lock_processor=false;
+			// ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > 0,"Erro, tentando reduzir EMCs ativos menor que zero\n")
+			// orcs_engine.memory_controller->emc_active--;
+			orcs_engine.processor[this->processor_id].lock_processor=false;
 		}
 	}
 };
@@ -764,6 +764,7 @@ void emc_t::statistics(){
 // void emc_t::emc_send_back_core(){
 void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 		reorder_buffer_line_t *rob_line = emc_opcode->rob_ptr;
+		uint32_t processor_id = rob_line->processor_id;
 		#if EMC_COMMIT_DEBUG
 			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 				ORCS_PRINTF("==============================\n")
@@ -784,7 +785,7 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 			){
 				rob_line->uop = emc_opcode->uop;
 				rob_line->stage = emc_opcode->stage;
-				orcs_engine.processor->solve_registers_dependency(rob_line);
+				orcs_engine.processor[processor_id].solve_registers_dependency(rob_line);
 			}else{
 				ERROR_ASSERT_PRINTF(emc_opcode->mob_ptr !=NULL, "Error,emc  memory operation without mob value %s\n",emc_opcode->content_to_string().c_str())
 				ERROR_ASSERT_PRINTF(rob_line->mob_ptr !=NULL, "Error, rob memory operation without mob value %s\n",rob_line->content_to_string().c_str())

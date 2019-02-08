@@ -46,6 +46,7 @@ void reorder_buffer_line_t::package_clean() {
     this->sent_to_emc=false;
     this->op_on_emc_buffer=0;
     this->sent=false;
+    this->processor_id=0;
     };
 
 // ============================================================================

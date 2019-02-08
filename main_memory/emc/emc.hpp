@@ -67,6 +67,8 @@ class emc_t{
         bool ready_to_execute;
         bool executed;
         bool has_store;
+        uint32_t processor_id;
+        INSTANTIATE_GET_SET(uint32_t,processor_id);
         // ==========================================================================
         // EMC Methods
         // ==========================================================================
