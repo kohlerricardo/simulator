@@ -59,9 +59,13 @@ class emc_t{
         uint32_t mact_bits_mask;
         void update_mact_entry(uint64_t pc,int32_t value);
         uint64_t direct_ram_access;
+        uint64_t emc_llc_access;
         uint64_t incorrect_prediction_ram_access;
+        uint64_t incorrect_prediction_LLC_access;
         INSTANTIATE_GET_SET_ADD(uint64_t,direct_ram_access);
+        INSTANTIATE_GET_SET_ADD(uint64_t,emc_llc_access);
         INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_ram_access);
+        INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_LLC_access);
         // ==========================================================================
         // control attr 
         bool ready_to_execute;

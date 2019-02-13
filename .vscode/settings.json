@@ -38,7 +38,9 @@
         "fstream": "cpp",
         "functional": "cpp",
         "cinttypes": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "unistd.h": "c",
+        "types.h": "c"
     },
     "python.linting.pylintEnabled": false
 }

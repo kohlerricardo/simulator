@@ -690,14 +690,18 @@ void emc_t::lsq_read(){
 			if(this->memory_access_counter_table[index]>=MACT_THRESHOLD){
 				//add statistics do preditor				
 				this->add_direct_ram_access();
-				this->update_mact_entry(emc_mob_line->opcode_address,1);
+			}else{
+				this->add_emc_llc_access();
 			}
 			// ==========================================
 			uint32_t ttc = 0;
 			ttc = orcs_engine.cacheManager->search_EMC_Data(emc_mob_line); //enviar que é do emc
-			if(ttc>RAM_LATENCY){
+			if(ttc < RAM_LATENCY){
 				this->add_incorrect_prediction_ram_access();
 				this->update_mact_entry(emc_mob_line->opcode_address,-1);
+			}else{
+				this->add_incorrect_prediction_LLC_access();
+				this->update_mact_entry(emc_mob_line->opcode_address,1);
 			}
 			emc_mob_line->updatePackageReady(ttc);
 			emc_mob_line->emc_executed=true;
@@ -737,8 +741,10 @@ void emc_t::statistics(){
 		fprintf(output, "EMC_Access_LLC: %lu\n", this->get_access_LLC());
 		fprintf(output, "EMC_Access_LLC_HIT: %lu\n", this->get_access_LLC_Hit());
 		fprintf(output, "EMC_Access_LLC_MISS: %lu\n", this->get_access_LLC_Miss());
-		fprintf(output, "EMC_Direct_RAM_ACCESS_Predictor: %lu\n", this->get_direct_ram_access());
-		fprintf(output, "EMC_Incorrect_Prediction: %lu\n", this->get_incorrect_prediction_ram_access());
+		fprintf(output, "EMC_DRA_Predictor: %lu\n", this->get_direct_ram_access());
+		fprintf(output, "EMC_LLC_Access_Predictor: %lu\n", this->get_emc_llc_access());
+		fprintf(output, "EMC_Incorrect_RAM_Prediction: %lu\n", this->get_incorrect_prediction_ram_access());
+		fprintf(output, "EMC_Incorrect_LLC_Prediction: %lu\n", this->get_incorrect_prediction_LLC_access());
 		utils_t::largestSeparator(output);
 		fprintf(output,"INSTRUCTION_OPERATION_INT_ALU %lu\n",this->get_stat_inst_int_alu_completed());
 		fprintf(output,"INSTRUCTION_OPERATION_INT_MUL %lu\n",this->get_stat_inst_mul_alu_completed());

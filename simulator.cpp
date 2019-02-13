@@ -193,7 +193,9 @@ int main(int argc, char **argv) {
         //==================
         orcs_engine.branchPredictor[i].allocate();
         // Setting id emc
-        orcs_engine.memory_controller->emc[i].set_processor_id(i);
+        #if EMC_ACTIVE
+            orcs_engine.memory_controller->emc[i].set_processor_id(i);
+        #endif
 
     }
     //initializate simulator
@@ -231,10 +233,10 @@ int main(int argc, char **argv) {
         close=true;
     }
     if (output != NULL){
-        fprintf(output,"Global Statistics\n");
+        fprintf(output,"Global_Statistics\n");
         utils_t::largeSeparator(output);
-        fprintf(output,"Global Cycle %lu\n",orcs_engine.get_global_cycle());
-        fprintf(output,"Global IPC %2.6lf\n", static_cast<double>(FullLength) / static_cast<double>(orcs_engine.get_global_cycle()));
+        fprintf(output,"Global_Cycle: %lu\n",orcs_engine.get_global_cycle());
+        fprintf(output,"Global_IPC: %2.6lf\n", static_cast<double>(FullLength) / static_cast<double>(orcs_engine.get_global_cycle()));
         utils_t::largeSeparator(output);
     }
     if(close) fclose(output);
