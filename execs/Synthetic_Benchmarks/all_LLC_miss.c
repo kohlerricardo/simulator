@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include <inttypes.h>  
-#include <wchar.h>
+
 #define N 16
 int main (int argc,char **argv){
 
@@ -23,10 +23,7 @@ int main (int argc,char **argv){
         printf("ERRO, memoria nao alocada");
         exit(1);
     }
-    for(size_t i = 0; i < nLines*N; i++)
-    {
-        array_matrix[i]=1;
-    }
+    memset(array_matrix,0,nLines*N*sizeof(uint32_t));
     for(size_t i = 0; i < nLines; i++)
     {
         for(size_t j = 0; j < N; j++)

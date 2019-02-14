@@ -103,6 +103,9 @@ uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instr
             this->LLC_data_cache[index_llc].returnLine(instructionAddress,&this->L2_data_cache[index_l2]);
             this->L2_data_cache[index_l2].returnLine(instructionAddress,&this->inst_cache[index_inst]);
             }else{
+                //========================================= 
+                this->LLC_data_cache[index_llc].add_cacheAccess();
+                this->LLC_data_cache[index_llc].add_cacheMiss();
                 //request to Memory Controller
                 ttc = orcs_engine.memory_controller->requestDRAM();
                 orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
