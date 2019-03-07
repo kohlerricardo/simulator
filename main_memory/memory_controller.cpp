@@ -4,7 +4,8 @@
 memory_controller_t::memory_controller_t(){
 
     this->emc = NULL;
-
+	// Data Cache
+	this->data_cache = NULL;
 };
 // ============================================================================
 memory_controller_t::~memory_controller_t() = default;
@@ -13,6 +14,11 @@ memory_controller_t::~memory_controller_t() = default;
 // ============================================================================
 // @allocate objects to EMC
 void memory_controller_t::allocate(){
+    // ======================= data cache =======================
+	this->data_cache = new cache_t;
+	this->data_cache->allocate(EMC_DATA_CACHE);
+
+    // ======================= EMC =======================
     #if EMC_ACTIVE
     this->emc = new emc_t[NUMBER_OF_PROCESSORS];
     for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
@@ -37,12 +43,15 @@ void memory_controller_t::statistics(){
         fprintf(output,"Requests_from_LLC: %lu\n",this->get_requests_llc());
         fprintf(output,"Requests_from_EMC: %lu\n",this->get_requests_emc());
         utils_t::largestSeparator(output);
-	    if(close) fclose(output);
+        if(close) fclose(output);
         #if EMC_ACTIVE
-        for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
-        {
-            this->emc[i].statistics();
-        }
+            for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
+            {
+                this->emc[i].statistics();
+            }
+            utils_t::largestSeparator(output);
+            fprintf(output, "##############  EMC_Data_Cache ##################\n");
+            this->data_cache->statistics();
         #endif
         }
 };

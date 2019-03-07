@@ -33,7 +33,7 @@ void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache)
             this->add_totalPrefetched();
             linha_t *linha = cache->installLine(newAddress,RAM_LATENCY);
             #if EMC_ACTIVE
-                linha_t *linha_emc = orcs_engine.memory_controller->emc->data_cache->installLine(newAddress,RAM_LATENCY);
+                linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(newAddress,RAM_LATENCY);
                 linha_emc->linha_ptr_llc = linha;
                 linha->linha_ptr_emc=linha_emc; 
             #endif

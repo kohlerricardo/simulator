@@ -259,6 +259,7 @@ int main(int argc, char **argv) {
         }
     }
     orcs_engine.memory_controller->statistics();    
+    if(close)fclose(output);
     ORCS_PRINTF("Writed FILE\n")
     // *****************************************************************************************
 

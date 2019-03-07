@@ -25,7 +25,6 @@ class emc_t{
         // ==========================================================================
         // EMC Attr
         // ==========================================================================
-        cache_t *data_cache; 
         memory_order_buffer_line_t *unified_lsq; //EMC load store queue
         emc_opcode_package_t *uop_buffer; //uop buffer to store emc operations
         container_ptr_emc_opcode_package_t unified_rs;

@@ -162,7 +162,9 @@ void disambiguation_hashed_t::solve_memory_dependencies(memory_order_buffer_line
 
 		/// There is an unsolved dependency
 		if(mob_line->mem_deps_ptr_array[j]->emc_executed==true){
-
+			if(mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number > 0 ){
+				mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number--;
+			}
 		}else{
 			mob_line->mem_deps_ptr_array[j]->wait_mem_deps_number--;
 		}

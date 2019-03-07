@@ -12,11 +12,11 @@ Arquivo definindo os parametros do modelo de processador
 #define SIZE_OF_LLC_CACHES_ARRAY 1    // Numero de caches LLC
 
 // =========== PIPELINE STAGES =============
-#define FETCH_WIDTH 6
-#define DECODE_WIDTH 5
-#define RENAME_WIDTH 5
-#define DISPATCH_WIDTH 6
-#define EXECUTE_WIDTH 8
+#define FETCH_WIDTH 4
+#define DECODE_WIDTH 4
+#define RENAME_WIDTH 4
+#define DISPATCH_WIDTH 4
+#define EXECUTE_WIDTH 4
 #define COMMIT_WIDTH 4
 // =============================
 // PROCESSOR LATENCIES STAGES
@@ -144,7 +144,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LLC     =====================
 #define LLC_SIZE 4*MEGA
 #define LLC_ASSOCIATIVITY 8
-#define LLC_LATENCY 9
+#define LLC_LATENCY 40
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
@@ -156,7 +156,7 @@ Arquivo definindo os parametros do modelo de processador
 #define MAX_PARALLEL_REQUESTS 8
 // =====================RAM=======================
 // =====================PREFETCHER=======================
-#define PREFETCHER_ACTIVE 1
+#define PREFETCHER_ACTIVE 0
 #define STRIDE_TABLE_SIZE 16   
 #define DEGREE 1
 #define DISTANCE 4
@@ -188,7 +188,7 @@ Arquivo definindo os parametros do modelo de processador
 
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 0
+#define EMC_ACTIVE 1
 #define EMC_PARALLEL_ACTIVATE 1
 #define EMC_ROB_HEAD 1
 #define ALL_UOPS 0
@@ -255,8 +255,8 @@ Arquivo definindo os parametros do modelo de processador
 #define DECODE_DEBUG 0
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
-#define EXECUTE_DEBUG 0
-#define MOB_DEBUG 1
+#define EXECUTE_DEBUG 1
+#define MOB_DEBUG 0
 #define COMMIT_DEBUG 1
 #define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 0
@@ -271,6 +271,6 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 14000
+#define WAIT_CYCLE 1118073450
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP

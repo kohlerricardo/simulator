@@ -9,7 +9,7 @@ class register_remapping_table_t{
     emc_opcode_package_t *entry;
     void package_clean();
     void print_rrt_entry();
-   
+    void print_all(); 
 };
  
 #endif // 

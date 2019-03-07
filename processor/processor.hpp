@@ -232,6 +232,7 @@ class processor_t {
 		bool lock_processor; // lock commit para não deixar completar qualquer instrução antes de o EMC parar de excutar, evitando modificar as estruturas
 		bool unable_start;
 		int8_t counter_activate_emc;
+		uint64_t cycle_start_mechanism; // cycle wait to star rename mechanism
 		// ====================================================================
 		uint32_t counter_ambiguation_read;
 		uint32_t counter_ambiguation_write;
@@ -255,6 +256,8 @@ class processor_t {
 		void cancel_execution_emc(); //reverte status dos uops ao core
 		void make_dependence_chain(reorder_buffer_line_t* rob_line); //generate dep chain
 		void update_counter_emc(int32_t value);
+		void print_RRT();
+		void print_ROB();
 		// boolean
 		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
 		bool verify_spill_register(reorder_buffer_line_t* rob_line);// Verifying register spill to include store ops on chain

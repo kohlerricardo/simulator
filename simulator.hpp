@@ -110,7 +110,7 @@ extern orcs_engine_t orcs_engine;
 #define POSITION_FAIL -1        /// FAIL when return is int32_t
 #define FAIL 0                  /// FAIL when return is int32_t or uint32_t
 #define OK 1                    /// OK when return is int32_t or uint32_t
-
+#define NOT_ALL_REGS 2
 #define TRACE_LINE_SIZE 512
 // ========================
 // Defines Simulators Caracteristics

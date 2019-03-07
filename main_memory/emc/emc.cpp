@@ -17,8 +17,6 @@ emc_t::emc_t()
 	this->fu_mem_load = NULL;
 	this->fu_mem_store = NULL;
 	// ========================================
-	// Data Cache
-	this->data_cache = NULL;
 	//MACT
 	this->memory_access_counter_table = NULL;
 	this->mact_bits_mask = 0;
@@ -26,9 +24,6 @@ emc_t::emc_t()
 };
 emc_t::~emc_t()
 {
-	//deletting data cache
-	if (this->data_cache != NULL)
-		delete this->data_cache;
 	// ========================================
 	utils_t::template_delete_array<uint64_t>(this->fu_int_alu);
 	utils_t::template_delete_array<uint64_t>(this->fu_int_mul);
@@ -62,9 +57,7 @@ void emc_t::allocate()
 	//=======================  Unified RS =======================
 	this->unified_rs.reserve(EMC_UOP_BUFFER);
 
-	// ======================= data cache =======================
-	this->data_cache = new cache_t;
-	this->data_cache->allocate(EMC_DATA_CACHE);
+
 	// ======================= alocate uop buffer =======================
 	this->uop_buffer_end = 0;
 	this->uop_buffer_start = 0;
@@ -625,10 +618,10 @@ void emc_t::clock(){
 		#endif
 		if(this->has_store){
 			this->has_store = false;
-				// if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 					ORCS_PRINTF("Chain to execute %lu\n",orcs_engine.get_global_cycle())
 					this->print_structures();
-				// }
+				}
 			}
 		if(this->uop_buffer_used>0){
 			this->emc_commit();
@@ -684,25 +677,8 @@ void emc_t::lsq_read(){
 		}
 	#endif
 		if (emc_mob_line->memory_operation == MEMORY_OPERATION_READ){
-			// ==========================================
-			//Utilizando o miss predictor 
-			uint64_t index = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,emc_mob_line->emc_opcode_ptr->uop.opcode_address,0,this->mact_bits_mask);
-			if(this->memory_access_counter_table[index]>=MACT_THRESHOLD){
-				//add statistics do preditor				
-				this->add_direct_ram_access();
-			}else{
-				this->add_emc_llc_access();
-			}
-			// ==========================================
 			uint32_t ttc = 0;
 			ttc = orcs_engine.cacheManager->search_EMC_Data(emc_mob_line); //enviar que é do emc
-			if(ttc < RAM_LATENCY){
-				this->add_incorrect_prediction_ram_access();
-				this->update_mact_entry(emc_mob_line->opcode_address,-1);
-			}else{
-				this->add_incorrect_prediction_LLC_access();
-				this->update_mact_entry(emc_mob_line->opcode_address,1);
-			}
 			emc_mob_line->updatePackageReady(ttc);
 			emc_mob_line->emc_executed=true;
 			emc_mob_line->sent=true;
@@ -741,8 +717,8 @@ void emc_t::statistics(){
 		fprintf(output, "EMC_Access_LLC: %lu\n", this->get_access_LLC());
 		fprintf(output, "EMC_Access_LLC_HIT: %lu\n", this->get_access_LLC_Hit());
 		fprintf(output, "EMC_Access_LLC_MISS: %lu\n", this->get_access_LLC_Miss());
-		fprintf(output, "EMC_DRA_Predictor: %lu\n", this->get_direct_ram_access());
-		fprintf(output, "EMC_LLC_Access_Predictor: %lu\n", this->get_emc_llc_access());
+		fprintf(output, "EMC_Predict_DRA_Predictor: %lu\n", this->get_direct_ram_access());
+		fprintf(output, "EMC_Predict_LLC_Access_Predictor: %lu\n", this->get_emc_llc_access());
 		fprintf(output, "EMC_Incorrect_RAM_Prediction: %lu\n", this->get_incorrect_prediction_ram_access());
 		fprintf(output, "EMC_Incorrect_LLC_Prediction: %lu\n", this->get_incorrect_prediction_LLC_access());
 		utils_t::largestSeparator(output);
@@ -757,12 +733,8 @@ void emc_t::statistics(){
 		fprintf(output,"INSTRUCTION_OPERATION_BRANCH %lu\n",this->get_stat_inst_branch_completed());
 		fprintf(output,"INSTRUCTION_OPERATION_NOP %lu\n",this->get_stat_inst_nop_completed());
 		fprintf(output,"INSTRUCTION_OPERATION_OTHER %lu\n",this->get_stat_inst_other_completed());
-		utils_t::largeSeparator();
-		
+		utils_t::largeSeparator(output);
 		if(close) fclose(output);
-		fprintf(output, "##############  EMC_Data_Cache ##################\n");
-		this->data_cache->statistics();
-		utils_t::largestSeparator(output);
 		}
 
 };
@@ -836,6 +808,9 @@ void emc_t::print_structures(){
 	}
 	ORCS_PRINTF("\n ============ Load Store Queue ===============\n")
 	for (uint32_t i = 0;i < EMC_LSQ_SIZE;i++){
+		if(this->unified_lsq[i].status == PACKAGE_STATE_FREE){
+			continue;
+		}
 		ORCS_PRINTF("\n%s\n",this->unified_lsq[i].content_to_string().c_str())
 	}
 	ORCS_PRINTF("\nWait to send buffer used %u\n",this->uop_wait_finish.get_size())
