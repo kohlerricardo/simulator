@@ -6,9 +6,9 @@ Arquivo definindo os parametros do modelo de processador
 #ifndef _SANDYBRIDGE_HPP_
 #define _SANDYBRIDGE_HPP_
 // =========== PROCESSOR =============
-#define NUMBER_OF_PROCESSORS 1  // Numero de cores
-#define SIZE_OF_L1_CACHES_ARRAY 1     // Numero de caches L1
-#define SIZE_OF_L2_CACHES_ARRAY 1     // Numero de caches L2
+#define NUMBER_OF_PROCESSORS 2  // Numero de cores
+#define SIZE_OF_L1_CACHES_ARRAY 2     // Numero de caches L1
+#define SIZE_OF_L2_CACHES_ARRAY 2     // Numero de caches L2
 #define SIZE_OF_LLC_CACHES_ARRAY 1    // Numero de caches LLC
 
 // =========== PIPELINE STAGES =============
@@ -153,13 +153,15 @@ Arquivo definindo os parametros do modelo de processador
 #define RAM_LATENCY 350
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
-#define MAX_PARALLEL_REQUESTS 8
+#define MAX_PARALLEL_REQUESTS_CORE 6
+#define MAX_PARALLEL_ALL_CORES 16
 // =====================RAM=======================
 // =====================PREFETCHER=======================
-#define PREFETCHER_ACTIVE 0
-#define STRIDE_TABLE_SIZE 16   
+#define PREFETCHER_ACTIVE 1
+#define STRIDE_TABLE_SIZE 32*NUMBER_OF_PROCESSORS   
 #define DEGREE 1
 #define DISTANCE 4
+#define PARALLEL_PREFETCH NUMBER_OF_PROCESSORS
 // active prefetchers
 #define STRIDE 1
 // =====================PREFETCHER=======================
@@ -188,7 +190,7 @@ Arquivo definindo os parametros do modelo de processador
 
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 1
+#define EMC_ACTIVE 0
 #define EMC_PARALLEL_ACTIVATE 1
 #define EMC_ROB_HEAD 1
 #define ALL_UOPS 0

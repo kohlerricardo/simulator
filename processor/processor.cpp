@@ -1433,8 +1433,7 @@ uint32_t processor_t::mob_read(){
 	}
 	if (this->oldest_read_to_send != NULL){
 		#if PARALLEL_LIM_ACTIVE
-			if (this->counter_mshr_read >= MAX_PARALLEL_REQUESTS)
-			{
+			if ((this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE)&&(this->get_all_mem_req())){
 				this->add_times_reach_parallel_requests_read();
 				return FAIL;
 			}
@@ -1534,7 +1533,7 @@ uint32_t processor_t::mob_write(){
 	if (this->oldest_write_to_send != NULL)
 	{
 			#if PARALLEL_LIM_ACTIVE
-				if (this->counter_mshr_write >= MAX_PARALLEL_REQUESTS)
+				if (this->counter_mshr_write >= MAX_PARALLEL_REQUESTS_CORE)
 				{
 					this->add_times_reach_parallel_requests_write();
 					return FAIL;
@@ -2093,19 +2092,21 @@ bool processor_t::verify_spill_register(reorder_buffer_line_t *rob_line){
 // @return true if no loads operation is gt 1
 bool processor_t::verify_dependent_loads(){
 	uint8_t loads = 1;
-
-	for (uint32_t i = 1; i < this->rob_buffer.size(); i++)
-	{
-		if(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
-						loads++;
-						this->numero_load_deps++;
-						this->soma_instrucoes_deps+=this->instrucoes_inter_load_deps;
-						this->instrucoes_inter_load_deps=0;
-					}else{
-						this->instrucoes_inter_load_deps++;
-					}
-	}
 	this->instrucoes_inter_load_deps=0;
+		// ORCS_PRINTF("\n\n%s\n",this->rob_buffer[0]->content_to_string().c_str())
+	for (uint32_t i = 1; i < this->rob_buffer.size(); i++){
+		// ORCS_PRINTF("%s\n",this->rob_buffer[i]->content_to_string().c_str())
+		if(this->rob_buffer[i]->uop.uop_operation != INSTRUCTION_OPERATION_MEM_LOAD){
+			this->instrucoes_inter_load_deps++;
+			// ORCS_PRINTF("InterLoads %u\n",this->instrucoes_inter_load_deps)
+		}else{
+			loads++;
+			this->numero_load_deps++;
+			this->soma_instrucoes_deps+=this->instrucoes_inter_load_deps;
+			this->instrucoes_inter_load_deps=0;
+			// ORCS_PRINTF("\nLOADS %u\nSoma_Inst %u\n",this->numero_load_deps,this->soma_instrucoes_deps)
+		}
+	}
 	// this->start_emc_module=false;
 	// this->rob_buffer.clear();
 	return (loads > 1) ? true : false; //if compacto
@@ -2194,6 +2195,15 @@ bool processor_t::verify_ambiguation(memory_order_buffer_line_t *mob_line){
 	return false;
 };
 // ============================================================================
+bool processor_t::get_all_mem_req(){
+	uint32_t sum_num_req=0;
+	for(uint8_t i = 0; i < NUMBER_OF_PROCESSORS; i++){
+		sum_num_req += orcs_engine.processor[i].counter_mshr_read;
+	}
+	sum_num_req+=orcs_engine.cacheManager->prefetcher->prefetch_waiting_complete.size();
+	return (sum_num_req >= MAX_PARALLEL_ALL_CORES);
+}
+// ============================================================================
 void processor_t::statistics(){
 	bool close = false;
 	FILE *output = stdout;
@@ -2212,9 +2222,9 @@ void processor_t::statistics(){
 		fprintf(output, "Stage_Rename: %lu\n", this->renameCounter);
 		fprintf(output, "Stage_Commit: %lu\n", this->commit_uop_counter);
 		utils_t::largestSeparator(output);
-			#if MAX_PARALLEL_REQUESTS
-				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_READ: %lu\n", this->get_times_reach_parallel_requests_read());
-				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_WRITE: %lu\n", this->get_times_reach_parallel_requests_write());
+			#if MAX_PARALLEL_REQUESTS_CORE
+				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_CORE_READ: %lu\n", this->get_times_reach_parallel_requests_read());
+				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_CORE_WRITE: %lu\n", this->get_times_reach_parallel_requests_write());
 			#endif
 		utils_t::largestSeparator(output);
 		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", this->get_instruction_per_cycle());
@@ -2285,7 +2295,7 @@ void processor_t::printConfiguration(){
 		fprintf(output, "RAM_LATENCY ->%u\n", RAM_LATENCY);
 		fprintf(output, "=============== Limits ============\n");
 		fprintf(output, "PARALLEL_LIM_ACTIVE ->%u\n", PARALLEL_LIM_ACTIVE);
-		fprintf(output, "MAX_PARALLEL_REQUESTS ->%u\n", MAX_PARALLEL_REQUESTS);
+		fprintf(output, "MAX_PARALLEL_REQUESTS_CORE ->%u\n", MAX_PARALLEL_REQUESTS_CORE);
 	}
 }
 // ============================================================================

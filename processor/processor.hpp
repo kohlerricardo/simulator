@@ -259,6 +259,7 @@ class processor_t {
 		void print_RRT();
 		void print_ROB();
 		// boolean
+		bool get_all_mem_req();
 		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
 		bool verify_spill_register(reorder_buffer_line_t* rob_line);// Verifying register spill to include store ops on chain
 		// =================================================================================

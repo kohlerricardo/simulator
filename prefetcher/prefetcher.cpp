@@ -19,15 +19,24 @@ void prefetcher_t::allocate(){
         this->prefetcher = new stride_prefetcher_t;
         this->prefetcher->allocate();
     #endif  
+    // List of cycle completation prefetchs. Allows control issue prefetchers
+    this->prefetch_waiting_complete.reserve(PARALLEL_PREFETCH); 
 };
 // ================================================================
 // @mobLine - references to index the prefetch
 // @*cache - cache to be instaled line prefetched
 // ================================================================
 void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache){
+    if((this->prefetch_waiting_complete.front() <= orcs_engine.get_global_cycle()) && 
+        (this->prefetch_waiting_complete.size()!=0)){
+        this->prefetch_waiting_complete.erase(this->prefetch_waiting_complete.begin());
+    }
     int64_t newAddress = this->prefetcher->verify(mob_line->opcode_address,mob_line->memory_address);
     uint32_t sacrifice;
-    if(newAddress != POSITION_FAIL){
+    if(this->prefetch_waiting_complete.size()>= PARALLEL_PREFETCH){
+        return;
+    }
+    if(newAddress != POSITION_FAIL) {
         uint32_t status = cache->read(newAddress,sacrifice);
         if(status == MISS){
             this->add_totalPrefetched();
@@ -37,7 +46,8 @@ void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache)
                 linha_emc->linha_ptr_llc = linha;
                 linha->linha_ptr_emc=linha_emc; 
             #endif
-            linha->prefetched =1; 
+            linha->prefetched=1; 
+            this->prefetch_waiting_complete.push_back(orcs_engine.get_global_cycle()+RAM_LATENCY);
         }
     }
 };
