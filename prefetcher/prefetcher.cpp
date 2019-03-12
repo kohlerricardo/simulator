@@ -27,7 +27,8 @@ void prefetcher_t::allocate(){
 // @*cache - cache to be instaled line prefetched
 // ================================================================
 void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache){
-    if((this->prefetch_waiting_complete.front() <= orcs_engine.get_global_cycle()) && 
+    uint64_t cycle = orcs_engine.get_global_cycle();
+    if((this->prefetch_waiting_complete.front() <= cycle) && 
         (this->prefetch_waiting_complete.size()!=0)){
         this->prefetch_waiting_complete.erase(this->prefetch_waiting_complete.begin());
     }
@@ -47,7 +48,7 @@ void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache)
                 linha->linha_ptr_emc=linha_emc; 
             #endif
             linha->prefetched=1; 
-            this->prefetch_waiting_complete.push_back(orcs_engine.get_global_cycle()+RAM_LATENCY);
+            this->prefetch_waiting_complete.push_back(cycle+RAM_LATENCY);
         }
     }
 };

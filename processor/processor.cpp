@@ -1146,6 +1146,11 @@ void processor_t::execute()
 					ORCS_PRINTF("\nSolving %s\n\n", this->memory_order_buffer_read[pos].rob_ptr->content_to_string().c_str())
 				}
 			#endif
+			#if EMC_ACTIVE_DEBUG
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE && this->memory_order_buffer_read[pos].emc_executed ==true){
+					ORCS_PRINTF("\nSolving_EMC_REQ %s\n\n", this->memory_order_buffer_read[pos].rob_ptr->content_to_string().c_str())
+				}
+			#endif
 			this->memory_order_buffer_read[pos].rob_ptr->stage = PROCESSOR_STAGE_COMMIT;
 			this->memory_order_buffer_read[pos].rob_ptr->uop.updatePackageReady(COMMIT_LATENCY);
 			this->memory_order_buffer_read[pos].processed=true;
@@ -1160,7 +1165,7 @@ void processor_t::execute()
 						this->counter_mshr_read--;
 				}
 			#endif
-			if(this->memory_order_buffer_read[pos].waiting_DRAM){
+			if(this->memory_order_buffer_read[pos].waiting_DRAM && !this->memory_order_buffer_read[pos].emc_executed){
 				ERROR_ASSERT_PRINTF(this->request_DRAM > 0,"ERRO, Contador negativo Waiting DRAM\n")
 				#if EXECUTE_DEBUG
 					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
@@ -1433,7 +1438,7 @@ uint32_t processor_t::mob_read(){
 	}
 	if (this->oldest_read_to_send != NULL){
 		#if PARALLEL_LIM_ACTIVE
-			if ((this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE)&&(this->get_all_mem_req())){
+			if (this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE){
 				this->add_times_reach_parallel_requests_read();
 				return FAIL;
 			}
@@ -1453,29 +1458,36 @@ uint32_t processor_t::mob_read(){
 		#if PARALLEL_LIM_ACTIVE
 			this->counter_mshr_read++; //numero de req paralelas, add+1
 		#endif
+		if (this->isRobHead(this->oldest_read_to_send->rob_ptr)){
+			this->add_loads_sent_at_rob_head();
+		}
 		#if EMC_ACTIVE
 			if (this->has_llc_miss)
 			{
 				this->has_llc_miss = false;
 				#if EMC_ROB_HEAD
 					if (this->isRobHead(this->oldest_read_to_send->rob_ptr))
-					{
+					{					
 				#endif	
+					#if EMC_ROB_HEAD
+						this->add_llc_miss_rob_head();
+					#endif	
+					#if EMC_ACTIVE_DEBUG
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("\n\nLLC MISS on Cycle %lu\n",orcs_engine.get_global_cycle())
+							ORCS_PRINTF("ROB Buffer size %lu\n",this->rob_buffer.size())
+							ORCS_PRINTF("EMC COUNTER  %hhd\n",this->counter_activate_emc)
+						}
+					#endif
 					// =====================================================
 					// generate chain on home core buffer
 					// =====================================================
 					this->rob_buffer.push_back(oldest_read_to_send->rob_ptr);
 					this->make_dependence_chain(oldest_read_to_send->rob_ptr);
 					oldest_read_to_send->rob_ptr->original_miss = true;
-					#if EMC_ROB_HEAD
-						this->add_llc_miss_rob_head();
-						#if EMC_ACTIVE_DEBUG
-							if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
-								ORCS_PRINTF("LLC Miss on Cycle %lu\n",orcs_engine.get_global_cycle())
-							}
-						#endif
+				#if EMC_ROB_HEAD
 					}
-					#endif	
+				#endif
 			}
 		#endif
 		this->oldest_read_to_send = NULL;
@@ -1827,16 +1839,21 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 				if(
 				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
-				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD|| //){
-				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD //||){
+				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE
+				){
 			#endif
 					//verify memory ambiguation
 					if(next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE || 
 						next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 							if(this->verify_ambiguation(next_operation->reg_deps_ptr_array[i]->mob_ptr)){
+								#if EMC_ACTIVE_DEBUG
+									if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+									ORCS_PRINTF("\n\nTem_ambig %s\n\n",next_operation->reg_deps_ptr_array[i]->content_to_string().c_str())
+								}
+								#endif
 								// cancel chain execution
 								// neste ponto nenhuma das estruturas foram utilizadas ainda
-								this->add_cancel_emc_execution();
 								this->rob_buffer.clear();
 								return;
 							}
@@ -2200,7 +2217,9 @@ bool processor_t::get_all_mem_req(){
 	for(uint8_t i = 0; i < NUMBER_OF_PROCESSORS; i++){
 		sum_num_req += orcs_engine.processor[i].counter_mshr_read;
 	}
-	sum_num_req+=orcs_engine.cacheManager->prefetcher->prefetch_waiting_complete.size();
+	#if PREFETCHER_ACTIVE
+		sum_num_req+=orcs_engine.cacheManager->prefetcher->prefetch_waiting_complete.size();
+	#endif
 	return (sum_num_req >= MAX_PARALLEL_ALL_CORES);
 }
 // ============================================================================
@@ -2225,6 +2244,8 @@ void processor_t::statistics(){
 			#if MAX_PARALLEL_REQUESTS_CORE
 				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_CORE_READ: %lu\n", this->get_times_reach_parallel_requests_read());
 				fprintf(output, "Times_Reach_MAX_PARALLEL_REQUESTS_CORE_WRITE: %lu\n", this->get_times_reach_parallel_requests_write());
+				fprintf(output, "Loads_sent_at_ROB_HEAD: %u\n", this->get_loads_sent_at_rob_head());
+
 			#endif
 		utils_t::largestSeparator(output);
 		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", this->get_instruction_per_cycle());

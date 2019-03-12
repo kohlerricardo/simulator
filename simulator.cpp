@@ -215,6 +215,12 @@ int main(int argc, char **argv) {
         for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
         {
             orcs_engine.processor[i].clock();
+            #if SNAPSHOT
+                if(orcs_engine.processor[i].commit_uop_counter > 50000000){
+                    orcs_engine.processor[i].statistics();
+                    exit(EXIT_SUCCESS);
+                }
+            #endif
         }
         
         orcs_engine.global_cycle++;

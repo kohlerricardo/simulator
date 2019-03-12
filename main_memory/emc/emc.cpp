@@ -759,8 +759,7 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_FP_MUL||
 			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_FP_DIV||
 			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_OTHER||
-			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_NOP
-			){
+			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_NOP){
 				rob_line->uop = emc_opcode->uop;
 				rob_line->stage = emc_opcode->stage;
 				orcs_engine.processor[processor_id].solve_registers_dependency(rob_line);
@@ -778,6 +777,7 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 				}
 				if(emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 					*(rob_line->mob_ptr) = *(emc_opcode->mob_ptr);//copiar somente os valores de, uop_executed, ready at, status, sent, is_llc_miss
+					rob_line->mob_ptr->sent_to_emc = true;
 				}else{
 					rob_line->mob_ptr->sent_to_emc=false;
 				}
@@ -785,7 +785,7 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 				emc_opcode->mob_ptr->package_clean();
 				rob_line->mob_ptr->processed = false;
 				rob_line->mob_ptr->emc_executed = true;
-				rob_line->sent = rob_line->mob_ptr->sent;
+				rob_line->sent = rob_line->mob_ptr->sent = true;
 				// ===========================================================================
 				// eliminar a flag para ser executado no core 
 				// ===========================================================================

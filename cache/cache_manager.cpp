@@ -412,7 +412,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             // ===================================
             orcs_engine.memory_controller->emc->add_access_LLC_Miss();
             latency_request += orcs_engine.memory_controller->requestDRAM();
-
+            mob_line->waiting_DRAM = true;
             linha_t *linha_llc = this->LLC_data_cache[index_llc].installLine(mob_line->memory_address,latency_request);
             linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,latency_request);
             // linking emc and llc

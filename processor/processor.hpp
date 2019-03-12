@@ -50,6 +50,7 @@ class processor_t {
 	/// EMC Attributes
 	// ====================================================================
 	uint32_t llc_miss_rob_head; //tracks number of times llc miss is rob head
+	uint32_t loads_sent_at_rob_head; //Count number of laod which are sent to memory at rob head
 
     public:
 		
@@ -208,6 +209,7 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_write);
 		INSTANTIATE_GET_SET_ADD(float_t,instruction_per_cycle);
 		INSTANTIATE_GET_SET_ADD(uint64_t,ended_cycle);
+		INSTANTIATE_GET_SET_ADD(uint32_t,loads_sent_at_rob_head);
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================
