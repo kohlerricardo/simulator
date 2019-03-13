@@ -249,6 +249,7 @@ class processor_t {
 		uint32_t numero_load_deps;
 		uint32_t cancel_emc_execution;
 		uint32_t cancel_emc_execution_one_op;
+		uint32_t cancel_counter_emc_execution;
 		uint32_t started_emc_execution;
 		uint32_t total_instruction_sent_emc;
 		// ====================================================================
@@ -290,6 +291,7 @@ class processor_t {
 		// ====================================================================
 		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head);
 		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution);
+		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_counter_emc_execution);
 		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution_one_op);
 		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_execution);
 		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_read);

@@ -1490,6 +1490,10 @@ uint32_t processor_t::mob_read(){
 				#endif
 			}
 		#endif
+			#if DRY_RUN
+			this->rob_buffer.push_back(oldest_read_to_send->rob_ptr);
+			this->make_dependence_chain(oldest_read_to_send->rob_ptr);
+			#endif 
 		this->oldest_read_to_send = NULL;
 	} //end if mob_line null
 	#if MOB_DEBUG
@@ -1839,8 +1843,8 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 				if(
 				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
-				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD //||){
-				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE
+				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD || //){
+				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE
 				){
 			#endif
 					//verify memory ambiguation
@@ -1854,6 +1858,7 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 								#endif
 								// cancel chain execution
 								// neste ponto nenhuma das estruturas foram utilizadas ainda
+								this->add_cancel_emc_execution();
 								this->rob_buffer.clear();
 								return;
 							}
@@ -1875,32 +1880,37 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			}
 		}
 	}
-	if(this->counter_activate_emc >=2){
+	#if DRY_RUN
+		this->verify_dependent_loads();
+		this->rob_buffer.clear();
+	#endif
+	// if(this->counter_activate_emc >=2){
 		if(this->rob_buffer.size()<2){
 			this->add_cancel_emc_execution_one_op();
 			this->rob_buffer.clear();
 		}else{
-			this->start_emc_module=true;
-			// uint64_t aux = orcs_engine.get_global_cycle();
-			// this->cycle_start_mechanism = aux+((this->rob_buffer[0]->mob_ptr->readyAt - aux)*0.9);
-			// this->verify_dependent_loads();
-			#if EMC_ACTIVE_DEBUG
-				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-					ORCS_PRINTF("==========\n")
-					ORCS_PRINTF("Chain_made\n")
-					for (uint32_t i = 0; i < this->rob_buffer.size(); i++){
-						ORCS_PRINTF("%d -> %s\n",i,this->rob_buffer[i]->content_to_string().c_str())
-					}
-					// INFO_PRINTF()	
-					ORCS_PRINTF("==========\n")
-				}
-			#endif
 			this->add_started_emc_execution();
+			this->start_emc_module=true;
 		}
-	}else{
-		this->rob_buffer.clear();
-		this->add_cancel_emc_execution();
-	}
+	// 	}else{
+	// 		this->start_emc_module=true;
+	// 		#if EMC_ACTIVE_DEBUG
+	// 			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+	// 				ORCS_PRINTF("==========\n")
+	// 				ORCS_PRINTF("Chain_made\n")
+	// 				for (uint32_t i = 0; i < this->rob_buffer.size(); i++){
+	// 					ORCS_PRINTF("%d -> %s\n",i,this->rob_buffer[i]->content_to_string().c_str())
+	// 				}
+	// 				// INFO_PRINTF()	
+	// 				ORCS_PRINTF("==========\n")
+	// 			}
+	// 		#endif
+	// 		this->add_started_emc_execution();
+	// 	}
+	// }else{
+	// 	this->rob_buffer.clear();
+	// 	this->add_cancel_counter_emc_execution();
+	// }
 	
 };
 // =====================================================================
@@ -2250,7 +2260,11 @@ void processor_t::statistics(){
 		utils_t::largestSeparator(output);
 		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", this->get_instruction_per_cycle());
 		fprintf(output, "MPKI: %lf\n", (float)orcs_engine.cacheManager->LLC_data_cache[orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC)].get_cacheMiss()/((float)this->fetchCounter/1000));
-		
+		// 
+		fprintf(output, "numero_load_deps: %u\n", this->numero_load_deps);
+		fprintf(output, "Total_instrucoes_dependentes: %u\n", this->soma_instrucoes_deps);
+		fprintf(output, "load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps));
+		// 
 		utils_t::largestSeparator(output);
 			#if EMC_ACTIVE
 				fprintf(output, "\n======================== EMC INFOS ===========================\n");
@@ -2262,8 +2276,8 @@ void processor_t::statistics(){
 				fprintf(output, "total_ambiuation_read: %d\n", this->get_counter_ambiguation_read());
 				fprintf(output, "total_ambiuation_write: %d\n", this->get_counter_ambiguation_write());
 				fprintf(output, "started_emc_execution: %d\n", this->get_started_emc_execution());
-				fprintf(output, "canceled_emc_execution: %d\n", this->get_cancel_emc_execution());
-				fprintf(output, "canceled_amb_emc_execution: %d\n", (this->get_cancel_emc_execution()-this->get_counter_ambiguation_write()));
+				fprintf(output, "canceled_counter_emc_execution: %d\n", this->get_cancel_counter_emc_execution());
+				fprintf(output, "canceled_amb_emc_execution: %d\n", this->get_cancel_emc_execution());
 				fprintf(output, "canceled_emc_execution_one_op: %d\n", this->get_cancel_emc_execution_one_op());
 				fprintf(output, "total_instruction_sent_emc: %d\n", this->get_total_instruction_sent_emc());
 				fprintf(output, "avg_inst_sent_emc: %.4f\n",static_cast<double> (this->get_total_instruction_sent_emc())/static_cast<double> (this->get_started_emc_execution()));

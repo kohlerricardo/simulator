@@ -127,24 +127,24 @@ Arquivo definindo os parametros do modelo de processador
 // D$
 #define L1_DATA_SIZE 32*KILO
 #define L1_DATA_ASSOCIATIVITY 8
-#define L1_DATA_LATENCY 4
+#define L1_DATA_LATENCY 3
 #define L1_DATA_SETS (L1_DATA_SIZE/LINE_SIZE)/L1_DATA_ASSOCIATIVITY
 // I$
 #define L1_INST_SIZE 32*KILO
 #define L1_INST_ASSOCIATIVITY 8
-#define L1_INST_LATENCY 4
+#define L1_INST_LATENCY 3
 #define L1_INST_SETS (L1_INST_SIZE/LINE_SIZE)/L1_INST_ASSOCIATIVITY
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
 #define L2_SIZE 256*KILO
 #define L2_ASSOCIATIVITY 4
-#define L2_LATENCY 12
+#define L2_LATENCY 6
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 4*MEGA
-#define LLC_ASSOCIATIVITY 16
-#define LLC_LATENCY 32
+#define LLC_SIZE 1*MEGA
+#define LLC_ASSOCIATIVITY 8
+#define LLC_LATENCY 12
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
@@ -192,7 +192,7 @@ Arquivo definindo os parametros do modelo de processador
 // ===================== EMC =======================================
 #define EMC_ACTIVE 0
 #define EMC_PARALLEL_ACTIVATE 1
-#define EMC_ROB_HEAD 1
+#define EMC_ROB_HEAD 0
 #define ALL_UOPS 0
 #define LOCKING_COMMIT 1
 // ===================== EMC =======================================
@@ -251,6 +251,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==========DEBUGS
 #define DEBUG 0
 #define EMC_ACTIVE_DEBUG 0
+#define DRY_RUN 0
 #if DEBUG
 #define FETCH_DEBUG 0
 #define DECODE_DEBUG 0
