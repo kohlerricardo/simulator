@@ -20,7 +20,7 @@ Arquivo definindo os parametros do modelo de processador
 #define COMMIT_WIDTH 8
 // =============================
 // PROCESSOR LATENCIES STAGES
-#define FETCH_LATENCY 2
+#define FETCH_LATENCY 3
 #define DECODE_LATENCY 3
 #define RENAME_LATENCY 3
 #define DISPATCH_LATENCY 1
