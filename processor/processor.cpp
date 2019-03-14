@@ -1877,37 +1877,29 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			}
 		}
 	}
-	#if DRY_RUN
-		this->verify_dependent_loads();
-		this->rob_buffer.clear();
-	#endif
-	// if(this->counter_activate_emc >=2){
+	if(this->counter_activate_emc >=2){
 		if(this->rob_buffer.size()<2){
 			this->add_cancel_emc_execution_one_op();
 			this->rob_buffer.clear();
 		}else{
-			this->add_started_emc_execution();
 			this->start_emc_module=true;
+			#if EMC_ACTIVE_DEBUG
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("==========\n")
+					ORCS_PRINTF("Chain_made\n")
+					for (uint32_t i = 0; i < this->rob_buffer.size(); i++){
+						ORCS_PRINTF("%d -> %s\n",i,this->rob_buffer[i]->content_to_string().c_str())
+					}
+					// INFO_PRINTF()	
+					ORCS_PRINTF("==========\n")
+				}
+			#endif
+			this->add_started_emc_execution();
 		}
-	// 	}else{
-	// 		this->start_emc_module=true;
-	// 		#if EMC_ACTIVE_DEBUG
-	// 			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-	// 				ORCS_PRINTF("==========\n")
-	// 				ORCS_PRINTF("Chain_made\n")
-	// 				for (uint32_t i = 0; i < this->rob_buffer.size(); i++){
-	// 					ORCS_PRINTF("%d -> %s\n",i,this->rob_buffer[i]->content_to_string().c_str())
-	// 				}
-	// 				// INFO_PRINTF()	
-	// 				ORCS_PRINTF("==========\n")
-	// 			}
-	// 		#endif
-	// 		this->add_started_emc_execution();
-	// 	}
-	// }else{
-	// 	this->rob_buffer.clear();
-	// 	this->add_cancel_counter_emc_execution();
-	// }
+	}else{
+		this->rob_buffer.clear();
+		this->add_cancel_counter_emc_execution();
+	}
 	
 };
 // =====================================================================

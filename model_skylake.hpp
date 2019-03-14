@@ -6,9 +6,9 @@ Arquivo definindo os parametros do modelo de processador
 #ifndef _SKYLAKE_HPP_
 #define _SKYLAKE_HPP_
 // =========== PROCESSOR =============
-#define NUMBER_OF_PROCESSORS 1  // Numero de cores
-#define SIZE_OF_L1_CACHES_ARRAY 1     // Numero de caches L1
-#define SIZE_OF_L2_CACHES_ARRAY 1     // Numero de caches L2
+#define NUMBER_OF_PROCESSORS 4  // Numero de cores
+#define SIZE_OF_L1_CACHES_ARRAY 4     // Numero de caches L1
+#define SIZE_OF_L2_CACHES_ARRAY 4     // Numero de caches L2
 #define SIZE_OF_LLC_CACHES_ARRAY 1    // Numero de caches LLC
 // =========== PROCESSOR =============
 
