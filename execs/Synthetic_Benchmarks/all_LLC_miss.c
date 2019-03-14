@@ -46,25 +46,34 @@ int main (int argc,char **argv){
         ptr_this = ptr_this->next_element;
         ptr_this->next_element = NULL;
     }
-    // asm volatile ("nop");
-    // asm volatile ("nop");
-    // asm volatile ("nop");
+    asm volatile ("nop");
+    asm volatile ("nop");
+    asm volatile ("nop");
 
     printf("Array principal\n");
     ptr_this = array_matrix;
     for (i = 0; i < rep; i++) {
         ptr_this = array_matrix;
-        for (j = 0; j < size ; j ++){
+        for (j = 0; j < size ; j +=8){
             ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+
             value = ptr_this->value;
         }
     }
-    // asm volatile ("nop");
-    // asm volatile ("nop");
-    // asm volatile ("nop");
+    asm volatile ("nop");
+    asm volatile ("nop");
+    asm volatile ("nop");
 
 
-    free(array_matrix);
+    // free(array_matrix);
 
     printf("%"PRIu64"\n", value);
     exit(EXIT_SUCCESS);

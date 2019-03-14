@@ -1255,7 +1255,7 @@ void processor_t::execute()
 					#if EMC_ACTIVE_DEBUG
 					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 						ORCS_PRINTF("Locking Processor\n")
-						// this->print_ROB();
+						this->print_ROB();
 					}
 				#endif
 				// ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > EMC_PARALLEL_ACTIVATE,"Error, tentando executar mais EMCs em paralelo que o permitido\n ")
@@ -1438,7 +1438,7 @@ uint32_t processor_t::mob_read(){
 	}
 	if (this->oldest_read_to_send != NULL){
 		#if PARALLEL_LIM_ACTIVE
-			if (this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE){
+			if ((this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE) && (!this->get_all_mem_req())){
 				this->add_times_reach_parallel_requests_read();
 				return FAIL;
 			}
@@ -1458,9 +1458,6 @@ uint32_t processor_t::mob_read(){
 		#if PARALLEL_LIM_ACTIVE
 			this->counter_mshr_read++; //numero de req paralelas, add+1
 		#endif
-		if (this->isRobHead(this->oldest_read_to_send->rob_ptr)){
-			this->add_loads_sent_at_rob_head();
-		}
 		#if EMC_ACTIVE
 			if (this->has_llc_miss)
 			{
@@ -1843,8 +1840,8 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 				if(
 				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
-				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD || //){
-				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE
+				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD //|| //){
+				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE
 				){
 			#endif
 					//verify memory ambiguation
@@ -2230,7 +2227,7 @@ bool processor_t::get_all_mem_req(){
 	#if PREFETCHER_ACTIVE
 		sum_num_req+=orcs_engine.cacheManager->prefetcher->prefetch_waiting_complete.size();
 	#endif
-	return (sum_num_req >= MAX_PARALLEL_ALL_CORES);
+	return (sum_num_req < MAX_PARALLEL_ALL_CORES);
 }
 // ============================================================================
 void processor_t::statistics(){
@@ -2260,11 +2257,6 @@ void processor_t::statistics(){
 		utils_t::largestSeparator(output);
 		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", this->get_instruction_per_cycle());
 		fprintf(output, "MPKI: %lf\n", (float)orcs_engine.cacheManager->LLC_data_cache[orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC)].get_cacheMiss()/((float)this->fetchCounter/1000));
-		// 
-		fprintf(output, "numero_load_deps: %u\n", this->numero_load_deps);
-		fprintf(output, "Total_instrucoes_dependentes: %u\n", this->soma_instrucoes_deps);
-		fprintf(output, "load_deps_ratio: %.4f\n", float(this->soma_instrucoes_deps) / float(this->numero_load_deps));
-		// 
 		utils_t::largestSeparator(output);
 			#if EMC_ACTIVE
 				fprintf(output, "\n======================== EMC INFOS ===========================\n");
