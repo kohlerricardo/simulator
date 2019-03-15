@@ -20,7 +20,8 @@ class memory_order_buffer_line_t {
         bool sent; //*
         bool forwarded_data;
         bool waiting_DRAM;
-        bool is_llc_miss;
+        bool core_generate_miss;
+        bool emc_generate_miss;
         uint32_t processor_id; //*
         //==========================================================================================
         emc_opcode_package_t* emc_opcode_ptr;  //emc opcode pointer 
@@ -38,6 +39,7 @@ class memory_order_buffer_line_t {
         static int32_t find_free(memory_order_buffer_line_t *input_array, uint32_t size_array);
         static int32_t find_old_request_state_ready(memory_order_buffer_line_t *input_array, uint32_t size_array, package_state_t state);
         static void printAllOrder(memory_order_buffer_line_t* input_array, uint32_t size_array,uint32_t start,uint32_t end);
+
         // =====================================================================
         // Update status
         // =====================================================================

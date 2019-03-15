@@ -1181,17 +1181,9 @@ void processor_t::execute()
 	
 	#if EMC_ACTIVE
 		if (this->start_emc_module){	
-			// if(orcs_engine.memory_controller->emc_active >= EMC_PARALLEL_ACTIVATE){
-			// 	this->start_emc_module=false;
-			// 	this->rob_buffer.clear();
-			// 	this->unable_start=true;
-			// }
 		#if EMC_ACTIVE_DEBUG
 			if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
-						ORCS_PRINTF("Cycle Start Exec %lu\n",orcs_engine.get_global_cycle())
-					}
 				for(uint32_t i=0;i<this->rob_buffer.size();i++){
-					if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
 						ORCS_PRINTF("%s\n\n",this->rob_buffer[i]->content_to_string().c_str())
 					}
 				}
@@ -1458,39 +1450,35 @@ uint32_t processor_t::mob_read(){
 		#if PARALLEL_LIM_ACTIVE
 			this->counter_mshr_read++; //numero de req paralelas, add+1
 		#endif
-		#if EMC_ACTIVE
-			if (this->has_llc_miss)
-			{
-				this->has_llc_miss = false;
-				#if EMC_ROB_HEAD
-					if (this->isRobHead(this->oldest_read_to_send->rob_ptr))
-					{					
-				#endif	
-					#if EMC_ROB_HEAD
-						this->add_llc_miss_rob_head();
-					#endif	
-					#if EMC_ACTIVE_DEBUG
-						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
-							ORCS_PRINTF("\n\nLLC MISS on Cycle %lu\n",orcs_engine.get_global_cycle())
-							ORCS_PRINTF("ROB Buffer size %lu\n",this->rob_buffer.size())
-							ORCS_PRINTF("EMC COUNTER  %hhd\n",this->counter_activate_emc)
-						}
-					#endif
-					// =====================================================
-					// generate chain on home core buffer
-					// =====================================================
-					this->rob_buffer.push_back(oldest_read_to_send->rob_ptr);
-					this->make_dependence_chain(oldest_read_to_send->rob_ptr);
-					oldest_read_to_send->rob_ptr->original_miss = true;
-				#if EMC_ROB_HEAD
-					}
-				#endif
-			}
-		#endif
-			#if DRY_RUN
-			this->rob_buffer.push_back(oldest_read_to_send->rob_ptr);
-			this->make_dependence_chain(oldest_read_to_send->rob_ptr);
-			#endif 
+		// #if EMC_ACTIVE
+		// 	if (this->has_llc_miss)
+		// 	{
+		// 		this->has_llc_miss = false;
+		// 		#if EMC_ROB_HEAD
+		// 			if (this->isRobHead(this->oldest_read_to_send->rob_ptr))
+		// 			{					
+		// 		#endif	
+		// 			#if EMC_ROB_HEAD
+		// 				this->add_llc_miss_rob_head();
+		// 			#endif	
+		// 			#if EMC_ACTIVE_DEBUG
+		// 				if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+		// 					ORCS_PRINTF("\n\nLLC MISS on Cycle %lu\n",orcs_engine.get_global_cycle())
+		// 					ORCS_PRINTF("ROB Buffer size %lu\n",this->rob_buffer.size())
+		// 					ORCS_PRINTF("EMC COUNTER  %hhd\n",this->counter_activate_emc)
+		// 				}
+		// 			#endif
+		// 			// =====================================================
+		// 			// generate chain on home core buffer
+		// 			// =====================================================
+		// 			this->rob_buffer.push_back(oldest_read_to_send->rob_ptr);
+		// 			this->make_dependence_chain(oldest_read_to_send->rob_ptr);
+		// 			oldest_read_to_send->rob_ptr->original_miss = true;
+		// 		#if EMC_ROB_HEAD
+		// 			}
+		// 		#endif
+		// 	}
+		// #endif
 		this->oldest_read_to_send = NULL;
 	} //end if mob_line null
 	#if MOB_DEBUG
@@ -1613,6 +1601,41 @@ void processor_t::commit(){
 		}
 	#endif
 	int32_t pos_buffer;
+// #################################################################################
+		#if EMC_ACTIVE
+			if( (this->reorderBuffer[this->robStart].uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD) &&
+				(this->reorderBuffer[this->robStart].mob_ptr->core_generate_miss) &&
+				((this->reorderBuffer[this->robStart].mob_ptr->readyAt-RAM_LATENCY) == orcs_engine.get_global_cycle())
+			){
+				this->add_llc_miss_rob_head();
+				#if EMC_ACTIVE_DEBUG
+					if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+						ORCS_PRINTF("\n\nLLC MISS on Cycle %lu\n",orcs_engine.get_global_cycle())
+						ORCS_PRINTF("ROB Buffer size %lu\n",this->rob_buffer.size())
+						ORCS_PRINTF("EMC COUNTER  %hhd\n",this->counter_activate_emc)
+					}
+				#endif
+				// if(this->counter_activate_emc >=2){
+					this->reorderBuffer[this->robStart].original_miss = true;
+					// =====================================================
+					// generate chain on home core buffer
+					// =====================================================
+					this->rob_buffer.push_back(&this->reorderBuffer[this->robStart]);
+					this->make_dependence_chain(&this->reorderBuffer[this->robStart]);
+					// =====================================================
+					// Sorting chain in order
+					// =====================================================
+					std::sort(this->rob_buffer.begin(),this->rob_buffer.end(),[](const reorder_buffer_line_t *lhs, const reorder_buffer_line_t *rhs){
+						return lhs->uop.uop_number < rhs->uop.uop_number;
+					});
+
+				// }else{
+						// this->add_cancel_counter_emc_execution();
+				// }
+
+			}
+		#endif
+// #################################################################################
 
 	/// Commit the packages
 	for (uint32_t i = 0; i < COMMIT_WIDTH; i++){
@@ -1627,7 +1650,7 @@ void processor_t::commit(){
 			this->reorderBuffer[pos_buffer].uop.status == PACKAGE_STATE_READY &&
 			this->reorderBuffer[pos_buffer].uop.readyAt <= orcs_engine.get_global_cycle())
 		{
-		// if( this->reorderBuffer[pos_buffer].uop.uop_number==174628710){
+		// if( this->reorderBuffer[pos_buffer].uop.uop_number==5883163){
 		// 	ORCS_PRINTF("Global Cycle %lu",orcs_engine.get_global_cycle())
 		// 	exit(EXIT_FAILURE);
 		// }
@@ -1640,7 +1663,9 @@ void processor_t::commit(){
 			#if EMC_ACTIVE
 				if( (this->reorderBuffer[pos_buffer].mob_ptr != NULL) && 
 					(this->reorderBuffer[pos_buffer].is_poisoned)	  &&
-					(this->reorderBuffer[pos_buffer].mob_ptr->is_llc_miss)){
+					((this->reorderBuffer[pos_buffer].mob_ptr->core_generate_miss) || 
+					(this->reorderBuffer[pos_buffer].mob_ptr->emc_generate_miss))
+					){
 					if(this->reorderBuffer[pos_buffer].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 						this->update_counter_emc(1);
 					}else{
@@ -1877,10 +1902,14 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			}
 		}
 	}
-	if(this->counter_activate_emc >=2){
-		if(this->rob_buffer.size()<2){
+	if(this->rob_buffer.size()<2){
 			this->add_cancel_emc_execution_one_op();
 			this->rob_buffer.clear();
+			#if EMC_ACTIVE_DEBUG
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("Cancelado One Op\n")
+				}
+			#endif
 		}else{
 			this->start_emc_module=true;
 			#if EMC_ACTIVE_DEBUG
@@ -1896,11 +1925,6 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			#endif
 			this->add_started_emc_execution();
 		}
-	}else{
-		this->rob_buffer.clear();
-		this->add_cancel_counter_emc_execution();
-	}
-	
 };
 // =====================================================================
 // @return return the next element to be catch the dependences
@@ -1975,6 +1999,9 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 			if(rob_line->original_miss){ //if original memory miss, reduce latency
 				emc_package->uop.readyAt = emc_package->uop.readyAt-(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
 				lsq->readyAt=lsq->readyAt-(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
+			}else{
+				lsq->status = PACKAGE_STATE_WAIT;
+				lsq->processed = false;
 			}
 			if(lsq->wait_mem_deps_number>0){
 				lsq->wait_mem_deps_number=0;
@@ -1986,8 +2013,7 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 		}
 		// ===========================================================
 		/// Control the Register Dependency - Register READ
-		for (uint32_t k = 0; k < MAX_REGISTERS; k++)
-		{
+		for (uint32_t k = 0; k < MAX_REGISTERS; k++){
 			if (emc_package->uop.read_regs[k] < 0)
 			{
 				break;
@@ -2013,8 +2039,7 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 		}
 
 		/// Control the Register Dependency - Register WRITE
-		for (uint32_t k = 0; k < MAX_REGISTERS; k++)
-		{
+		for (uint32_t k = 0; k < MAX_REGISTERS; k++){
 			// this->add_registerWrite();
 			if (rob_line->uop.write_regs[k] < 0)
 			{
@@ -2030,6 +2055,11 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 			// ORCS_PRINTF("Write register %d - %d\n",rob_line->uop.write_regs[k],write_register)
 			this->rrt[write_register].entry = emc_package;
 		}
+		#if EMC_ACTIVE_DEBUG
+			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+				ORCS_PRINTF("After Renamed Uop its %s\n\n",emc_package->content_to_string().c_str())
+			}
+		#endif
 		return OK;
 };
 // =======================================================================

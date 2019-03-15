@@ -33,7 +33,8 @@ void memory_order_buffer_line_t::package_clean() {
         this->forwarded_data=false;
         this->waiting_DRAM=false;
         this->emc_executed=false;
-        this->is_llc_miss=false;
+        this->core_generate_miss=false;
+        this->emc_generate_miss=false;
         this->processor_id = 0;
         #if EMC_ACTIVE
         this->emc_opcode_ptr=NULL;
@@ -47,21 +48,26 @@ std::string memory_order_buffer_line_t::content_to_string() {
     if(this->status == PACKAGE_STATE_FREE){
         return content_string;
     }
-    content_string = content_string + " |Exec:" + utils_t::uint64_to_string(this->opcode_address);
     content_string = content_string + " |Uop Number:" + utils_t::uint64_to_string(this->uop_number);
+    content_string = content_string + " |Exec:" + utils_t::uint64_to_string(this->opcode_address);
     content_string = content_string + " |Executed:" + utils_t::bool_to_string(this->uop_executed);
     content_string = content_string + " |Mem. Operation:" +  get_enum_memory_operation_char(this->memory_operation);
     content_string = content_string + " |Mem. Address:" +  utils_t::uint64_to_string(this->memory_address);
+    content_string = content_string + " |Mem. Address:" +  utils_t::uint64_to_string(this->memory_size);
     content_string = content_string + " |Status:" +  get_enum_package_state_char(this->status);
     content_string = content_string + " |Wait Mem Deps:" + utils_t::int32_to_string(this->wait_mem_deps_number);
     content_string = content_string + " |Ready At:" +  utils_t::uint64_to_string(this->readyAt);
-    content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo);
+    content_string = content_string + " |Ready To Go:" +  utils_t::uint64_to_string(this->readyToGo) + "\n";
+    content_string = content_string + " | CONTROL FLAGS: \n";
     content_string = content_string + " |Sent:"+utils_t::bool_to_string(this->sent);
     content_string = content_string + " |Processed:"+utils_t::bool_to_string(this->processed);
     content_string = content_string + " |Sent To EMC:"+utils_t::bool_to_string(this->sent_to_emc);
     content_string = content_string + " |Executed at EMC:"+utils_t::bool_to_string(this->emc_executed);
-    content_string = content_string + " |Waiting_DRAM:"+utils_t::bool_to_string(this->waiting_DRAM);
     content_string = content_string + " |Forwarded_data:"+utils_t::bool_to_string(this->forwarded_data);
+    content_string = content_string + " |Waiting_DRAM:"+utils_t::bool_to_string(this->waiting_DRAM);
+    content_string = content_string + " |Core Miss:"+utils_t::bool_to_string(this->core_generate_miss);
+    content_string = content_string + " |EMC Miss:"+utils_t::bool_to_string(this->emc_generate_miss);
+    content_string = content_string + " |Core ID:" + utils_t::int32_to_string(this->processor_id);
     return content_string;
 };
 

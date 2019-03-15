@@ -6,9 +6,9 @@ Arquivo definindo os parametros do modelo de processador
 #ifndef _SKYLAKE_HPP_
 #define _SKYLAKE_HPP_
 // =========== PROCESSOR =============
-#define NUMBER_OF_PROCESSORS 4  // Numero de cores
-#define SIZE_OF_L1_CACHES_ARRAY 4     // Numero de caches L1
-#define SIZE_OF_L2_CACHES_ARRAY 4     // Numero de caches L2
+#define NUMBER_OF_PROCESSORS 1  // Numero de cores
+#define SIZE_OF_L1_CACHES_ARRAY 1     // Numero de caches L1
+#define SIZE_OF_L2_CACHES_ARRAY 1     // Numero de caches L2
 #define SIZE_OF_LLC_CACHES_ARRAY 1    // Numero de caches LLC
 // =========== PROCESSOR =============
 
@@ -251,7 +251,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==========DEBUGS
 #define DEBUG 0
 #define EMC_ACTIVE_DEBUG 0
-#define DRY_RUN 0
+
 #if DEBUG
 #define FETCH_DEBUG 0
 #define DECODE_DEBUG 0
@@ -273,7 +273,8 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 600000000
+#define WAIT_CYCLE 34750000
+// #define WAIT_CYCLE 34879000
 // **************** END DEFINES ******************
 // **************** END DEFINES ******************
 #endif //_SKYLAKE_HPP_

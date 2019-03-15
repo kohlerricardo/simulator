@@ -210,7 +210,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 this->LLC_data_cache[index_llc].add_cacheAccess();
                 this->LLC_data_cache[index_llc].add_cacheMiss();
                 orcs_engine.processor[mob_line->processor_id].has_llc_miss=true; // setting llc miss
-                mob_line->is_llc_miss=true;
+                mob_line->core_generate_miss=true;
                 //========================================= 
                 //request to Memory Controller
                 ttc = orcs_engine.memory_controller->requestDRAM();
@@ -405,7 +405,6 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             // ===================================
             if(ram==1){ orcs_engine.memory_controller->emc->add_incorrect_prediction_ram_access();}
             orcs_engine.memory_controller->emc->update_mact_entry(mob_line->opcode_address,-1);
-            mob_line->is_llc_miss=false;
         }else{
             orcs_engine.memory_controller->emc->add_incorrect_prediction_LLC_access();
             orcs_engine.memory_controller->emc->update_mact_entry(mob_line->opcode_address,1);
@@ -413,6 +412,9 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             orcs_engine.memory_controller->emc->add_access_LLC_Miss();
             latency_request += orcs_engine.memory_controller->requestDRAM();
             mob_line->waiting_DRAM = true;
+            mob_line->emc_generate_miss=true;
+            
+            // ===================================
             linha_t *linha_llc = this->LLC_data_cache[index_llc].installLine(mob_line->memory_address,latency_request);
             linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,latency_request);
             // linking emc and llc
