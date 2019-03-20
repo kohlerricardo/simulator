@@ -27,5 +27,6 @@ class prefetcher_t{
         void allocate();
         void statistics();
         void prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache);//endereco cache alvo
+        void reset_statistics();
 };
 #endif

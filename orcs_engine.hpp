@@ -17,7 +17,8 @@ class orcs_engine_t {
         // =======================================
         char *output_file_name;
         bool simulator_alive;
-
+        uint32_t instruction_warmup_counter;
+        bool is_warmup;
         /// Components modeled
         trace_reader_t *trace_reader;
         //==================
@@ -47,4 +48,5 @@ class orcs_engine_t {
         uint64_t get_global_cycle() {
             return this->global_cycle;
         };
+        void global_reset_statistics();
 };

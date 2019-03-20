@@ -21,6 +21,7 @@ static void process_argv(int argc, char **argv) {
         {"core",        required_argument, 0, 'c'},
         {"trace",       required_argument, 0, 't'},
         {"output_filename",       optional_argument, 0, 'f'},
+        {"warmup_instructions",       optional_argument, 0, 'w'},
         {NULL,          0, NULL, 0}
     };
 
@@ -29,7 +30,7 @@ static void process_argv(int argc, char **argv) {
     int option_index = 0;
     int traces_informados = 0;
     
-    while ((opt = getopt_long_only(argc, argv, "h:c:t:f:",
+    while ((opt = getopt_long_only(argc, argv, "h:c:t:f:w:",
                  long_options, &option_index)) != -1) {
         switch (opt) {
         case 0:
@@ -52,6 +53,9 @@ static void process_argv(int argc, char **argv) {
             break;
         case 'f':
             orcs_engine.output_file_name = optarg;
+            break;
+        case 'w':
+            orcs_engine.instruction_warmup_counter = atoi(optarg);
             break;
         case '?':
             break;
@@ -112,7 +116,12 @@ std::string get_status_execution(){
                                                 floor(seconds_remaining / 3600.0),
                                                 floor(fmod(seconds_remaining, 3600.0) / 60.0),
                                                 fmod(seconds_remaining, 60.0));
+    final_report+=report;
 
+    snprintf(report,sizeof(report),"Warmup Instructions %u M\n",((orcs_engine.instruction_warmup_counter)/1000)/1000);
+    final_report+=report;
+    // End of card
+    snprintf(report,sizeof(report),"%s","==========================================================================\n");
     final_report+=report;
     // Get statistics from each core
 
@@ -209,7 +218,14 @@ int main(int argc, char **argv) {
                 ORCS_PRINTF("%s\n",get_status_execution().c_str())
             }
         #endif
+        if(orcs_engine.is_warmup == true){
+             ORCS_PRINTF("Warm-Up End - Cycle: %-12" PRIu64 "\n", orcs_engine.get_global_cycle() );
 
+            orcs_engine.global_reset_statistics();
+            orcs_engine.is_warmup = false;
+
+            ORCS_PRINTF("Reseted Statistics\n" );
+        }
         
         orcs_engine.memory_controller->clock();
         for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)

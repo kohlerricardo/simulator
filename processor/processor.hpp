@@ -33,6 +33,11 @@ class processor_t {
 	float_t instruction_per_cycle;
 	uint64_t ended_cycle;
 	//=============
+	//WARMUP
+	//=============
+	uint64_t warmup_reset_cycle;
+	uint64_t warmup_last_opcode;
+	//=============
 	//Statistics Commit
 	//=============
 	uint64_t stat_inst_int_alu_completed;
@@ -50,7 +55,7 @@ class processor_t {
 	/// EMC Attributes
 	// ====================================================================
 	uint32_t llc_miss_rob_head; //tracks number of times llc miss is rob head
-	uint32_t loads_sent_at_rob_head; //Count number of laod which are sent to memory at rob head
+	uint32_t loads_sent_at_rob_head; //Count number of load which are sent to memory at rob head
 
     public:
 		
@@ -118,8 +123,9 @@ class processor_t {
 		// Bool Functions @return 
 		bool isBusy();
 		// ====================================================================
-		// Structures
+		// Other Methods
 		// ====================================================================
+		void reset_statistics();
 		// =======================
 		// Buffers
 		// =======================
@@ -210,6 +216,9 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(float_t,instruction_per_cycle);
 		INSTANTIATE_GET_SET_ADD(uint64_t,ended_cycle);
 		INSTANTIATE_GET_SET_ADD(uint32_t,loads_sent_at_rob_head);
+		// ====================================================================
+		INSTANTIATE_GET_SET_ADD(uint64_t,warmup_reset_cycle);
+		INSTANTIATE_GET_SET_ADD(uint64_t,warmup_last_opcode);
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================

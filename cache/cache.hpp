@@ -38,6 +38,7 @@ class cache_t
         void allocate(cacheLevel_t level);//allocate data structure
         void writeBack(linha_t *line); //makes writeback of line
         void returnLine(uint64_t address,cache_t *cache);//return line from lower cache level
+        void reset_statistics();
         // ============================================================================
         // Functions with uint return
         // ============================================================================

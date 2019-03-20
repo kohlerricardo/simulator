@@ -32,7 +32,7 @@ class memory_controller_t{
         INSTANTIATE_GET_SET_ADD(uint64_t,requests_llc)
         //request DRAM data
         uint64_t requestDRAM();
-       
+        void reset_statistics();
         
 };
 

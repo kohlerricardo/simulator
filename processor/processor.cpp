@@ -95,6 +95,9 @@ void processor_t::allocate()
 	this->memory_read_executed = 0;
 	this->memory_write_executed = 0;
 	//======================================================================
+	this->set_warmup_last_opcode(0);
+	this->set_warmup_reset_cycle(0);
+	//======================================================================
 	// Initializating structures
 	//======================================================================
 	//======================================================================
@@ -1615,7 +1618,6 @@ void processor_t::commit(){
 						ORCS_PRINTF("EMC COUNTER  %hhd\n",this->counter_activate_emc)
 					}
 				#endif
-				// if(this->counter_activate_emc >=2){
 					this->reorderBuffer[this->robStart].original_miss = true;
 					// =====================================================
 					// generate chain on home core buffer
@@ -1628,10 +1630,14 @@ void processor_t::commit(){
 					std::sort(this->rob_buffer.begin(),this->rob_buffer.end(),[](const reorder_buffer_line_t *lhs, const reorder_buffer_line_t *rhs){
 						return lhs->uop.uop_number < rhs->uop.uop_number;
 					});
+				if(this->counter_activate_emc >=2){
+					this->start_emc_module = true;
+					this->add_started_emc_execution();
+				}else{
+					this->add_cancel_counter_emc_execution();
+					this->rob_buffer.clear();
+				}
 
-				// }else{
-						// this->add_cancel_counter_emc_execution();
-				// }
 
 			}
 		#endif
@@ -1911,7 +1917,7 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 				}
 			#endif
 		}else{
-			this->start_emc_module=true;
+			// this->start_emc_module=true;
 			#if EMC_ACTIVE_DEBUG
 				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 					ORCS_PRINTF("==========\n")
@@ -1923,7 +1929,7 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 					ORCS_PRINTF("==========\n")
 				}
 			#endif
-			this->add_started_emc_execution();
+			// this->add_started_emc_execution();
 		}
 };
 // =====================================================================
@@ -2001,6 +2007,7 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 				lsq->readyAt=lsq->readyAt-(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
 			}else{
 				lsq->status = PACKAGE_STATE_WAIT;
+				lsq->uop_executed = false;
 				lsq->processed = false;
 			}
 			if(lsq->wait_mem_deps_number>0){
@@ -2277,7 +2284,7 @@ void processor_t::statistics(){
 
 			#endif
 		utils_t::largestSeparator(output);
-		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", this->get_instruction_per_cycle());
+		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", this->get_instruction_per_cycle());	
 		fprintf(output, "MPKI: %lf\n", (float)orcs_engine.cacheManager->LLC_data_cache[orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC)].get_cacheMiss()/((float)this->fetchCounter/1000));
 		utils_t::largestSeparator(output);
 			#if EMC_ACTIVE
@@ -2448,7 +2455,7 @@ void processor_t::clock(){
 	if (!this->isBusy())
 	{
 		if(!this->snapshoted){
-			this->set_instruction_per_cycle(float(this->fetchCounter) / float(orcs_engine.get_global_cycle()));
+			this->set_instruction_per_cycle(float(this->fetchCounter-this->get_warmup_last_opcode()) / float(orcs_engine.get_global_cycle()-this->get_warmup_reset_cycle()));
 			this->set_ended_cycle(orcs_engine.get_global_cycle());
 			this->snapshoted=true;
 		}
@@ -2467,3 +2474,50 @@ void processor_t::clock(){
 		}
 	#endif
 };
+
+void processor_t::reset_statistics(){
+		this->set_registerWrite(0);
+		/////
+		this->set_stall_full_FetchBuffer(0);
+		this->set_stall_wrong_branch(0);
+		this->set_stall_full_DecodeBuffer(0);
+		this->set_stall_full_MOB_Read(0);
+		this->set_stall_full_MOB_Write(0);
+		this->set_stall_full_ROB(0);
+		this->set_stall_empty_RS(0);
+		this->set_stat_disambiguation_read_false_positive(0);
+		this->set_stat_disambiguation_write_false_positive(0);
+		this->set_stat_address_to_address(0);
+		this->set_times_reach_parallel_requests_read(0);
+		this->set_times_reach_parallel_requests_write(0);
+		this->set_instruction_per_cycle(0);
+		this->set_ended_cycle(0);
+		this->set_loads_sent_at_rob_head(0);
+		// ====================================================================
+		// Statistics inst completed
+		// ====================================================================
+		this->set_stat_inst_branch_completed(0);
+		this->set_stat_inst_div_alu_completed(0);
+		this->set_stat_inst_div_fp_completed(0);
+		this->set_stat_inst_int_alu_completed(0);
+		this->set_stat_inst_int_fp_completed(0);
+		this->set_stat_inst_mul_alu_completed(0);
+		this->set_stat_inst_mul_fp_completed(0);
+		this->set_stat_inst_load_completed(0);
+		this->set_stat_inst_store_completed(0);
+		this->set_stat_inst_nop_completed(0);
+		this->set_stat_inst_other_completed(0);
+		#if EMC_ACTIVE
+			this->set_llc_miss_rob_head(0);
+			this->set_cancel_emc_execution(0);
+			this->set_cancel_counter_emc_execution(0);
+			this->set_cancel_emc_execution_one_op(0);
+			this->set_started_emc_execution(0);
+			this->set_counter_ambiguation_read(0);
+			this->set_counter_ambiguation_write(0);
+			this->set_total_instruction_sent_emc(0);
+			this->numero_load_deps=0;
+			this->soma_instrucoes_deps=0;
+			this->instrucoes_inter_load_deps=0;
+		#endif
+}

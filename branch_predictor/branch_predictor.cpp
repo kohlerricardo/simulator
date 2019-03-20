@@ -14,7 +14,15 @@ branch_predictor_t::~branch_predictor_t(){
 	this->btb = NULL;
 	this->branchPredictor = NULL;
 };
-
+void branch_predictor_t::reset_statistics(){
+		this->branchTaken = 0;
+		this->branchNotTaken = 0;
+		this->branches = 0;
+		this->branchTakenMiss = 0;
+		this->branchNotTakenMiss = 0;
+		this->btbHits = 0;
+		this->btbMiss = 0;
+}
 void branch_predictor_t::allocate(){
     uint32_t size  = BTB_ENTRIES/BTB_WAYS;
     this->btb = new btb_t[size];

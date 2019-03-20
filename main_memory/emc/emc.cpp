@@ -48,6 +48,29 @@ emc_t::~emc_t()
 	// MACT dellocate
 	utils_t::template_delete_array<int8_t>(this->memory_access_counter_table);
 };
+
+// ============================================================================
+void emc_t::reset_statistics(){
+		this->set_direct_ram_access(0);
+        this->set_emc_llc_access(0);
+        this->set_incorrect_prediction_ram_access(0);
+        this->set_incorrect_prediction_LLC_access(0); 
+		this->set_access_LLC(0);
+        this->set_access_LLC_Hit(0);
+        this->set_access_LLC_Miss(0);	
+		this->set_stat_inst_branch_completed(0);
+		this->set_stat_inst_div_alu_completed(0);
+		this->set_stat_inst_div_fp_completed(0);
+		this->set_stat_inst_int_alu_completed(0);
+		this->set_stat_inst_int_fp_completed(0);
+		this->set_stat_inst_mul_alu_completed(0);
+		this->set_stat_inst_mul_fp_completed(0);
+		this->set_stat_inst_load_completed(0);
+		this->set_stat_inst_store_completed(0);
+		this->set_stat_inst_nop_completed(0);
+		this->set_stat_inst_other_completed(0);
+}
+
 // ============================================================================
 // @allocate objects to EMC
 void emc_t::allocate()

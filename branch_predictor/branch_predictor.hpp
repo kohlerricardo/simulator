@@ -39,6 +39,6 @@ class branch_predictor_t{
         void allocate();
         uint32_t solveBranch(opcode_package_t instruction, opcode_package_t nextOpcode);
         void statistics();
-
+        void reset_statistics();
 
 };
