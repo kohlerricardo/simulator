@@ -25,12 +25,12 @@
 reorder_buffer_line_t::reorder_buffer_line_t() {
     this->package_clean();
     this->reg_deps_ptr_array = NULL;
-};
+}
 
 // ============================================================================
 reorder_buffer_line_t::~reorder_buffer_line_t() {
     utils_t::template_delete_array<reorder_buffer_line_t*>(reg_deps_ptr_array);
-};
+}
 
 // ============================================================================
 void reorder_buffer_line_t::package_clean() {
@@ -47,7 +47,7 @@ void reorder_buffer_line_t::package_clean() {
     this->op_on_emc_buffer=0;
     this->sent=false;
     this->processor_id=0;
-    };
+    }
 
 // ============================================================================
 std::string reorder_buffer_line_t::content_to_string() {
@@ -75,7 +75,7 @@ std::string reorder_buffer_line_t::content_to_string() {
         content_string = content_string + this->mob_ptr->content_to_string();
     }
     return content_string;
-};
+}
 std::string reorder_buffer_line_t::content_to_string2() {
     std::string content_string;
     content_string = "";
@@ -94,7 +94,7 @@ std::string reorder_buffer_line_t::content_to_string2() {
     content_string = content_string + " | On Dep Chain: " + utils_t::bool_to_string(this->on_chain);
     content_string = content_string + " | Sent: " + utils_t::bool_to_string(this->sent);
     return content_string;
-};
+}
 // ============================================================================
 void reorder_buffer_line_t::print_dependences(){
     for(uint16_t i=0;i<ROB_SIZE;i++){
@@ -102,7 +102,7 @@ void reorder_buffer_line_t::print_dependences(){
 
         ORCS_PRINTF("%s\n",this->reg_deps_ptr_array[i]->content_to_string().c_str())
     }
-};
+}
 
 // ============================================================================
 /// STATIC METHODS
@@ -121,4 +121,4 @@ std::string reorder_buffer_line_t::print_all(reorder_buffer_line_t *input_array,
         }
     }
     return final_string;
-};
+}

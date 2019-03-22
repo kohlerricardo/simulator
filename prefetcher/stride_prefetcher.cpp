@@ -1,19 +1,19 @@
 #include "../simulator.hpp"
 stride_prefetcher_t::stride_prefetcher_t(){
-};
+}
 stride_prefetcher_t::~stride_prefetcher_t(){
     if(this->stride_table) delete[] &this->stride_table;
-};
+}
 void stride_prefetcher_t::allocate(){
     this->stride_table = new stride_table_t[STRIDE_TABLE_SIZE];
-};
+}
 inline uint32_t stride_prefetcher_t::searchLRU(){
     uint32_t idx = 0;
     for (uint32_t i = 1; i < STRIDE_TABLE_SIZE; i++){
         idx = (this->stride_table[idx].lru < this->stride_table[i].lru)? idx : i;
     }
     return idx;
-};
+}
 int32_t stride_prefetcher_t::searchPattern(uint64_t pc){
     uint64_t tag = pc;
     // fprintf(stderr,"\n\n %lu \n\n",tag);
@@ -25,7 +25,7 @@ int32_t stride_prefetcher_t::searchPattern(uint64_t pc){
         }
     }
     return MISS;
-};
+}
 
 uint32_t stride_prefetcher_t::installStride(uint64_t pc,uint64_t address){
      uint64_t tag = pc;
@@ -49,7 +49,7 @@ uint32_t stride_prefetcher_t::installStride(uint64_t pc,uint64_t address){
         this->stride_table[idx].status = TRAINING;
         this->stride_table[idx].lru = orcs_engine.get_global_cycle();
         return OK;
-};
+}
 uint32_t stride_prefetcher_t::updateStride(uint64_t pc, uint64_t address, status_stride_prefetcher_t status){
     // fprintf(stderr,"update stride\n");
      uint64_t tag = pc;
@@ -65,7 +65,7 @@ uint32_t stride_prefetcher_t::updateStride(uint64_t pc, uint64_t address, status
             }
         }
     return OK;
-};
+}
 int64_t stride_prefetcher_t::verify(uint64_t pc,uint64_t address){
     int64_t new_address = POSITION_FAIL;
     int32_t idx = this->searchPattern(pc); 
@@ -95,4 +95,4 @@ int64_t stride_prefetcher_t::verify(uint64_t pc,uint64_t address){
         }
     }
     return new_address;
-};
+}

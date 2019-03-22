@@ -104,7 +104,7 @@ void disambiguation_hashed_t::make_memory_dependencies(memory_order_buffer_line_
 	{
 		this->disambiguation_store_hash[store_hash] = new_mob_line;
 	}
-};
+}
 void disambiguation_hashed_t::solve_memory_dependencies(memory_order_buffer_line_t *mob_line){
 
 	/// Remove pointers from disambiguation_hash
@@ -193,7 +193,7 @@ void disambiguation_hashed_t::solve_memory_dependencies(memory_order_buffer_line
 		/// This update the ready cycle, and it is usefull to compute the time each instruction waits for the functional unit
 		mob_line->mem_deps_ptr_array[j] = NULL;
 	}
-};
+}
 
 void disambiguation_hashed_t::statistics(){
 	bool close = false;
@@ -210,5 +210,5 @@ void disambiguation_hashed_t::statistics(){
             utils_t::largeSeparator(output);
         }
     if(close) fclose(output);
-};
+}
 // ============================================================================

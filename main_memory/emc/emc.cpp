@@ -21,7 +21,7 @@ emc_t::emc_t()
 	this->memory_access_counter_table = NULL;
 	this->mact_bits_mask = 0;
 	
-};
+}
 emc_t::~emc_t()
 {
 	// ========================================
@@ -47,8 +47,7 @@ emc_t::~emc_t()
 	utils_t::template_delete_array<memory_order_buffer_line_t>(this->unified_lsq);
 	// MACT dellocate
 	utils_t::template_delete_array<int8_t>(this->memory_access_counter_table);
-};
-
+}
 // ============================================================================
 void emc_t::reset_statistics(){
 		this->set_direct_ram_access(0);
@@ -111,10 +110,11 @@ void emc_t::allocate()
 	// MACT Allocate
 	this->memory_access_counter_table = utils_t::template_allocate_initialize_array<int8_t>(MACT_SIZE,0);
 	this->mact_bits_mask = utils_t::get_power_of_two(MACT_SIZE);
+	ORCS_PRINTF("\n\n%u\n\n",this->mact_bits_mask);
 	//=======================  wait list all uop completes =======================
 	this->uop_wait_finish.allocate(EMC_UOP_BUFFER);
 	
-};
+}
 // ============================================================================
 int32_t emc_t::get_position_uop_buffer(){
 
@@ -131,7 +131,7 @@ int32_t emc_t::get_position_uop_buffer(){
 		}
 	}
 	return position;
-};
+}
 // ============================================================================
 void emc_t::remove_front_uop_buffer(){
 	ERROR_ASSERT_PRINTF(this->uop_buffer_used > 0, "Removendo do UOP Buffer sem estar usado\n")
@@ -143,7 +143,7 @@ void emc_t::remove_front_uop_buffer(){
 	{
 		this->uop_buffer_start = 0;
 	}
-};
+}
 // ============================================================================
 void emc_t::emc_dispatch(){	
 	#if EMC_DISPATCH_DEBUG
@@ -370,7 +370,7 @@ void emc_t::emc_dispatch(){
 			} //end if dispatched
 		}	 //end if pode despachar
 	}		  //end for
-};
+}
 // ============================================================================
 void emc_t::emc_execute(){
 	#if EMC_EXECUTE_DEBUG
@@ -496,7 +496,7 @@ void emc_t::emc_execute(){
 	{
 		this->lsq_read();
 	}
-};
+}
 // ============================================================================
 void emc_t::emc_commit(){
 	#if EMC_COMMIT_DEBUG
@@ -575,6 +575,16 @@ void emc_t::emc_commit(){
 				break;
 		}
 			ERROR_ASSERT_PRINTF(uint32_t(pos_buffer) == this->uop_buffer_start, "EMC sending different position from start\n");
+			// ==========================================================
+			// // contar statistics from miss predictor
+			// if(this->uop_buffer[pos_buffer].mob_ptr != NULL){
+			// 	if(this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && !this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
+			// 		this->add_incorrect_prediction_ram_access();
+			// 	}else if (!this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
+			// 		this->add_incorrect_prediction_LLC_access();
+			// 	}
+			// }
+			// ==========================================================
 			this->emc_send_back_core(&this->uop_buffer[pos_buffer]);
 			this->remove_front_uop_buffer();
 		}
@@ -588,7 +598,7 @@ void emc_t::emc_commit(){
 			this->print_structures();
 		}
 	#endif
-};
+}
 // ============================================================================
 void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
 	#if EMC_EXECUTE_DEBUG
@@ -619,7 +629,7 @@ void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
 			break;
 		}
 	}
-};
+}
 // ============================================================================
 void emc_t::clock(){
 	#if EMC_DEBUG
@@ -663,17 +673,20 @@ void emc_t::clock(){
 			orcs_engine.processor[this->processor_id].lock_processor=false;
 		}
 	}
-};
+}
 // ============================================================================
 void emc_t::update_mact_entry(uint64_t pc,int32_t value){
-	uint64_t index  = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,pc,0,this->mact_bits_mask);
+	
+	uint64_t index  = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,pc>>2,0,this->mact_bits_mask);
+
 	this->memory_access_counter_table[index]+=value;
-	if(this->memory_access_counter_table[index]>7){
-		this->memory_access_counter_table[index]=0;	
+
+	if(this->memory_access_counter_table[index]>(signed)(this->mact_bits_mask-1)){
+		this->memory_access_counter_table[index]=(signed)(this->mact_bits_mask-1);	
 	}else if(this->memory_access_counter_table[index]<0){
-		this->memory_access_counter_table[index]=7;
+		this->memory_access_counter_table[index]=0;
 	}
-};
+}
 // ============================================================================
 void emc_t::lsq_read(){
 	#if EMC_LSQ_DEBUG
@@ -700,6 +713,18 @@ void emc_t::lsq_read(){
 		}
 	#endif
 		if (emc_mob_line->memory_operation == MEMORY_OPERATION_READ){
+		// //========================================= 
+        // // Predict Access Direct RAM
+        // uint64_t index = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,emc_mob_line->emc_opcode_ptr->uop.opcode_address,0,this->mact_bits_mask);
+        // if(this->memory_access_counter_table[index]>=MACT_THRESHOLD){
+        //     //add statistics do preditor				
+		// 	this->add_direct_ram_access();
+		// 	emc_mob_line->emc_predict_access_ram = true;
+        // }else{
+        //     orcs_engine.memory_controller->emc->add_emc_llc_access();
+		// 	emc_mob_line->emc_predict_access_ram = false;
+        // }
+        // //========================================= 
 			uint32_t ttc = 0;
 			ttc = orcs_engine.cacheManager->search_EMC_Data(emc_mob_line); //enviar que é do emc
 			emc_mob_line->updatePackageReady(ttc);
@@ -724,7 +749,7 @@ void emc_t::lsq_read(){
 			}
 	#endif
 	} //end if mob_line null
-};	//end method
+}	//end method
 // ============================================================================
 void emc_t::statistics(){
 	FILE *output = stdout;
@@ -742,8 +767,8 @@ void emc_t::statistics(){
 		fprintf(output, "EMC_Access_LLC_MISS: %lu\n", this->get_access_LLC_Miss());
 		fprintf(output, "EMC_Predict_DRA_Predictor: %lu\n", this->get_direct_ram_access());
 		fprintf(output, "EMC_Predict_LLC_Access_Predictor: %lu\n", this->get_emc_llc_access());
-		fprintf(output, "EMC_Incorrect_RAM_Prediction: %lu\n", this->get_incorrect_prediction_ram_access());
-		fprintf(output, "EMC_Incorrect_LLC_Prediction: %lu\n", this->get_incorrect_prediction_LLC_access());
+		fprintf(output, "EMC_Incorrect_RAM_Prediction: %lu\n",this->get_incorrect_prediction_ram_access());
+		fprintf(output, "EMC_Incorrect_LLC_Prediction: %lu\n",this->get_incorrect_prediction_LLC_access());
 		utils_t::largestSeparator(output);
 		fprintf(output,"INSTRUCTION_OPERATION_INT_ALU %lu\n",this->get_stat_inst_int_alu_completed());
 		fprintf(output,"INSTRUCTION_OPERATION_INT_MUL %lu\n",this->get_stat_inst_mul_alu_completed());
@@ -760,7 +785,7 @@ void emc_t::statistics(){
 		if(close) fclose(output);
 		}
 
-};
+}
 // ============================================================================
 // void emc_t::emc_send_back_core(){
 void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
@@ -838,7 +863,7 @@ void emc_t::print_structures(){
 	}
 	ORCS_PRINTF("\nWait to send buffer used %u\n",this->uop_wait_finish.get_size())
 	this->uop_wait_finish.print_all();
-};
+}
 void emc_t::lsq_forward(memory_order_buffer_line_t *emc_mob_line){
 	for (uint16_t i = 0; i < EMC_LSQ_SIZE; i++){
 		if(this->unified_lsq[i].memory_address == emc_mob_line->memory_address &&
@@ -857,4 +882,4 @@ void emc_t::lsq_forward(memory_order_buffer_line_t *emc_mob_line){
 				break;
 		}
 	}
-};
+}

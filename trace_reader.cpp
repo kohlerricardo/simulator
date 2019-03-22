@@ -23,7 +23,7 @@ trace_reader_t::trace_reader_t() {
     this->fetch_instructions=0;
         //get total opcodes 
     this->trace_opcode_max=0;
-};
+}
 
 // =====================================================================
 trace_reader_t::~trace_reader_t() {
@@ -36,7 +36,7 @@ trace_reader_t::~trace_reader_t() {
     utils_t::template_delete_matrix<char>(line_memory, TRACE_LINE_SIZE);
 
 
-};
+}
 
 // =====================================================================
 void trace_reader_t::allocate(char *trace_file) {
@@ -88,7 +88,7 @@ void trace_reader_t::allocate(char *trace_file) {
 	/// Initialize
 	for (uint32_t bbl = 0; bbl < this->binary_total_bbls; bbl++) {
 		this->binary_bbl_size[bbl] = 0;
-	};
+	}
 
 	/// Define the size of each specific BBL
 	this->define_binary_bbl_size();
@@ -118,7 +118,7 @@ void trace_reader_t::allocate(char *trace_file) {
     this->address_translation =  this->get_processor_id() << 56;
     // ====================================================================  
 
-};
+}
 /// Get the total number of opcodes
 uint64_t trace_reader_t::get_trace_size() {
    bool file_eof = false;
@@ -144,7 +144,7 @@ uint64_t trace_reader_t::get_trace_size() {
     gzseek(this->gzDynamicTraceFile, 0, SEEK_SET);
 
     return(trace_size);
-};
+}
 
 // =====================================================================
 void trace_reader_t::get_total_bbls() {
@@ -170,7 +170,7 @@ void trace_reader_t::get_total_bbls() {
     }
 
     this->binary_total_bbls++;
-};
+}
 
 // =====================================================================
 void trace_reader_t::define_binary_bbl_size() {
@@ -198,7 +198,7 @@ void trace_reader_t::define_binary_bbl_size() {
             binary_bbl_size[bbl]++;
         }
     }
-};  
+}  
 
 // =====================================================================
 void trace_reader_t::generate_binary_dict() {
@@ -235,7 +235,7 @@ void trace_reader_t::generate_binary_dict() {
             opcode++;
         }
     }
-};
+}
 
 // =====================================================================
 /// Convert Static Trace line into Instruction
@@ -331,7 +331,7 @@ bool trace_reader_t::trace_string_to_opcode(char *input_string, opcode_package_t
     opcode->is_prefetch = (sub_string[0] == '1');
 
     return OK;
-};
+}
 
 
 // =====================================================================
@@ -373,7 +373,7 @@ bool trace_reader_t::trace_next_dynamic(uint32_t *next_bbl) {
         }
     }
     return OK;
-};
+}
 
 // =====================================================================
 /// Convert Dynamic Memory Trace line into Instruction Memory Operands
@@ -436,7 +436,7 @@ bool trace_reader_t::trace_next_memory(uint64_t *mem_address, uint32_t *mem_size
         }
     }
     return OK;
-};
+}
 
 // =====================================================================
 bool trace_reader_t::trace_fetch(opcode_package_t *m) {
@@ -509,7 +509,7 @@ bool trace_reader_t::trace_fetch(opcode_package_t *m) {
 
 	this->fetch_instructions++;
     return OK;
-};
+}
 
 // =====================================================================
 void trace_reader_t::statistics() {
@@ -526,6 +526,6 @@ void trace_reader_t::statistics() {
             utils_t::largestSeparator(output);
         }
         if(close) fclose(output);
-};
+}
 
 

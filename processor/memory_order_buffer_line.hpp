@@ -27,6 +27,7 @@ class memory_order_buffer_line_t {
         emc_opcode_package_t* emc_opcode_ptr;  //emc opcode pointer 
         bool emc_executed;
         bool sent_to_emc;
+        bool emc_predict_access_ram;
         // ====================================================================
         /// Methods
         // ====================================================================

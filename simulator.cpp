@@ -10,7 +10,7 @@ static void display_use() {
     ORCS_PRINTF("-f [output file name]\n\n");
     ORCS_PRINTF("-c [number of cores]\n\n");
     ORCS_PRINTF("Please provide -c <number of cores> [-t <trace_file_basename>] -f <output filename>\n");
-};
+}
 
 // =============================================================================
 static void process_argv(int argc, char **argv) {
@@ -77,7 +77,7 @@ static void process_argv(int argc, char **argv) {
         display_use();
     }
 
-};
+}
 std::string get_status_execution(){
     std::string final_report;
     char report[1000];
@@ -297,4 +297,4 @@ int main(int argc, char **argv) {
     delete orcs_engine.memory_controller;
     
     return(EXIT_SUCCESS);
-};
+}

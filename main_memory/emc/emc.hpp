@@ -61,17 +61,17 @@ class emc_t{
         uint64_t emc_llc_access;
         uint64_t incorrect_prediction_ram_access;
         uint64_t incorrect_prediction_LLC_access;
-        INSTANTIATE_GET_SET_ADD(uint64_t,direct_ram_access);
-        INSTANTIATE_GET_SET_ADD(uint64_t,emc_llc_access);
-        INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_ram_access);
-        INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_LLC_access);
+        INSTANTIATE_GET_SET_ADD(uint64_t,direct_ram_access)
+        INSTANTIATE_GET_SET_ADD(uint64_t,emc_llc_access)
+        INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_ram_access)
+        INSTANTIATE_GET_SET_ADD(uint64_t,incorrect_prediction_LLC_access)
         // ==========================================================================
         // control attr 
         bool ready_to_execute;
         bool executed;
         bool has_store;
         uint32_t processor_id;
-        INSTANTIATE_GET_SET(uint32_t,processor_id);
+        INSTANTIATE_GET_SET(uint32_t,processor_id)
         // ==========================================================================
         // EMC Methods
         // ==========================================================================
@@ -97,24 +97,24 @@ class emc_t{
         //EMC Core Interact
         void emc_send_back_core(emc_opcode_package_t *emc_opcode);
         // void emc_send_back_core();
-        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC);
-        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Hit);
-        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Miss);
+        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC)
+        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Hit)
+        INSTANTIATE_GET_SET_ADD(uint64_t,access_LLC_Miss)
         
         // ====================================================================
 		// Statistics inst completed
 		// ====================================================================
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_branch_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_alu_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_fp_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_alu_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_fp_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_alu_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_fp_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_load_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_store_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_nop_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_other_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_branch_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_alu_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_fp_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_alu_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_fp_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_alu_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_fp_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_load_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_store_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_nop_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_other_completed)
 
         // ==========================================================================
         // EMC Debug Methods

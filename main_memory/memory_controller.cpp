@@ -6,7 +6,7 @@ memory_controller_t::memory_controller_t(){
     this->emc = NULL;
 	// Data Cache
 	this->data_cache = NULL;
-};
+}
 // ============================================================================
 memory_controller_t::~memory_controller_t() = default;
 // ============================================================================
@@ -26,7 +26,7 @@ void memory_controller_t::allocate(){
         this->emc[i].allocate();
     }
     #endif
-};
+}
 // ============================================================================
 void memory_controller_t::statistics(){
     FILE *output = stdout;
@@ -54,7 +54,7 @@ void memory_controller_t::statistics(){
             this->data_cache->statistics();
         #endif
         }
-};
+}
 // ============================================================================
 void memory_controller_t::clock(){
     #if EMC_ACTIVE
@@ -64,14 +64,14 @@ void memory_controller_t::clock(){
         }
     #endif
 
-};
+}
 // ============================================================================
 
 // ============================================================================
 uint64_t memory_controller_t::requestDRAM(){
     this->add_requests_made();
     return RAM_LATENCY;
-};
+}
 // ============================================================================
 void memory_controller_t::reset_statistics(){
     this->set_requests_made(0);

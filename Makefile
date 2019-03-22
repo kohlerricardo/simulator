@@ -6,7 +6,7 @@ CPPFLAGS = $(FLAGS)
 BIN_NAME = orcs
 RM = rm -f
 
-FLAGS =   -ggdb3 -Wall -Wextra -Werror -std=c++11 -lefence -O3
+FLAGS =   -ggdb3 -Wall -Wextra -Werror -std=c++0x -lefence -O3 -pedantic
 LDFLAGS = -ggdb3
 ########################################################################
 ##FOLDERS
@@ -43,8 +43,7 @@ SRC_CACHE = $(FD_CACHE)/cache.cpp\
 			$(FD_CACHE)/cache_manager.cpp
 
 SRC_OTHER = $(FD_OTHER)/utils.cpp\
-			$(FD_OTHER)/enumerations.cpp\
-			$(FD_OTHER)/sanityTest.cpp
+			$(FD_OTHER)/enumerations.cpp
 
 SRC_PREFETCHER = $(FD_PREFETCHER)/prefetcher.cpp\
 				 $(FD_PREFETCHER)/stride_prefetcher.cpp

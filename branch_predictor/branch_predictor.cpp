@@ -3,7 +3,7 @@
 branch_predictor_t::branch_predictor_t(){
     this->btb = NULL;
 	this->branchPredictor = NULL;
-};
+}
 branch_predictor_t::~branch_predictor_t(){
     if(this->branchPredictor != NULL){
 		delete this->branchPredictor;
@@ -13,7 +13,7 @@ branch_predictor_t::~branch_predictor_t(){
 	//Setting pointers to null
 	this->btb = NULL;
 	this->branchPredictor = NULL;
-};
+}
 void branch_predictor_t::reset_statistics(){
 		this->branchTaken = 0;
 		this->branchNotTaken = 0;
@@ -41,7 +41,7 @@ void branch_predictor_t::allocate(){
         this->branchPredictor = new piecewise_t();
         this->branchPredictor->allocate();
 #endif
-};
+}
 uint32_t branch_predictor_t::searchLine(uint64_t pc){
 	uint32_t getBits = (BTB_ENTRIES/BTB_WAYS);
 	uint32_t tag = (pc >> 2);
@@ -93,7 +93,7 @@ uint32_t branch_predictor_t::installLine(opcode_package_t instruction){
 	this->index = index;
 	this->way = way;
 	return OK;
-};
+}
 inline uint32_t branch_predictor_t::searchLRU(btb_t *btb){
 	uint32_t index=0;
 	for (size_t i = 1; i < BTB_WAYS; i++)
@@ -101,7 +101,7 @@ inline uint32_t branch_predictor_t::searchLRU(btb_t *btb){
 		index = (btb->btb_entry[index].lru <= btb->btb_entry[i].lru)? index : i ;
 	}
 	return index;
-};
+}
 void branch_predictor_t::statistics(){
 	bool close = false;
 	FILE *output = stdout;
@@ -123,7 +123,7 @@ void branch_predictor_t::statistics(){
 			utils_t::largestSeparator(output);
 		}
 	if(close) fclose(output);
-};
+}
 uint32_t branch_predictor_t::solveBranch(opcode_package_t branchInstrucion, opcode_package_t nextInstruction){
     //==========
     // Consulta BTB
@@ -164,4 +164,4 @@ uint32_t branch_predictor_t::solveBranch(opcode_package_t branchInstrucion, opco
 			}
 	}
     return stallCyles;
-};
+}

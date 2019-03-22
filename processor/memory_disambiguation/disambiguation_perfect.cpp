@@ -4,11 +4,11 @@ disambiguation_perfect_t::disambiguation_perfect_t(){
 	this->stat_address_to_address=0;
 	this->stat_disambiguation_read_false_positive=0;
 	this->stat_disambiguation_write_false_positive = 0;
-};
+}
 disambiguation_perfect_t::~disambiguation_perfect_t(){
-};
+}
 void disambiguation_perfect_t::allocate(){
-};
+}
 void disambiguation_perfect_t::make_memory_dependencies(memory_order_buffer_line_t *mob_line){
 	//makes dependencies Read After Write (RAW)
 	if(mob_line->memory_operation == MEMORY_OPERATION_READ){
@@ -60,7 +60,7 @@ void disambiguation_perfect_t::make_memory_dependencies(memory_order_buffer_line
 						}//end add and age comp.
 				}//end for
 	}//end write  dependences
-};
+}
 void disambiguation_perfect_t::solve_memory_dependencies(memory_order_buffer_line_t *mob_line){
 // =========================================================================
 	/// SOLVE MEMORY DEPENDENCIES - MOB
@@ -103,7 +103,7 @@ void disambiguation_perfect_t::solve_memory_dependencies(memory_order_buffer_lin
 			}
 		}
 	}
-};
+}
 void disambiguation_perfect_t::statistics(){FILE *output = stdout;
 	if(orcs_engine.output_file_name != NULL)
 		output = fopen(orcs_engine.output_file_name,"a+");
@@ -115,4 +115,4 @@ void disambiguation_perfect_t::statistics(){FILE *output = stdout;
             utils_t::largeSeparator(output);
         }
         fclose(output);
-};
+}

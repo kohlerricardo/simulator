@@ -57,7 +57,7 @@ uint64_t utils_t::get_power_of_two(uint64_t n) {
         log2++;
     }
     return log2;
-};
+}
 
 // =============================================================================
 uint32_t utils_t::check_if_power_of_two(uint64_t n) {
@@ -76,7 +76,7 @@ uint32_t utils_t::check_if_power_of_two(uint64_t n) {
     else {
         return FAIL;
     }
-};
+}
 // =============================================================================
 uint64_t utils_t::hash_function(hash_function_t type, uint64_t input1, uint64_t input2, uint64_t bit_size) {
     uint32_t i;
@@ -199,7 +199,7 @@ uint64_t utils_t::fill_bit(uint32_t start, uint32_t end) {
     for (i = start ; i <= end ; i++)
         r |= 1 << i;
     return r;
-};
+}
 
 
 // =============================================================================
@@ -208,7 +208,7 @@ uint32_t utils_t::max(uint32_t val1, uint32_t val2) {
         return val1;
     else
         return val2;
-};
+}
 
 // =============================================================================
 uint64_t utils_t::max(uint64_t val1, uint64_t val2) {
@@ -216,7 +216,7 @@ uint64_t utils_t::max(uint64_t val1, uint64_t val2) {
         return val1;
     else
         return val2;
-};
+}
 
 // =============================================================================
 uint32_t utils_t::min(uint32_t val1, uint32_t val2) {
@@ -224,7 +224,7 @@ uint32_t utils_t::min(uint32_t val1, uint32_t val2) {
         return val1;
     else
         return val2;
-};
+}
 
 // =============================================================================
 uint64_t utils_t::min(uint64_t val1, uint64_t val2) {
@@ -232,7 +232,7 @@ uint64_t utils_t::min(uint64_t val1, uint64_t val2) {
         return val1;
     else
         return val2;
-};
+}
 // =============================================================================
 std::string utils_t::address_to_binary(uint64_t address) {
     /// Auxiliary strings
@@ -255,7 +255,7 @@ std::string utils_t::address_to_binary(uint64_t address) {
         }
     }
     return answer;
-};
+}
 
 // =============================================================================
 std::string utils_t::print_mask_of_bits(uint32_t line_size, uint32_t line_number, uint32_t assoc) {
@@ -283,7 +283,7 @@ std::string utils_t::print_mask_of_bits(uint32_t line_size, uint32_t line_number
     }
 
     return a;
-};
+}
 
 // =============================================================================
 std::string utils_t::progress_pretty(uint64_t actual, uint64_t total) {
@@ -301,7 +301,7 @@ std::string utils_t::progress_pretty(uint64_t actual, uint64_t total) {
     }
     answer = "[" + answer + "]";
     return answer;
-};
+}
 
 
 // =============================================================================
@@ -344,7 +344,7 @@ std::string utils_t::progress_pretty(uint64_t actual, uint64_t total) {
 //     }
 
 //     return answer;
-// };
+// }
 
 // =============================================================================
 void utils_t::bool_to_char(char *string, bool input_int) {
@@ -436,7 +436,7 @@ std::string utils_t::uint32_to_string(uint32_t input_int) {
     sprintf(a , "%2u", input_int);
     answer = a;
     return answer;
-};
+}
 
 // =============================================================================
 std::string utils_t::int32_to_string(int32_t input_int) {
@@ -450,7 +450,7 @@ std::string utils_t::int32_to_string(int32_t input_int) {
     snprintf(a, sizeof(a), "%2d", input_int);
     answer = a;
     return answer;
-};
+}
 
 // =============================================================================
 std::string utils_t::big_uint64_to_string(uint64_t input_int) {
@@ -462,7 +462,7 @@ std::string utils_t::big_uint64_to_string(uint64_t input_int) {
     answer = a;
 
     return answer;
-};
+}
 
 // =============================================================================
 std::string utils_t::uint64_to_string(uint64_t input_int) {
@@ -479,7 +479,7 @@ std::string utils_t::uint64_to_string(uint64_t input_int) {
         answer = a;
     }
     return answer;
-};
+}
 
 // =============================================================================
 std::string utils_t::int64_to_string(int64_t input_int) {
@@ -496,7 +496,7 @@ std::string utils_t::int64_to_string(int64_t input_int) {
         answer = a;
     }
     return answer;
-};
+}
 
 std::string pointer_rob_to_string(reorder_buffer_line_t *rob_pointer){
     char a[2];
@@ -508,7 +508,7 @@ std::string pointer_rob_to_string(reorder_buffer_line_t *rob_pointer){
     sprintf(a , "%s", (rob_pointer !=NULL) ? "T" : "F");
     answer = a;
     return answer;
-};
+}
 
 // =============================================================================
 /*! process_mem_usage(double &, double &) - takes two doubles by reference,
@@ -548,23 +548,23 @@ std::string pointer_rob_to_string(reorder_buffer_line_t *rob_pointer){
 //     double page_size_mb = sysconf(_SC_PAGE_SIZE) / 1024.0 / 1024.0;     /// Obtain the real memory page size
 //     *vm_usage     = vsize / 1024.0 / 1024.0;
 //     *resident_set = rss * page_size_mb;
-// };
+// }
 
 void utils_t::smallSeparator(){
     ORCS_PRINTF("#======================#\n")
-};
+}
 void utils_t::largeSeparator(){
     ORCS_PRINTF("#===============================================#\n")
-};
+}
 void utils_t::largestSeparator(){
     ORCS_PRINTF("#========================================================================#\n")
-};
+}
 void utils_t::smallSeparator(FILE * file){
     fprintf(file,"#======================#\n");
-};
+}
 void utils_t::largeSeparator(FILE * file){
    fprintf(file,"#===============================================#\n");
-};
+}
 void utils_t::largestSeparator(FILE * file){
    fprintf(file,"#========================================================================#\n");
-};
+}

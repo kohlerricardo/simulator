@@ -6,7 +6,7 @@ piecewise_t::piecewise_t(){
     this->W = NULL;
     this->GA = NULL;
     this->GHR = NULL;
-};
+}
 piecewise_t::~piecewise_t(){
     if(this->W) {
         for (size_t i = 0; i < N; i++)
@@ -26,7 +26,7 @@ piecewise_t::~piecewise_t(){
     if(this->GHR) delete [] GHR;
     this->GA = NULL;
     this->GHR = NULL;
-};
+}
 
 void piecewise_t::allocate(){
     // fprintf(stderr,"alocando piecewise");
@@ -41,9 +41,9 @@ void piecewise_t::allocate(){
             std::memset(&this->W[i][j][0],0,((H+1)*sizeof(int8_t)));
         }
     } 
-    this->GA = new uint32_t[M];
+    this->GA = new uint64_t[M];
     this->GHR = new uint8_t[H];
-    std::memset(&this->GA[0],0,(M*sizeof(uint32_t)));
+    std::memset(&this->GA[0],0,(M*sizeof(uint64_t)));
     std::memset(&this->GHR[0],0,(H*sizeof(uint8_t)));
     this->saida = 0;
 }
@@ -86,4 +86,4 @@ void piecewise_t::train(uint64_t address,taken_t predict, taken_t correct){
     }
     this->GA[0]=indexB;
     this->GHR[0]=correct;
-};
+}

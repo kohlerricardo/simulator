@@ -23,12 +23,12 @@ class cache_manager_t{
         uint32_t searchData(memory_order_buffer_line_t *mob_line);
         uint32_t writeData(memory_order_buffer_line_t *mob_line);
         int32_t generate_index_array(uint32_t processor_id,cacheLevel_t level);
-        INSTANTIATE_GET_SET_ADD(uint64_t,instructionSearched);
-        INSTANTIATE_GET_SET_ADD(uint64_t,instructionLLCSearched);
-        INSTANTIATE_GET_SET_ADD(uint64_t,readMiss);
-        INSTANTIATE_GET_SET_ADD(uint64_t,readHit);
-        INSTANTIATE_GET_SET_ADD(uint64_t,writeMiss);
-        INSTANTIATE_GET_SET_ADD(uint64_t,writeHit);
+        INSTANTIATE_GET_SET_ADD(uint64_t,instructionSearched)
+        INSTANTIATE_GET_SET_ADD(uint64_t,instructionLLCSearched)
+        INSTANTIATE_GET_SET_ADD(uint64_t,readMiss)
+        INSTANTIATE_GET_SET_ADD(uint64_t,readHit)
+        INSTANTIATE_GET_SET_ADD(uint64_t,writeMiss)
+        INSTANTIATE_GET_SET_ADD(uint64_t,writeHit)
         // ==========================================
         // Prefetcher
         // ==========================================

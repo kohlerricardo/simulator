@@ -194,45 +194,45 @@ class processor_t {
 		//container to accelerate  execution
 		container_ptr_reorder_buffer_line_t unified_functional_units;
 
-		INSTANTIATE_GET_SET(uint32_t,processor_id);
+		INSTANTIATE_GET_SET(uint32_t,processor_id)
 		// ====================================================================
 		// Statistics
 		// ====================================================================
 
-		INSTANTIATE_GET_SET_ADD(uint64_t,registerWrite);
+		INSTANTIATE_GET_SET_ADD(uint64_t,registerWrite)
 		/////
-		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_FetchBuffer);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stall_wrong_branch);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_DecodeBuffer);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_MOB_Read);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_MOB_Write);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_ROB);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stall_empty_RS);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_read_false_positive);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_write_false_positive);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_address_to_address);
-		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_read);
-		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_write);
-		INSTANTIATE_GET_SET_ADD(float_t,instruction_per_cycle);
-		INSTANTIATE_GET_SET_ADD(uint64_t,ended_cycle);
-		INSTANTIATE_GET_SET_ADD(uint32_t,loads_sent_at_rob_head);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_FetchBuffer)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stall_wrong_branch)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_DecodeBuffer)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_MOB_Read)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_MOB_Write)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stall_full_ROB)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stall_empty_RS)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_read_false_positive)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_disambiguation_write_false_positive)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_address_to_address)
+		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_read)
+		INSTANTIATE_GET_SET_ADD(uint64_t,times_reach_parallel_requests_write)
+		INSTANTIATE_GET_SET_ADD(float_t,instruction_per_cycle)
+		INSTANTIATE_GET_SET_ADD(uint64_t,ended_cycle)
+		INSTANTIATE_GET_SET_ADD(uint32_t,loads_sent_at_rob_head)
 		// ====================================================================
-		INSTANTIATE_GET_SET_ADD(uint64_t,warmup_reset_cycle);
-		INSTANTIATE_GET_SET_ADD(uint64_t,warmup_last_opcode);
+		INSTANTIATE_GET_SET_ADD(uint64_t,warmup_reset_cycle)
+		INSTANTIATE_GET_SET_ADD(uint64_t,warmup_last_opcode)
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_branch_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_alu_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_fp_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_alu_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_fp_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_alu_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_fp_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_load_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_store_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_nop_completed);
-		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_other_completed);
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_branch_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_alu_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_div_fp_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_alu_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_int_fp_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_alu_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_mul_fp_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_load_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_store_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_nop_completed)
+		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_other_completed)
 
 		// ====================================================================
 		// EMC Methods and attr
@@ -298,12 +298,12 @@ class processor_t {
 		int32_t search_register(int32_t write_register);//Register remapping table declaration
     	int32_t allocate_new_register(int32_t write_register);
 		// ====================================================================
-		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head);
-		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution);
-		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_counter_emc_execution);
-		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution_one_op);
-		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_execution);
-		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_read);
-		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_write);
-		INSTANTIATE_GET_SET_ADD(uint32_t,total_instruction_sent_emc);
+		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head)
+		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution)
+		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_counter_emc_execution)
+		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution_one_op)
+		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_execution)
+		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_read)
+		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_write)
+		INSTANTIATE_GET_SET_ADD(uint32_t,total_instruction_sent_emc)
 };

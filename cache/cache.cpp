@@ -29,7 +29,7 @@ inline void cache_t::printLine(linha_t *linha){
 	#if SLEEP
 		usleep(500);
 	#endif
-};
+}
 // ==================
 // print cache configuration
 // ==================
@@ -38,7 +38,7 @@ inline void cache_t::printCacheConfiguration(){
 	#if SLEEP
 		usleep(500);
 	#endif
-};
+}
 
 void cache_t::reset_statistics(){
 		this->set_cacheAccess(0);
@@ -166,27 +166,27 @@ void cache_t::allocate(cacheLevel_t level){
 			break;
 		}
 	}
-};
+}
 // ==================
 // @address -address to get index
 // @return tag to data in cache
 // ==================
-inline uint32_t cache_t::tagSetCalculation(uint64_t address){
-	uint32_t tag = (address >> this->shiftData);
+inline uint64_t cache_t::tagSetCalculation(uint64_t address){
+	uint64_t tag = (address >> this->shiftData);
 	return tag;
 
-};
+}
 // ==================
 // @address -address to get index
 // @return index of data in cache
 // ==================
 inline uint32_t cache_t::idxSetCalculation(uint64_t address){
 	uint32_t getBits = (this->nSets)-1;
-	uint32_t tag = this->tagSetCalculation(address);
+	uint64_t tag = this->tagSetCalculation(address);
 	uint32_t index = tag&getBits;
 	return index;
 
-};
+}
 // ==================
 // @address -address to make a read
 // @ttc latency to complete
@@ -194,10 +194,15 @@ inline uint32_t cache_t::idxSetCalculation(uint64_t address){
 // ==================
 uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 	uint32_t idx = this->idxSetCalculation(address);
-	uint32_t tag = this->tagSetCalculation(address);
+	uint64_t tag = this->tagSetCalculation(address);
 	// this->add_cacheRead();
 	for (size_t i = 0; i < this->nLines; i++){
 		if(this->sets[idx].linhas[i].tag == tag){
+			#if CACHE_MANAGER_DEBUG
+				if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+					ORCS_PRINTF("Cache Line %s\n",this->sets[idx].linhas[i].content_to_string().c_str())
+				}
+			#endif
 			// =====================================================
 			// Se ready Cycle for menor que o atual, a latencia é
 			// apenas da leitura, sendo um hit.
@@ -279,12 +284,12 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 				ttc+=LLC_LATENCY;
 			}
 	return MISS;
-};
+}
 // ============================
 // @address write address
 // ============================
 uint32_t cache_t::write(uint64_t address){
-	uint32_t tag = this->tagSetCalculation(address);
+	uint64_t tag = this->tagSetCalculation(address);
 	uint32_t idx = this->idxSetCalculation(address);
 	int32_t line = POSITION_FAIL;
 	this->add_cacheWrite();
@@ -306,14 +311,14 @@ uint32_t cache_t::write(uint64_t address){
 		}
 	
 	return OK;	
-};
+}
 // ==================
 // @address - address to install a line
 // @return - pointer to line  
 // ==================
 linha_t* cache_t::installLine(uint64_t address,uint64_t latency){
 	uint32_t idx = this->idxSetCalculation(address);
-	uint32_t tag = this->tagSetCalculation(address);
+	uint64_t tag = this->tagSetCalculation(address);
 	for (size_t i = 0; i < this->nLines; i++)
 	{
 		if(this->sets[idx].linhas[i].valid==0){
@@ -350,7 +355,7 @@ linha_t* cache_t::installLine(uint64_t address,uint64_t latency){
 	this->sets[idx].linhas[line].prefetched = 0;	
 	this->sets[idx].linhas[line].readyAt = orcs_engine.get_global_cycle()+latency;
 	return &this->sets[idx].linhas[line];
-};
+}
 // ===================
 // @set - cache set to locate lru
 // @return index of line lru 
@@ -363,7 +368,7 @@ inline uint32_t cache_t::searchLru(cacheSet_t *set){
 		index = (set->linhas[index].lru <= set->linhas[i].lru)? index : i ;
 	}
 	return index;
-};
+}
 
 //====================
 //write back
@@ -428,7 +433,7 @@ inline void cache_t::writeBack(linha_t *linha){
 		}
 		#endif
 	}
-};
+}
 //====================
 // @1 address - endereco do dado
 // @2 nivel de cache alvo da mudanca
@@ -436,7 +441,7 @@ inline void cache_t::writeBack(linha_t *linha){
 //====================
 void cache_t::returnLine(uint64_t address,cache_t *cache){
 	uint32_t idx = this->idxSetCalculation(address);
-	uint32_t tag = this->tagSetCalculation(address);
+	uint64_t tag = this->tagSetCalculation(address);
 	int32_t line=POSITION_FAIL;
 	// pega a linha desta cache
 	for (size_t i = 0; i < this->nLines; i++)
@@ -475,7 +480,7 @@ void cache_t::returnLine(uint64_t address,cache_t *cache){
 		linha_return->prefetched = linha_return->linha_ptr_l2->prefetched;
 		linha_return->readyAt = orcs_engine.get_global_cycle();
 	}
-};
+}
 // ====================
 // statistics of a level of cache
 // ====================

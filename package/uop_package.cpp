@@ -1,8 +1,8 @@
 #include "../simulator.hpp"
 #include <string>
-uop_package_t::uop_package_t(){};
+uop_package_t::uop_package_t(){}
 
-uop_package_t::~uop_package_t(){};
+uop_package_t::~uop_package_t(){}
 void uop_package_t::package_clean()
 {
     /// TRACE Variables
@@ -22,7 +22,7 @@ void uop_package_t::package_clean()
     this->uop_number = 0;
     this->readyAt = orcs_engine.get_global_cycle();;
     this->status =PACKAGE_STATE_FREE;
-};
+}
 bool uop_package_t::operator==(const uop_package_t &package) {
     /// TRACE Variables
     if (strcmp(this->opcode_assembly, package.opcode_assembly) != 0) return FAIL;
@@ -44,7 +44,7 @@ bool uop_package_t::operator==(const uop_package_t &package) {
     if (this->status != package.status) return FAIL;
 
     return OK;
-};
+}
 void uop_package_t::opcode_to_uop(uint64_t uop_number, instruction_operation_t uop_operation, uint64_t memory_address, uint32_t memory_size, opcode_package_t opcode)
 {
     // ERROR_ASSERT_PRINTF(this->state == PACKAGE_STATE_FREE,
@@ -63,23 +63,23 @@ void uop_package_t::opcode_to_uop(uint64_t uop_number, instruction_operation_t u
     this->uop_operation = uop_operation;
     this->memory_address = memory_address;
     this->memory_size = memory_size;
-};
+}
 void uop_package_t::updatePackageUntrated(uint32_t stallTime){
     this->status = PACKAGE_STATE_UNTREATED;
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
-};
+}
 void uop_package_t::updatePackageReady(uint32_t stallTime){
     this->status = PACKAGE_STATE_READY;
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
-};
+}
 void uop_package_t::updatePackageWait(uint32_t stallTime){
     this->status = PACKAGE_STATE_WAIT;
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
-};
+}
 void uop_package_t::updatePackageFree(uint32_t stallTime){
     this->status = PACKAGE_STATE_FREE;
     this->readyAt = orcs_engine.get_global_cycle()+stallTime;
-};
+}
 /// Convert Instruction variables into String
 std::string uop_package_t::content_to_string() {
     std::string content_string;
@@ -110,7 +110,7 @@ std::string uop_package_t::content_to_string() {
     content_string = content_string + " ]";
 
     return content_string;
-};
+}
 /// Convert Instruction variables into String
 std::string uop_package_t::content_to_string2() {
     std::string content_string;
@@ -123,4 +123,4 @@ std::string uop_package_t::content_to_string2() {
     content_string = content_string + " Ready At" + utils_t::uint64_to_string(this->readyAt);
 
     return content_string;
-};
+}

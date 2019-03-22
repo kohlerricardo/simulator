@@ -5,7 +5,7 @@ this->L1_data_cache = NULL;
 this->L2_data_cache = NULL;
 this->LLC_data_cache = NULL;
 this->inst_cache = NULL;
-};
+}
 cache_manager_t::~cache_manager_t()=default;
 void cache_manager_t::allocate(){
     //Allocate I$
@@ -48,7 +48,7 @@ void cache_manager_t::allocate(){
     this->prefetcher = new prefetcher_t;
     this->prefetcher->allocate();
     #endif
-};
+}
 uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instructionAddress){
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
@@ -58,10 +58,21 @@ uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instr
     if((index_inst == POSITION_FAIL)||(index_l2==POSITION_FAIL)||(index_llc==POSITION_FAIL)){
         ERROR_PRINTF("Error on generate index to access array")
     }
+
+    #if CACHE_MANAGER_DEBUG
+        if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+            ORCS_PRINTF("Indexes [%d] [%d] [%d]\n",index_inst,index_l2,index_llc);
+        }
+    #endif
     uint32_t hit = this->inst_cache[index_inst].read(instructionAddress,ttc);
     //if hit, add Searched instructions. Must be equal inst cache hit 
     latency_request+=ttc;
     if(hit==HIT){
+        #if CACHE_MANAGER_DEBUG
+            if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+                ORCS_PRINTF("HIT L1 Inst ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
+            }
+        #endif
         this->inst_cache[index_inst].add_cacheAccess();
         this->inst_cache[index_inst].add_cacheHit();
         this->add_instructionSearched();    
@@ -77,6 +88,11 @@ uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instr
         latency_request+=ttc;        
         // ==========
         if(hit == HIT){
+            #if CACHE_MANAGER_DEBUG
+                if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+                    ORCS_PRINTF("HIT L2 ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
+                }
+            #endif
             // L2 HIT
             //========================================= 
             this->L2_data_cache[index_l2].add_cacheAccess();
@@ -95,6 +111,11 @@ uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instr
             hit = this->LLC_data_cache[index_llc].read(instructionAddress,ttc);
             latency_request+=ttc;    
             if(hit == HIT){
+                #if CACHE_MANAGER_DEBUG
+                    if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+                        ORCS_PRINTF("HIT LLC ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
+                    }
+                #endif
             // LLC HIT
             //========================================= 
             this->LLC_data_cache[index_llc].add_cacheAccess();
@@ -111,7 +132,9 @@ uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instr
                 orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
                 latency_request+=ttc;
                 #if CACHE_MANAGER_DEBUG
-                    // ORCS_PRINTF("Latency LLC MISS %u\n",latency_request)
+                    if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+                        ORCS_PRINTF("HIT LLC ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
+                    }
                 #endif
                 // ====================
                 // Install cache lines
@@ -140,11 +163,11 @@ uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instr
         }
     }
     return latency_request;
-};
+}
 uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
     #if CACHE_MANAGER_DEBUG
     if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
-            ORCS_PRINTF("===================================\n")
+            ORCS_PRINTF("============== SEARCH DATA =====================\n")
             ORCS_PRINTF("Global_Cycle %lu\n",orcs_engine.get_global_cycle())
 		}
 
@@ -262,7 +285,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
         }
     }
     return latency_request;
-};
+}
 uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
 
     uint32_t ttc = 0;
@@ -357,10 +380,17 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
         }
     }
     return latency_request;
-};
+}
 
 
 uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
+        #if CACHE_MANAGER_DEBUG
+            if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+                ORCS_PRINTF("============== SEARCH_EMC_DATA =====================\n")
+                ORCS_PRINTF("Global_Cycle %lu\n",orcs_engine.get_global_cycle())
+            }
+
+        #endif
     uint32_t ttc = 0;
     uint32_t latency_request = 0;
     
@@ -373,6 +403,11 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
     latency_request+=ttc;
     //EMC data cache Hit
     if(hit==HIT){
+        #if CACHE_MANAGER_DEBUG
+            if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+                ORCS_PRINTF("HIT L1_EMC ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
+            }
+        #endif
         //========================================= 
         orcs_engine.memory_controller->data_cache->add_cacheAccess();
         orcs_engine.memory_controller->data_cache->add_cacheHit();
@@ -386,7 +421,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
 
         //========================================= 
         // Predict Access Direct RAM
-        uint64_t index = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,mob_line->emc_opcode_ptr->uop.opcode_address,0,orcs_engine.memory_controller->emc->mact_bits_mask);
+        uint64_t index = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,mob_line->emc_opcode_ptr->uop.opcode_address>>2,0,orcs_engine.memory_controller->emc->mact_bits_mask);
         uint8_t ram=0;
         if(orcs_engine.memory_controller->emc->memory_access_counter_table[index]>=MACT_THRESHOLD){
             //add statistics do preditor				
@@ -398,7 +433,12 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
         //========================================= 
         hit = this->LLC_data_cache[index_llc].read(mob_line->memory_address,ttc); 
         if(hit == HIT){ 
-            latency_request+=(ttc*0.2);
+        latency_request+=ttc;
+        #if CACHE_MANAGER_DEBUG
+            if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+                ORCS_PRINTF("HIT LLC_FROM_EMC ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
+            }
+        #endif
             // ===================================
             // marcando access llc emc
             orcs_engine.memory_controller->emc->add_access_LLC_Hit();
@@ -406,14 +446,18 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             if(ram==1){ orcs_engine.memory_controller->emc->add_incorrect_prediction_ram_access();}
             orcs_engine.memory_controller->emc->update_mact_entry(mob_line->opcode_address,-1);
         }else{
+            latency_request += orcs_engine.memory_controller->requestDRAM();
+            #if CACHE_MANAGER_DEBUG
+                if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+                    ORCS_PRINTF("To RAM ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
+                }
+            #endif
             orcs_engine.memory_controller->emc->add_incorrect_prediction_LLC_access();
             orcs_engine.memory_controller->emc->update_mact_entry(mob_line->opcode_address,1);
             // ===================================
             orcs_engine.memory_controller->emc->add_access_LLC_Miss();
-            latency_request += orcs_engine.memory_controller->requestDRAM();
             mob_line->waiting_DRAM = true;
             mob_line->emc_generate_miss=true;
-            
             // ===================================
             linha_t *linha_llc = this->LLC_data_cache[index_llc].installLine(mob_line->memory_address,latency_request);
             linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,latency_request);
@@ -425,32 +469,32 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
         }
     }
     return latency_request;
-};
+}
 int32_t cache_manager_t::generate_index_array(uint32_t processor_id,cacheLevel_t level){
     switch (level){
-    case INST_CACHE:{
-        return processor_id & (SIZE_OF_L1_CACHES_ARRAY-1);
-    }
-    break;
-    case L1:{
-        return processor_id & (SIZE_OF_L1_CACHES_ARRAY-1);
-    }    
-    break;
-    case L2:{
-        return processor_id & (SIZE_OF_L2_CACHES_ARRAY-1);
-    }    
-    break;
-    case LLC:{
-        return processor_id & (SIZE_OF_LLC_CACHES_ARRAY-1);
-    }    
-    break;
-    case EMC_DATA_CACHE:{
-        ERROR_PRINTF("Invalid call generate index");
+        case INST_CACHE:{
+            return processor_id & (SIZE_OF_L1_CACHES_ARRAY-1);
         }
-    break;
+        break;
+        case L1:{
+            return processor_id & (SIZE_OF_L1_CACHES_ARRAY-1);
+        }    
+        break;
+        case L2:{
+            return processor_id & (SIZE_OF_L2_CACHES_ARRAY-1);
+        }    
+        break;
+        case LLC:{
+            return processor_id & (SIZE_OF_LLC_CACHES_ARRAY-1);
+        }    
+        break;
+        case EMC_DATA_CACHE:{
+            ERROR_PRINTF("Invalid call generate index");
+            }
+        break;
     }
     return POSITION_FAIL;
-};
+}
 void cache_manager_t::statistics(uint32_t core_id){
     bool close = false;
     FILE *output = stdout;
@@ -476,4 +520,4 @@ void cache_manager_t::statistics(uint32_t core_id){
     #if PREFETCHER_ACTIVE
     this->prefetcher->statistics();
     #endif
-};
+}

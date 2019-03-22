@@ -49,6 +49,18 @@ class linha_t
             this->linha_ptr_emc = NULL;
             #endif
         }
+        std::string content_to_string(){
+            std::string content_string;
+            content_string = "";
+            
+            content_string = content_string + " Valid:" + utils_t::uint32_to_string(this->valid);
+            content_string = content_string + " TAG:" + utils_t::uint64_to_string(this->tag);
+            content_string = content_string + " Prefetched:" + utils_t::uint32_to_string(this->prefetched);
+            content_string = content_string + " LRU" + utils_t::big_uint64_to_string(this->lru);
+            content_string = content_string + " readyAt" + utils_t::big_uint64_to_string(this->readyAt);
+
+            return content_string;
+        }
 };
 
 #endif // LINHA_H

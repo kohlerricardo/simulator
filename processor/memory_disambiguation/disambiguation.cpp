@@ -26,13 +26,13 @@ void desambiguation_t::allocate(){
         this->disambiguator = new disambiguation_hashed_t;
         this->disambiguator->allocate();
     #endif
-};
+}
 void desambiguation_t::make_memory_dependences(memory_order_buffer_line_t *mob_line){
     this->disambiguator->make_memory_dependencies(mob_line);
-};
+}
 void desambiguation_t::solve_memory_dependences(memory_order_buffer_line_t *mob_line){
     this->disambiguator->solve_memory_dependencies(mob_line);
-};
+}
 void desambiguation_t::statistics(){
     bool close = false;
     FILE *output = stdout;
@@ -54,4 +54,4 @@ void desambiguation_t::statistics(){
             this->disambiguator->statistics();
         #endif
     }
-};
+}

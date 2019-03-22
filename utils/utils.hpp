@@ -33,7 +33,7 @@ class utils_t {
             if (variable) {
                 delete variable;
             }
-        };
+        }
         // ====================================================================
         template <class TYPE>
         static void template_delete_array(TYPE *array) {
@@ -41,7 +41,7 @@ class utils_t {
             if (array != NULL) {
                 delete[] array;
             }
-        };
+        }
         // ====================================================================
         template <class TYPE>
         static void template_delete_matrix(TYPE **matrix, uint32_t count) {
@@ -52,7 +52,7 @@ class utils_t {
                 }
                 delete[] matrix;
             }
-        };
+        }
 
 
         // ====================================================================
@@ -62,7 +62,7 @@ class utils_t {
             /// Allocate
             TYPE *var = new TYPE[count];
             return var;
-        };
+        }
 
         // ====================================================================
         template <class TYPE>
@@ -74,9 +74,9 @@ class utils_t {
             /// Initialize
             for (uint32_t position = 0; position < count; position++) {
                 var[position] = init;
-            };
+            }
             return var;
-        };
+        }
 
         // ====================================================================
         template <class TYPE>
@@ -92,9 +92,9 @@ class utils_t {
             /// Distribute over the positions
             for (uint32_t line = 1; line < count_x; line++) {
                 var[line] = var[0] + (count_y * line);
-            };
+            }
             return var;
-        };
+        }
 
         // ====================================================================
         template <class TYPE>
@@ -110,13 +110,13 @@ class utils_t {
             /// Initialize
             for (uint32_t position = 0; position < count_x*count_y; position++) {
                 var[0][position] = init;
-            };
+            }
             /// Distribute over the positions
             for (uint32_t line = 1; line < count_x; line++) {
                 var[line] = var[0] + (count_y * line);
-            };
+            }
             return var;
-        };
+        }
 
         static void get_path(char *path, char *file_path);
 

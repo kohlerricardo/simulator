@@ -9,8 +9,7 @@ orcs_engine_t::orcs_engine_t() {
 	this->memory_controller = NULL;
 	this->is_warmup =  false;
 	this->instruction_warmup_counter =0;
-};
-
+}
 // =====================================================================
 void orcs_engine_t::allocate() {
 	// Statistics Time
@@ -23,7 +22,7 @@ void orcs_engine_t::allocate() {
 	this->branchPredictor = new branch_predictor_t[NUMBER_OF_PROCESSORS];
 	this->cacheManager = new cache_manager_t;
 	this->memory_controller = new memory_controller_t;
-};
+}
 bool orcs_engine_t::get_simulation_alive(){
 	for(uint16_t cpu=0;cpu<NUMBER_OF_PROCESSORS;cpu++){
 		if (this->processor[cpu].isBusy()) {
@@ -31,7 +30,7 @@ bool orcs_engine_t::get_simulation_alive(){
         }
 	}
 	return FAIL;
-};
+}
 void orcs_engine_t::global_reset_statistics(){
 	for(uint8_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
 	{

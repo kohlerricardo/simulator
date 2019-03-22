@@ -65,8 +65,6 @@ class circular_buffer_t {
         void pop_push();
         void print_all();
 };
-
-
 // ============================================================================
 template <class CB_TYPE>
 circular_buffer_t<CB_TYPE>::circular_buffer_t() {
@@ -76,7 +74,7 @@ circular_buffer_t<CB_TYPE>::circular_buffer_t() {
     this->capacity = 0;
 
     this->data = NULL;
-};
+}
 
 // ============================================================================
 template <class CB_TYPE>
@@ -84,7 +82,7 @@ circular_buffer_t<CB_TYPE>::~circular_buffer_t() {
     if (this->data != NULL) {
         delete []data;
     }
-};
+}
 
 // ============================================================================
 template <class CB_TYPE>
@@ -93,7 +91,7 @@ void circular_buffer_t<CB_TYPE>::allocate(uint32_t elements) {
     this->data = new CB_TYPE[this->capacity];
 
     ERROR_ASSERT_PRINTF(this->data != NULL, "Could not allocate the circular buffer size.\n")
-};
+}
 
 // ============================================================================
 template <class CB_TYPE>
@@ -106,31 +104,31 @@ inline CB_TYPE& circular_buffer_t<CB_TYPE>::operator[](uint32_t index) {
         position -= this->capacity;
 
     return this->data[position];
-};
+}
 
 // ============================================================================
 template <class CB_TYPE>
 inline uint32_t circular_buffer_t<CB_TYPE>::get_size() {
     return this->size; 
-};
+}
 
 // ============================================================================
 template <class CB_TYPE>
 inline uint32_t circular_buffer_t<CB_TYPE>::get_capacity() {
     return this->capacity;
-};
+}
 
 // ============================================================================
 template <class CB_TYPE>
 inline bool circular_buffer_t<CB_TYPE>::is_full() {
     return (this->size == this->capacity);
-};
+}
 
 // ============================================================================
 template <class CB_TYPE>
 inline bool circular_buffer_t<CB_TYPE>::is_empty() {
     return (this->size == 0);
-};
+}
 
 // ============================================================================
 /// Insert into the newest position
@@ -150,7 +148,7 @@ int32_t circular_buffer_t<CB_TYPE>::push_back(const CB_TYPE& new_element) {
     }
 
     return virtual_position;
-};
+}
 
 // ============================================================================
 /// Obtain the oldest package inside the circular buffer
@@ -163,7 +161,7 @@ inline CB_TYPE* circular_buffer_t<CB_TYPE>::front() {
     else {
         return &this->data[beg_index];
     }
-};
+}
 
 // ============================================================================
 /// Obtain the newest package inside the circular buffer
@@ -180,7 +178,7 @@ inline CB_TYPE* circular_buffer_t<CB_TYPE>::back() {
 
         return &this->data[position];
     }
-};
+}
 
 // ============================================================================
 /// Remove the oldest element
@@ -194,7 +192,7 @@ void circular_buffer_t<CB_TYPE>::pop_front() {
         if (this->beg_index >= this->capacity)
             this->beg_index = 0;
     }
-};
+}
 
 // ============================================================================
 /// Remove the oldest element and insert it into the newest position
@@ -212,7 +210,7 @@ void circular_buffer_t<CB_TYPE>::pop_push() {
     this->end_index++;
     if (this->end_index >= this->capacity)
         this->end_index = 0;
-};
+}
 // ==============================================================================
 //Imprime todo o circular buffer, debug only
 
@@ -222,7 +220,7 @@ void circular_buffer_t<CB_TYPE>::print_all() {
     {
        ORCS_PRINTF("%s\n",this->data[i].content_to_string().c_str())
     }
-};
+}
 
 
 #endif  // _CIRCULAR_BUFFER_HPP_

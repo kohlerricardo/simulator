@@ -2,7 +2,7 @@ class piecewise_t{
 
 public:
     int8_t ***W;
-    uint32_t *GA;
+    uint64_t *GA;
     uint8_t *GHR;
     float saida;
     void allocate();

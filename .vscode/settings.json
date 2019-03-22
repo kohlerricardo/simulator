@@ -42,5 +42,6 @@
         "unistd.h": "c",
         "types.h": "c"
     },
-    "python.linting.pylintEnabled": false
+    "python.linting.pylintEnabled": false,
+    "python.pythonPath": "/usr/bin/python"
 }

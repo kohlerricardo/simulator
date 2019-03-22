@@ -75,7 +75,6 @@ class cache_manager_t;
 //  =========================================//
 template<class CB_TYPE> class circular_buffer_t;
 class utils_t;
-class sanity_test_t;
 class priority_memory_access_t;
 //  =========================================//
 // Prefetcher Classes
@@ -153,7 +152,6 @@ extern orcs_engine_t orcs_engine;
 //  =========================================//
 #include "./utils/circular_buffer.hpp"
 #include "./utils/utils.hpp"
-#include "./utils/sanityTest.hpp"
 //  =========================================//
 // Core Includes
 //  =========================================//

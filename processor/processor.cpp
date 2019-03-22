@@ -32,7 +32,7 @@ processor_t::processor_t()
 	this->counter_make_dep_chain = 0;
 	this->rrt = NULL;
 	// =============== EMC Module ======================
-};
+}
 processor_t::~processor_t()
 {
 	//Memory structures
@@ -74,7 +74,7 @@ processor_t::~processor_t()
 	utils_t::template_delete_array<register_remapping_table_t>(this->rrt);
 #endif
 	// =====================================================================
-};
+}
 // =====================================================================
 void processor_t::allocate()
 {
@@ -189,14 +189,14 @@ void processor_t::allocate()
 	// =====================================================================
 	this->cycle_start_mechanism = 0;
 	// =====================================================================
-};
+}
 // =====================================================================
 bool processor_t::isBusy(){
 	return (this->traceIsOver == false ||
 			!this->fetchBuffer.is_empty() ||
 			!this->decodeBuffer.is_empty() ||
 			this->robUsed != 0);
-};
+}
 
 // ======================================
 // Require a position to insert on ROB
@@ -217,7 +217,7 @@ int32_t processor_t::searchPositionROB(){
 		}
 	}
 	return position;
-};
+}
 // ======================================
 // Remove the Head of the reorder buffer
 // The Reorder Buffer behavior is a Circular FIFO
@@ -232,7 +232,7 @@ void processor_t::removeFrontROB(){
 	{
 		this->robStart = 0;
 	}
-};
+}
 // ============================================================================
 // get position on MOB read.
 // MOB read is a circular buffer
@@ -251,7 +251,7 @@ int32_t processor_t::search_position_mob_read(){
 		}
 	}
 	return position;
-};
+}
 // ============================================================================
 // remove front mob read on commit
 // ============================================================================
@@ -272,7 +272,7 @@ void processor_t::remove_front_mob_read(){
 	{
 		this->memory_order_buffer_read_start = 0;
 	}
-};
+}
 // ============================================================================
 // get position on MOB write.
 // MOB read is a circular buffer
@@ -291,7 +291,7 @@ int32_t processor_t::search_position_mob_write(){
 		}
 	}
 	return position;
-};
+}
 // ============================================================================
 // remove front mob read on commit
 // ============================================================================
@@ -313,7 +313,7 @@ void processor_t::remove_front_mob_write(){
 	{
 		this->memory_order_buffer_write_start = 0;
 	}
-};
+}
 // ============================================================================
 
 
@@ -351,6 +351,11 @@ void processor_t::fetch(){
 			this->traceIsOver = true;
 			break;
 		}
+		#if FETCH_DEBUG
+			
+				ORCS_PRINTF("Opcode Fetched %s\n", operation.content_to_string2().c_str())
+			
+		#endif
 		//============================
 		//add control variables
 		//============================
@@ -359,6 +364,7 @@ void processor_t::fetch(){
 		//============================
 		///Solve Branch
 		//============================
+
 		if (this->hasBranch)
 		{
 			//solve
@@ -367,7 +373,7 @@ void processor_t::fetch(){
 			this->hasBranch = false;
 			uint32_t ttc = orcs_engine.cacheManager->searchInstruction(this->processor_id,operation.opcode_address);
 			// ORCS_PRINTF("ready after wrong branch %lu\n",this->get_stall_wrong_branch()+ttc)
-			operation.updatePackageReady(stallWrongBranch + ttc);
+			operation.updatePackageReady(FETCH_LATENCY+stallWrongBranch + ttc);
 			updated = true;
 			this->previousBranch.package_clean();
 			// ORCS_PRINTF("Stall Wrong Branch %u\n",stallWrongBranch)
@@ -392,9 +398,18 @@ void processor_t::fetch(){
 		{
 			uint32_t ttc = orcs_engine.cacheManager->searchInstruction(this->processor_id,operation.opcode_address);
 			this->fetchBuffer.back()->updatePackageReady(FETCH_LATENCY + ttc);
+			
 		}
 	}
-};
+		// #if FETCH_DEBUG
+		// 	if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+		// 		for(uint32_t i = 0;i < this->fetchBuffer.size;i++){
+		// 			ORCS_PRINTF("Opcode list-> %s\n", this->fetchBuffer[i].content_to_string2().c_str())
+
+		// 		}
+		// 	}
+		// #endif
+}
 // ============================================================================
 /*
 	===========================
@@ -424,6 +439,9 @@ void processor_t::decode(){
 
 	#if DECODE_DEBUG
 		ORCS_PRINTF("Decode Stage\n")
+		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+				ORCS_PRINTF("Opcode to decode %s\n", this->fetchBuffer.front()->content_to_string2().c_str())
+			}
 	#endif
 	uop_package_t new_uop;
 	int32_t statusInsert = POSITION_FAIL;
@@ -442,9 +460,7 @@ void processor_t::decode(){
 		}
 		ERROR_ASSERT_PRINTF(this->decodeCounter == this->fetchBuffer.front()->opcode_number, "Trying decode out-of-order");
 		this->decodeCounter++;
-	#if DECODE_DEBUG
-			ORCS_PRINTF("Opcode to decode %s\n", this->fetchBuffer.front()->content_to_string().c_str())
-	#endif
+
 		// =====================
 		//Decode Read 1
 		// =====================
@@ -680,7 +696,7 @@ void processor_t::decode(){
 		}
 		this->fetchBuffer.pop_front();
 	}
-};
+}
 
 // ============================================================================
 void processor_t::update_registers(reorder_buffer_line_t *new_rob_line){
@@ -722,7 +738,7 @@ void processor_t::update_registers(reorder_buffer_line_t *new_rob_line){
 
 		this->register_alias_table[write_register] = new_rob_line;
 	}
-};
+}
 // ============================================================================
 void processor_t::rename(){
 	#if RENAME_DEBUG
@@ -1400,7 +1416,7 @@ memory_order_buffer_line_t* processor_t::get_next_op_load(){
 	}
 
 	return NULL;
-};
+}
 // ============================================================================
 uint32_t processor_t::mob_read(){
 	#if MOB_DEBUG
@@ -1411,13 +1427,16 @@ uint32_t processor_t::mob_read(){
 			ORCS_PRINTF("MOB Read Start %u\n",this->memory_order_buffer_read_start)
 			ORCS_PRINTF("MOB Read End %u\n",this->memory_order_buffer_read_end)
 			ORCS_PRINTF("MOB Read Used %u\n",this->memory_order_buffer_read_used)
-
-			memory_order_buffer_line_t::printAllOrder(this->memory_order_buffer_read,MOB_READ,this->memory_order_buffer_read_start,this->memory_order_buffer_read_used);
-		}
-		if(oldest_read_to_send!=NULL){
-			if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
-				ORCS_PRINTF("MOB Read Atual %s\n",this->oldest_read_to_send->content_to_string().c_str())
-			}		
+			#if PRINT_MOB
+				if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+					memory_order_buffer_line_t::printAllOrder(this->memory_order_buffer_read,MOB_READ,this->memory_order_buffer_read_start,this->memory_order_buffer_read_used);
+				}
+			#endif
+			if(oldest_read_to_send!=NULL){
+				if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
+					ORCS_PRINTF("MOB Read Atual %s\n",this->oldest_read_to_send->content_to_string().c_str())
+				}		
+			}
 		}
 	#endif
 	if(this->oldest_read_to_send == NULL){
@@ -1490,7 +1509,7 @@ uint32_t processor_t::mob_read(){
 		}
 	#endif
 	return OK;
-}; //end method
+} //end method
 // ============================================================================
 memory_order_buffer_line_t* processor_t::get_next_op_store(){
 		uint32_t i = this->memory_order_buffer_write_start;
@@ -1504,7 +1523,7 @@ memory_order_buffer_line_t* processor_t::get_next_op_store(){
 			return &this->memory_order_buffer_write[i];
 		}
 	return NULL;
-};
+}
 // ============================================================================
 uint32_t processor_t::mob_write(){
 	#if MOB_DEBUG
@@ -1514,12 +1533,16 @@ uint32_t processor_t::mob_write(){
 			ORCS_PRINTF("MOB Write Start %u\n",this->memory_order_buffer_write_start)
 			ORCS_PRINTF("MOB Write End %u\n",this->memory_order_buffer_write_end)
 			ORCS_PRINTF("MOB Write Used %u\n",this->memory_order_buffer_write_used)
-			memory_order_buffer_line_t::printAllOrder(this->memory_order_buffer_write,MOB_WRITE,this->memory_order_buffer_write_start,this->memory_order_buffer_write_used);
-		}
-		if(this->oldest_write_to_send!=NULL){
-			if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
-				ORCS_PRINTF("MOB write Atual %s\n",this->oldest_write_to_send->content_to_string().c_str())
-			}		
+			#if PRINT_MOB
+				if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+					memory_order_buffer_line_t::printAllOrder(this->memory_order_buffer_write,MOB_WRITE,this->memory_order_buffer_write_start,this->memory_order_buffer_write_used);
+				}
+			#endif
+			if(this->oldest_write_to_send!=NULL){
+				if(orcs_engine.get_global_cycle() > WAIT_CYCLE){
+					ORCS_PRINTF("MOB write Atual %s\n",this->oldest_write_to_send->content_to_string().c_str())
+				}		
+			}
 		}
 	#endif
 	if(this->oldest_write_to_send==NULL){
@@ -1590,7 +1613,7 @@ uint32_t processor_t::mob_write(){
 			}
 		#endif
 	return OK;
-};
+}
 // ============================================================================
 void processor_t::commit(){
 	#if COMMIT_DEBUG
@@ -1599,7 +1622,7 @@ void processor_t::commit(){
 			ORCS_PRINTF("=========================================================================\n")
 			ORCS_PRINTF("========== Commit Stage ==========\n")
 			ORCS_PRINTF("Cycle %lu\n", orcs_engine.get_global_cycle())
-			ORCS_PRINTF("Rob Head %s\n", this->reorderBuffer[this->robStart].content_to_string().c_str())
+			this->print_ROB();
 			ORCS_PRINTF("==================================\n")
 		}
 	#endif
@@ -1817,7 +1840,7 @@ void processor_t::solve_registers_dependency(reorder_buffer_line_t *rob_line){
 				break;
 			}
 		}
-};
+}
 // ============================================================================
 bool processor_t::verify_uop_on_emc(reorder_buffer_line_t *rob_line){
 	uint16_t pos = orcs_engine.memory_controller->emc[this->processor_id].uop_buffer_start;
@@ -1832,12 +1855,12 @@ bool processor_t::verify_uop_on_emc(reorder_buffer_line_t *rob_line){
 		if(pos>=EMC_UOP_BUFFER)pos=0;
 	}
 	return is_present;
-};
+}
 // ============================================================================
 bool processor_t::isRobHead(reorder_buffer_line_t *rob_line){
 	// ORCS_PRINTF("rob_line: %p , rob Head: %p\n",rob_line,&this->reorderBuffer[robStart])
 	return (rob_line == &this->reorderBuffer[robStart]);
-};
+}
 // =====================================================================
 void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 	// ORCS_PRINTF("Miss Original %s\n", rob_line->content_to_string().c_str())
@@ -1931,7 +1954,7 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			#endif
 			// this->add_started_emc_execution();
 		}
-};
+}
 // =====================================================================
 // @return return the next element to be catch the dependences
 int32_t processor_t::get_next_uop_dependence(){
@@ -1944,7 +1967,7 @@ int32_t processor_t::get_next_uop_dependence(){
 		}
 	}
 	return position;
-};
+}
 void processor_t::print_RRT(){
 	for(uint32_t i =0;i<EMC_REGISTERS;i++){
 		this->rrt[i].print_rrt_entry();
@@ -1978,7 +2001,7 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 		int32_t pos_lsq = memory_order_buffer_line_t::find_free(orcs_engine.memory_controller->emc[this->processor_id].unified_lsq, EMC_LSQ_SIZE);
 		if(pos_lsq == POSITION_FAIL){
 			return POSITION_FAIL;
-		};
+		}
 		lsq = &orcs_engine.memory_controller->emc[this->processor_id].unified_lsq[pos_lsq];
 		// ===========================================================
 		
@@ -2068,7 +2091,7 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 			}
 		#endif
 		return OK;
-};
+}
 // =======================================================================
 /*
  @1 write register to be searched in rrt
@@ -2085,7 +2108,7 @@ int32_t processor_t::search_register(int32_t write_register){
 		}
 	}
 	return reg_pos;
-};
+}
 // =======================================================================
 /*
  @1 write register to be allocated in rrt
@@ -2104,7 +2127,7 @@ int32_t processor_t::allocate_new_register(int32_t write_register){
 		}
 	}
 	return reg_pos;
-};
+}
 // ============================================================================
 /*
 Clean register remapping table
@@ -2114,7 +2137,7 @@ void processor_t::clean_rrt(){
 	{
 		this->rrt[i].package_clean();
 	}
-};
+}
 // ============================================================================
 /*
 Verify register spill to include stores on chain;
@@ -2140,7 +2163,7 @@ bool processor_t::verify_spill_register(reorder_buffer_line_t *rob_line){
 		}
 	}
 	return spill;
-};
+}
 // ============================================================================
 // @return true if no loads operation is gt 1
 bool processor_t::verify_dependent_loads(){
@@ -2163,7 +2186,7 @@ bool processor_t::verify_dependent_loads(){
 	// this->start_emc_module=false;
 	// this->rob_buffer.clear();
 	return (loads > 1) ? true : false; //if compacto
-};
+}
 // ============================================================================
 // @1 receive uop to verify if registers wait is on RRT
 // @return number of registers on RRT
@@ -2181,16 +2204,16 @@ uint32_t processor_t::count_registers_rrt(uop_package_t uop){
 		}
 	}
 	return registers_on_rrt;
-};
+}
 // ============================================================================
 void processor_t::update_counter_emc(int32_t value){
 	this->counter_activate_emc+=value;
 	if(this->counter_activate_emc>7){
-		this->counter_activate_emc=0;	
+		this->counter_activate_emc=7;	
 	}else if(this->counter_activate_emc<0){
-		this->counter_activate_emc=7;
+		this->counter_activate_emc=0;
 	}
-};
+}
 // ============================================================================
 void processor_t::cancel_execution_emc(){
 	for (uint8_t i = 0; i < EMC_UOP_BUFFER; i++)
@@ -2218,7 +2241,7 @@ void processor_t::cancel_execution_emc(){
 
 	//conferindo estruturas -> comentar futuramente
 	// orcs_engine.memory_controller->emc[this->processor_id].print_structures();
-};
+}
 // ============================================================================
 bool processor_t::already_exists(reorder_buffer_line_t *candidate){
 	for (uint32_t i = 0; i <this->rob_buffer.size(); i++)
@@ -2230,7 +2253,7 @@ bool processor_t::already_exists(reorder_buffer_line_t *candidate){
 		}
 	}
 	return false;
-};
+}
 // ============================================================================
 bool processor_t::verify_ambiguation(memory_order_buffer_line_t *mob_line){
 	uint32_t pos = this->memory_order_buffer_write_start;
@@ -2246,7 +2269,7 @@ bool processor_t::verify_ambiguation(memory_order_buffer_line_t *mob_line){
 			pos=0;
 	}
 	return false;
-};
+}
 // ============================================================================
 bool processor_t::get_all_mem_req(){
 	uint32_t sum_num_req=0;
@@ -2284,7 +2307,8 @@ void processor_t::statistics(){
 
 			#endif
 		utils_t::largestSeparator(output);
-		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", this->get_instruction_per_cycle());	
+		fprintf(output, "Instruction_Per_Cycle_After_Warmup: %1.6lf\n", this->get_instruction_per_cycle());	
+		fprintf(output, "Instruction_Per_Cycle_Before_Warmup: %1.6lf\n", (float)this->get_warmup_last_opcode()/(float)this->get_warmup_reset_cycle());	
 		fprintf(output, "MPKI: %lf\n", (float)orcs_engine.cacheManager->LLC_data_cache[orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC)].get_cacheMiss()/((float)this->fetchCounter/1000));
 		utils_t::largestSeparator(output);
 			#if EMC_ACTIVE
@@ -2306,7 +2330,7 @@ void processor_t::statistics(){
 			}
 		if(close) fclose(output);
 		this->desambiguator->statistics();
-};
+}
 // ============================================================================
 void processor_t::printConfiguration(){
 	FILE *output = fopen(orcs_engine.output_file_name, "a+");
@@ -2473,7 +2497,7 @@ void processor_t::clock(){
 			// ORCS_PRINTF("Opcodes Processed %lu",orcs_engine.trace_reader[this->processor_id].get_fetch_instructions())
 		}
 	#endif
-};
+}
 
 void processor_t::reset_statistics(){
 		this->set_registerWrite(0);

@@ -3,13 +3,13 @@
 prefetcher_t::prefetcher_t(){
     this->prefetcher = NULL;
     //ctor
-};
+}
 
 prefetcher_t::~prefetcher_t()
 {
     if(this->prefetcher!=NULL) delete &this->prefetcher;
     //dtor
-};
+}
 void prefetcher_t::allocate(){
     this->set_latePrefetches(0);
     this->set_usefulPrefetches(0);
@@ -21,7 +21,7 @@ void prefetcher_t::allocate(){
     #endif  
     // List of cycle completation prefetchs. Allows control issue prefetchers
     this->prefetch_waiting_complete.reserve(PARALLEL_PREFETCH); 
-};
+}
 // ================================================================
 // @mobLine - references to index the prefetch
 // @*cache - cache to be instaled line prefetched
@@ -51,7 +51,7 @@ void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache)
             this->prefetch_waiting_complete.push_back(cycle+RAM_LATENCY);
         }
     }
-};
+}
 void prefetcher_t::statistics(){
     bool close = false;
     FILE *output = stdout;
@@ -69,7 +69,7 @@ void prefetcher_t::statistics(){
             utils_t::largeSeparator(output);
         }
 	if(close) fclose(output);
-}; 
+} 
 void prefetcher_t::reset_statistics(){
     this->set_latePrefetches(0);
     this->set_usefulPrefetches(0);

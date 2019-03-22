@@ -43,9 +43,9 @@ class trace_reader_t {
         bool trace_next_dynamic(uint32_t *next_bbl);
         bool trace_next_memory(uint64_t *next_address, uint32_t *operation_size, bool *is_read);
         bool trace_fetch(opcode_package_t *m);
-        INSTANTIATE_GET_SET(uint64_t,fetch_instructions);
-        INSTANTIATE_GET_SET(uint64_t,trace_opcode_max);
-        INSTANTIATE_GET_SET(uint64_t,processor_id);
+        INSTANTIATE_GET_SET(uint64_t,fetch_instructions)
+        INSTANTIATE_GET_SET(uint64_t,trace_opcode_max)
+        INSTANTIATE_GET_SET(uint64_t,processor_id)
         uint64_t get_trace_size();///get total of opcodes
 };
 
