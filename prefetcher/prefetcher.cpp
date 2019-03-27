@@ -69,10 +69,4 @@ void prefetcher_t::statistics(){
             utils_t::largeSeparator(output);
         }
 	if(close) fclose(output);
-} 
-void prefetcher_t::reset_statistics(){
-    this->set_latePrefetches(0);
-    this->set_usefulPrefetches(0);
-    this->set_latePrefetches(0);
-    this->set_totalCycleLate(0);
 }

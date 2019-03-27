@@ -274,7 +274,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 linha_t *linha_emc = NULL;
                 linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,RAM_LATENCY);
                 linha_llc->linha_ptr_emc=linha_emc;
-                linha_emc->linha_ptr_llc=linha_llc;
+                linha_emc[mob_line->processor_id].linha_ptr_llc=linha_llc;
                 linha_emc=NULL;
                 #endif
                 //NULLING POINTERS <LEAK MEMORY>
@@ -417,18 +417,18 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
         //========================================= 
         orcs_engine.memory_controller->data_cache->add_cacheAccess();
         orcs_engine.memory_controller->data_cache->add_cacheMiss();
-        orcs_engine.memory_controller->emc->add_access_LLC();
+        orcs_engine.memory_controller->emc[mob_line->processor_id].add_access_LLC();
 
         //========================================= 
         // Predict Access Direct RAM
-        uint64_t index = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,mob_line->emc_opcode_ptr->uop.opcode_address>>2,0,orcs_engine.memory_controller->emc->mact_bits_mask);
-        uint8_t ram=0;
-        if(orcs_engine.memory_controller->emc->memory_access_counter_table[index]>=MACT_THRESHOLD){
-            //add statistics do preditor				
-            orcs_engine.memory_controller->emc->add_direct_ram_access();
-            ram=1;
+        uint64_t index = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,mob_line->emc_opcode_ptr->uop.opcode_address>>2,0,orcs_engine.memory_controller->emc[mob_line->processor_id].mact_bits_mask);
+        if(orcs_engine.memory_controller->emc[mob_line->processor_id].memory_access_counter_table[index]>=MACT_THRESHOLD){
+            //add statistics do preditor		
+            mob_line->emc_predict_access_ram = true;
+            orcs_engine.memory_controller->emc[mob_line->processor_id].add_direct_ram_access();
         }else{
-            orcs_engine.memory_controller->emc->add_emc_llc_access();
+            mob_line->emc_predict_access_ram = false;
+            orcs_engine.memory_controller->emc[mob_line->processor_id].add_emc_llc_access();
         }
         //========================================= 
         hit = this->LLC_data_cache[index_llc].read(mob_line->memory_address,ttc); 
@@ -441,10 +441,8 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
         #endif
             // ===================================
             // marcando access llc emc
-            orcs_engine.memory_controller->emc->add_access_LLC_Hit();
+            orcs_engine.memory_controller->emc[mob_line->processor_id].add_access_LLC_Hit();
             // ===================================
-            if(ram==1){ orcs_engine.memory_controller->emc->add_incorrect_prediction_ram_access();}
-            orcs_engine.memory_controller->emc->update_mact_entry(mob_line->opcode_address,-1);
         }else{
             latency_request += orcs_engine.memory_controller->requestDRAM();
             #if CACHE_MANAGER_DEBUG
@@ -452,10 +450,8 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
                     ORCS_PRINTF("To RAM ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
                 }
             #endif
-            orcs_engine.memory_controller->emc->add_incorrect_prediction_LLC_access();
-            orcs_engine.memory_controller->emc->update_mact_entry(mob_line->opcode_address,1);
             // ===================================
-            orcs_engine.memory_controller->emc->add_access_LLC_Miss();
+            orcs_engine.memory_controller->emc[mob_line->processor_id].add_access_LLC_Miss();
             mob_line->waiting_DRAM = true;
             mob_line->emc_generate_miss=true;
             // ===================================
@@ -463,7 +459,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,latency_request);
             // linking emc and llc
             linha_llc->linha_ptr_emc = linha_emc;
-            linha_emc->linha_ptr_llc = linha_llc;
+            linha_emc[mob_line->processor_id].linha_ptr_llc = linha_llc;
             orcs_engine.memory_controller->add_requests_emc();//number of requests made by emc
             // orcs_engine.memory_controller->add_requests_made();//add requests made by emc to total
         }

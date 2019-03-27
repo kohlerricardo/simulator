@@ -33,11 +33,6 @@ class processor_t {
 	float_t instruction_per_cycle;
 	uint64_t ended_cycle;
 	//=============
-	//WARMUP
-	//=============
-	uint64_t warmup_reset_cycle;
-	uint64_t warmup_last_opcode;
-	//=============
 	//Statistics Commit
 	//=============
 	uint64_t stat_inst_int_alu_completed;
@@ -56,7 +51,8 @@ class processor_t {
 	// ====================================================================
 	uint32_t llc_miss_rob_head; //tracks number of times llc miss is rob head
 	uint32_t loads_sent_at_rob_head; //Count number of load which are sent to memory at rob head
-
+	uint32_t loads_missed_counter; //count number of loads misspredicted
+	uint32_t started_emc_without_loads;
     public:
 		
 		// ====================================================================
@@ -125,7 +121,6 @@ class processor_t {
 		// ====================================================================
 		// Other Methods
 		// ====================================================================
-		void reset_statistics();
 		// =======================
 		// Buffers
 		// =======================
@@ -217,9 +212,6 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint64_t,ended_cycle)
 		INSTANTIATE_GET_SET_ADD(uint32_t,loads_sent_at_rob_head)
 		// ====================================================================
-		INSTANTIATE_GET_SET_ADD(uint64_t,warmup_reset_cycle)
-		INSTANTIATE_GET_SET_ADD(uint64_t,warmup_last_opcode)
-		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================
 		INSTANTIATE_GET_SET_ADD(uint64_t,stat_inst_branch_completed)
@@ -270,6 +262,10 @@ class processor_t {
 		void update_counter_emc(int32_t value);
 		void print_RRT();
 		void print_ROB();
+		// =================================================================================
+		void verify_loads_missed(); // verifica se ha loads dependentes perdidos
+		void verify_started_emc_without_loads(); // verifica se ha chains sem loads dependentes para execucao
+		// =================================================================================
 		// boolean
 		bool get_all_mem_req();
 		bool isRobHead(reorder_buffer_line_t* robEntry);//verify if rob entry is rob read
@@ -281,24 +277,19 @@ class processor_t {
 		bool already_exists(reorder_buffer_line_t *candidate);//verifica se já existe a instrução na cadeia
 		bool verify_ambiguation(memory_order_buffer_line_t *mob_line);
 		bool verify_uop_on_emc(reorder_buffer_line_t *rob_line);
-		uint32_t count_registers_rrt(uop_package_t uop);
 		// =================================================================================
 		// integer
 		int32_t renameEMC(reorder_buffer_line_t *rob_line);//Renaming entry to EMC
+		// =================================================================================
+		uint32_t count_registers_rrt(uop_package_t uop);
 		uint32_t broadcast_cdb(uint32_t position_rob,int32_t write_register);//broadcast destiny registers on ROB to pseudo wake up operations.
 		uint32_t get_position_rob_bcast(reorder_buffer_line_t *rob_ready);// this function add the operat0in in rob buffer only. 
-		// =================================================================================
 		int32_t get_next_uop_dependence();
-
-		// =================================================================================
-
-
-
-
 		int32_t search_register(int32_t write_register);//Register remapping table declaration
-    	int32_t allocate_new_register(int32_t write_register);
+    	int32_t allocate_new_register(int32_t write_register); //allocate new register to emc
 		// ====================================================================
 		INSTANTIATE_GET_SET_ADD(uint32_t,llc_miss_rob_head)
+		INSTANTIATE_GET_SET_ADD(uint32_t,loads_missed_counter)
 		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution)
 		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_counter_emc_execution)
 		INSTANTIATE_GET_SET_ADD(uint32_t,cancel_emc_execution_one_op)
@@ -306,4 +297,5 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_read)
 		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_write)
 		INSTANTIATE_GET_SET_ADD(uint32_t,total_instruction_sent_emc)
+		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_without_loads)
 };

@@ -73,10 +73,3 @@ uint64_t memory_controller_t::requestDRAM(){
     return RAM_LATENCY;
 }
 // ============================================================================
-void memory_controller_t::reset_statistics(){
-    this->set_requests_made(0);
-    this->set_operations_executed(0);
-    this->set_requests_emc(0);
-    this->set_requests_llc(0);
-}
-// ============================================================================

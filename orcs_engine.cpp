@@ -7,8 +7,6 @@ orcs_engine_t::orcs_engine_t() {
 	this->branchPredictor = NULL;
 	this->cacheManager = NULL;
 	this->memory_controller = NULL;
-	this->is_warmup =  false;
-	this->instruction_warmup_counter =0;
 }
 // =====================================================================
 void orcs_engine_t::allocate() {
@@ -30,37 +28,4 @@ bool orcs_engine_t::get_simulation_alive(){
         }
 	}
 	return FAIL;
-}
-void orcs_engine_t::global_reset_statistics(){
-	for(uint8_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
-	{
-		this->processor[i].reset_statistics();
-		
-
-
-		this->branchPredictor[i].reset_statistics();
-		#if EMC_ACTIVE
-			orcs_engine.memory_controller->emc[i].reset_statistics();
-		#endif
-		
-		this->processor[i].set_warmup_last_opcode(orcs_engine.trace_reader[i].get_fetch_instructions());
-		this->processor[i].set_warmup_reset_cycle(orcs_engine.get_global_cycle());
-	}
-	orcs_engine.memory_controller->data_cache->reset_statistics();
-	orcs_engine.memory_controller->reset_statistics();
-	#if PREFETCHER_ACTIVE
-		orcs_engine.prefetcher->reset_statistics();
-	#endif
-	for(uint8_t i = 0; i < SIZE_OF_L1_CACHES_ARRAY; i++){
-		this->cacheManager->inst_cache[i].reset_statistics();
-		this->cacheManager->L1_data_cache[i].reset_statistics();
-	}
-	for(uint8_t i = 0; i < SIZE_OF_L2_CACHES_ARRAY; i++){
-		this->cacheManager->L2_data_cache[i].reset_statistics();
-
-	}
-	for(uint8_t i = 0; i < SIZE_OF_LLC_CACHES_ARRAY; i++){
-		this->cacheManager->LLC_data_cache[i].reset_statistics();
-
-	}
 }

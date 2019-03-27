@@ -440,14 +440,6 @@ bool trace_reader_t::trace_next_memory(uint64_t *mem_address, uint32_t *mem_size
 
 // =====================================================================
 bool trace_reader_t::trace_fetch(opcode_package_t *m) {
-
-    // =================================================================
-    /// Setting warmup end
-    // =================================================================
-    if(orcs_engine.instruction_warmup_counter == this->get_fetch_instructions()){
-        orcs_engine.is_warmup = true;
-    }
-
     opcode_package_t NewOpcode;
     bool success;
     uint32_t new_BBL;

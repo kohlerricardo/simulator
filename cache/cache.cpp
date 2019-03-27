@@ -39,16 +39,6 @@ inline void cache_t::printCacheConfiguration(){
 		usleep(500);
 	#endif
 }
-
-void cache_t::reset_statistics(){
-		this->set_cacheAccess(0);
-		this->set_cacheHit(0);
-		this->set_cacheMiss(0);
-		this->set_cacheRead(0);
-		this->set_cacheWrite(0);
-		this->set_cacheWriteBack(0);
-}
-
 void cache_t::allocate(cacheLevel_t level){	
 	switch(level){
 		case INST_CACHE:{
