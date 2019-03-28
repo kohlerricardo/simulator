@@ -425,7 +425,6 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
         if(orcs_engine.memory_controller->emc[mob_line->processor_id].memory_access_counter_table[index]>=MACT_THRESHOLD){
             //add statistics do preditor		
             mob_line->emc_predict_access_ram = true;
-            orcs_engine.memory_controller->emc[mob_line->processor_id].add_direct_ram_access();
         }else{
             mob_line->emc_predict_access_ram = false;
             orcs_engine.memory_controller->emc[mob_line->processor_id].add_emc_llc_access();

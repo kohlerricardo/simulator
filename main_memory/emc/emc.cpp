@@ -90,7 +90,8 @@ void emc_t::allocate()
 	this->mact_bits_mask = utils_t::get_power_of_two(MACT_SIZE);
 	//=======================  wait list all uop completes =======================
 	this->uop_wait_finish.allocate(EMC_UOP_BUFFER);
-	
+	//pro valgrind nao chiar/debug aid
+	this->has_store=false;
 }
 // ============================================================================
 int32_t emc_t::get_position_uop_buffer(){
@@ -554,19 +555,17 @@ void emc_t::emc_commit(){
 			ERROR_ASSERT_PRINTF(uint32_t(pos_buffer) == this->uop_buffer_start, "EMC sending different position from start\n");
 			// ==========================================================
 			// contar statistics from miss predictor
-			if(this->uop_buffer[pos_buffer].mob_ptr != NULL){
+			if((this->uop_buffer[pos_buffer].mob_ptr != NULL) &&(!this->uop_buffer[pos_buffer].rob_ptr->original_miss)){
 				if(this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && !this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
-					this->add_incorrect_prediction_ram_access();
-					this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,-1);
-				}else if (!this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
 					this->add_incorrect_prediction_LLC_access();
+					this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,-1);
+				}else if (this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
+					this->add_direct_ram_access();
+				}
+				else if (!this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
+					this->add_incorrect_prediction_ram_access();
 					this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,1);
 				}
-				// else if (this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
-					
-				// }else if(!this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && !this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
-				// 	this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,-1);
-				// }
 			}
 			// ==========================================================
 			this->emc_send_back_core(&this->uop_buffer[pos_buffer]);
@@ -645,7 +644,6 @@ void emc_t::clock(){
 			this->emc_execute();
 			this->emc_dispatch();
 		}else{
-			// this->emc_send_back_core();
 			this->ready_to_execute=false;
 			#if EMC_DEBUG
 				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
@@ -653,7 +651,6 @@ void emc_t::clock(){
 				}
 			#endif
 			// ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > 0,"Erro, tentando reduzir EMCs ativos menor que zero\n")
-			// orcs_engine.memory_controller->emc_active--;
 			orcs_engine.processor[this->processor_id].lock_processor=false;
 		}
 	}
@@ -661,7 +658,7 @@ void emc_t::clock(){
 // ============================================================================
 void emc_t::update_mact_entry(uint64_t pc,int32_t value){
 	
-	uint64_t index  = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,pc>>2,0,this->mact_bits_mask);
+	uint64_t index  = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,(pc>>2),0,this->mact_bits_mask);
 
 	this->memory_access_counter_table[index]+=value;
 
@@ -697,18 +694,6 @@ void emc_t::lsq_read(){
 		}
 	#endif
 		if (emc_mob_line->memory_operation == MEMORY_OPERATION_READ){
-		// //========================================= 
-        // // Predict Access Direct RAM
-        // uint64_t index = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,emc_mob_line->emc_opcode_ptr->uop.opcode_address,0,this->mact_bits_mask);
-        // if(this->memory_access_counter_table[index]>=MACT_THRESHOLD){
-        //     //add statistics do preditor				
-		// 	this->add_direct_ram_access();
-		// 	emc_mob_line->emc_predict_access_ram = true;
-        // }else{
-        //     orcs_engine.memory_controller->emc->add_emc_llc_access();
-		// 	emc_mob_line->emc_predict_access_ram = false;
-        // }
-        // //========================================= 
 			uint32_t ttc = 0;
 			ttc = orcs_engine.cacheManager->search_EMC_Data(emc_mob_line); //enviar que é do emc
 			emc_mob_line->updatePackageReady(ttc);
@@ -749,8 +734,8 @@ void emc_t::statistics(){
 		fprintf(output, "EMC_Access_LLC: %lu\n", this->get_access_LLC());
 		fprintf(output, "EMC_Access_LLC_HIT: %lu\n", this->get_access_LLC_Hit());
 		fprintf(output, "EMC_Access_LLC_MISS: %lu\n", this->get_access_LLC_Miss());
-		fprintf(output, "EMC_Predict_DRA_Predictor: %lu\n", this->get_direct_ram_access());
-		fprintf(output, "EMC_Predict_LLC_Access_Predictor: %lu\n", this->get_emc_llc_access());
+		fprintf(output, "EMC_Correct_Prediction_RAM: %lu\n", this->get_direct_ram_access());
+		fprintf(output, "EMC_Correct_LLC_Prediction: %lu\n", this->get_emc_llc_access());
 		fprintf(output, "EMC_Incorrect_RAM_Prediction: %lu\n",this->get_incorrect_prediction_ram_access());
 		fprintf(output, "EMC_Incorrect_LLC_Prediction: %lu\n",this->get_incorrect_prediction_LLC_access());
 		utils_t::largestSeparator(output);

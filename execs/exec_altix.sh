@@ -12,17 +12,14 @@ BENCHMARK_FOLDER="spec_cpu2006/"
 cd ${TRACE_FOLDER}${BENCHMARK_FOLDER}
 LIST_BENCHS=`ls`
 cd ${ROOT}  
-WARMUP=$1
-W=$(($WARMUP/1000000))
-ORCS_D="orcs_Warmup_${W}M.d"
+ORCS_D="orcs.d"
 
 
 mkdir ${ORCS_D}
 echo "Starting execute Benchmarks"
 for i in ${LIST_BENCHS[@]}
 do  
-    echo byobu new-window "${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} -w $WARMUP -f ${ORCS_D}'/'${i}.txt "
-    # byobu new-window "${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} -f ${ORCS_D}'/'${i}.txt "
+    byobu new-window "${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} -f ${ORCS_D}'/'${i}.txt "
 #   ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${LIST_BENCHS[i]}'/'${LIST_BENCHS[i]} -f ${ORCS_D}'/'${LIST_BENCHS[i]}.txt&
 #   ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${LIST_BENCHS[i+1]}'/'${LIST_BENCHS[i+1]} -f ${ORCS_D}'/'${LIST_BENCHS[i+1]}.txt
 #   { time ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} -f ${ORCS_D}'/'${i}.txt ; } 2>> ${ORCS_D}'/'${i}.txt &
