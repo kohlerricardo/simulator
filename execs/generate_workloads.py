@@ -2,7 +2,7 @@
 
 import itertools
 import random
-apps=['bwaves.CFP.PP200M', 'gcc.CINT.PP200M', 'GemsFDTD.CFP.PP200M', 'libquantum.CINT.PP200M', 'leslie3d.CFP.PP200M', 'soplex.CFP.PP200M', 'lbm.CFP.PP200M', 'mcf.CINT.PP200M']
+apps=['astar.CINT.PP200M', 'gcc.CINT.PP200M', 'gobmk.CINT.PP200M','gromacs.CFP.PP200M','milc.CFP.PP200M','mcf.CINT.PP200M','omnetpp.CINT.PP200M','soplex.CFP.PP200M','xalancbmk.CINT.PP200M']
 tmp=[' '.join(lista) for lista in itertools.combinations(apps,4)]
 workloads=list()
 for a in tmp:

@@ -274,7 +274,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 linha_t *linha_emc = NULL;
                 linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,RAM_LATENCY);
                 linha_llc->linha_ptr_emc=linha_emc;
-                linha_emc[mob_line->processor_id].linha_ptr_llc=linha_llc;
+                linha_emc->linha_ptr_llc=linha_llc;
                 linha_emc=NULL;
                 #endif
                 //NULLING POINTERS <LEAK MEMORY>
@@ -458,9 +458,9 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,latency_request);
             // linking emc and llc
             linha_llc->linha_ptr_emc = linha_emc;
-            linha_emc[mob_line->processor_id].linha_ptr_llc = linha_llc;
+            linha_emc->linha_ptr_llc = linha_llc;
             orcs_engine.memory_controller->add_requests_emc();//number of requests made by emc
-            // orcs_engine.memory_controller->add_requests_made();//add requests made by emc to total
+            linha_emc=NULL;
         }
     }
     return latency_request;

@@ -47,7 +47,10 @@ void disambiguation_hashed_t::allocate(){
 	this->disambiguation_store_hash_bits_shift <<= utils_t::get_power_of_two(DESAMBIGUATION_BLOCK_SIZE);
 	this->disambiguation_store_hash_bits_mask <<= this->disambiguation_store_hash_bits_shift;
 	this->disambiguation_store_hash = utils_t::template_allocate_initialize_array<memory_order_buffer_line_t *>(STORE_HASH_SIZE, NULL);
-
+	// Setting values of statistics at Zero
+	this->set_stat_disambiguation_read_false_positive(0);
+    this->set_stat_disambiguation_write_false_positive(0);
+    this->set_stat_address_to_address(0);
 }
 void disambiguation_hashed_t::make_memory_dependencies(memory_order_buffer_line_t *new_mob_line){
 

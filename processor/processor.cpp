@@ -2310,7 +2310,7 @@ void processor_t::statistics(){
 
 			#endif
 		utils_t::largestSeparator(output);
-		fprintf(output, "Instruction_Per_Cycle_After_Warmup: %1.6lf\n", this->get_instruction_per_cycle());	
+		fprintf(output, "Instruction_Per_Cycle_After_Warmup: %1.6lf\n", (float)this->fetchCounter/this->get_ended_cycle());	
 		fprintf(output, "MPKI: %lf\n", (float)orcs_engine.cacheManager->LLC_data_cache[orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC)].get_cacheMiss()/((float)this->fetchCounter/1000));
 		utils_t::largestSeparator(output);
 			#if EMC_ACTIVE
@@ -2494,13 +2494,6 @@ void processor_t::clock(){
 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 			ORCS_PRINTF("===================================================================\n")
 			// sleep(1);
-		}
-	#endif
-	#if PERIODIC_CHECK
-		if (orcs_engine.get_global_cycle() % CLOCKS_TO_CHECK == 0)
-		{
-			this->printStructures();
-			// ORCS_PRINTF("Opcodes Processed %lu",orcs_engine.trace_reader[this->processor_id].get_fetch_instructions())
 		}
 	#endif
 }
