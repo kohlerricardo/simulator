@@ -1621,7 +1621,7 @@ void processor_t::commit(){
 	#endif
 	int32_t pos_buffer;
 // #################################################################################
-		#if EMC_ACTIVE
+		#if EMC_ACTIVE 
 			if( (this->reorderBuffer[this->robStart].uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD) &&
 				(this->reorderBuffer[this->robStart].mob_ptr->core_generate_miss) &&
 				((this->reorderBuffer[this->robStart].mob_ptr->readyAt-RAM_LATENCY) == orcs_engine.get_global_cycle())
@@ -1646,17 +1646,17 @@ void processor_t::commit(){
 					std::sort(this->rob_buffer.begin(),this->rob_buffer.end(),[](const reorder_buffer_line_t *lhs, const reorder_buffer_line_t *rhs){
 						return lhs->uop.uop_number < rhs->uop.uop_number;
 					});
-				if(this->counter_activate_emc >= EMC_THRESHOLD){
-					this->start_emc_module = true;
-					this->add_started_emc_execution();
-					this->verify_started_emc_without_loads();
-				}else{
-					this->add_cancel_counter_emc_execution();
-					this->verify_loads_missed();
-					this->rob_buffer.clear();
+				if(this->rob_buffer.size()>1){
+					if(this->counter_activate_emc >= EMC_THRESHOLD){
+						this->start_emc_module = true;
+						this->add_started_emc_execution();
+						this->verify_started_emc_without_loads();
+					}else{
+						this->add_cancel_counter_emc_execution();
+						this->verify_loads_missed();
+						this->rob_buffer.clear();
+					}
 				}
-
-
 			}
 		#endif
 // #################################################################################
@@ -2140,7 +2140,7 @@ void processor_t::verify_loads_missed(){
 // ============================================================================
 void processor_t::verify_started_emc_without_loads(){	
 
-	if(this->rob_buffer.size()>0){
+	if(this->rob_buffer.size()>2){
 		for(uint8_t i = 1; i < this->rob_buffer.size();i++){
 			if(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 				return;
@@ -2323,7 +2323,7 @@ void processor_t::statistics(){
 				fprintf(output, "total_instruction_sent_emc: %d\n", this->get_total_instruction_sent_emc());
 				fprintf(output, "avg_inst_sent_emc: %.4f\n",static_cast<double> (this->get_total_instruction_sent_emc())/static_cast<double> (this->get_started_emc_execution()-this->get_cancel_emc_execution_one_op()));
 				utils_t::smallSeparator(output);
-				fprintf(output, "started_emc_execution: %d\n", this->get_started_emc_execution()-(this->get_cancel_emc_execution_one_op()+this->get_cancel_emc_execution()));
+				fprintf(output, "started_emc_execution: %d\n", this->get_started_emc_execution());
 				fprintf(output, "canceled_counter_emc_execution: %d\n", this->get_cancel_counter_emc_execution());
 				fprintf(output, "canceled_ambiguation_emc_execution: %d\n", this->get_cancel_emc_execution());
 				fprintf(output, "canceled_emc_execution_one_op: %d\n", this->get_cancel_emc_execution_one_op());
