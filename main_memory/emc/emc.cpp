@@ -161,7 +161,9 @@ void emc_t::emc_dispatch(){
 	#if EMC_DISPATCH_DEBUG
 			if (orcs_engine.get_global_cycle() > WAIT_CYCLE)
 			{
+				ORCS_PRINTF("==================\n")
 				ORCS_PRINTF("EMC Trying dispatch %s\n", emc_opcode->content_to_string().c_str())
+				ORCS_PRINTF("==================\n")
 			}
 	#endif
 		if ((emc_opcode->uop.readyAt <= orcs_engine.get_global_cycle()) && (emc_opcode->wait_reg_deps_number == 0)){
@@ -368,7 +370,10 @@ void emc_t::emc_execute(){
 			this->unified_lsq[i].processed == false){
 			#if EMC_EXECUTE_DEBUG 
 			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+				ORCS_PRINTF("==================\n")
 				ORCS_PRINTF("EMC Memory Solving %s\n", this->unified_lsq[i].emc_opcode_ptr->content_to_string().c_str())
+				ORCS_PRINTF("==================\n")
+
 			}
 			#endif
 			ERROR_ASSERT_PRINTF(this->unified_lsq[i].uop_executed == true, "Removing memory read before being executed.\n")
@@ -397,7 +402,9 @@ void emc_t::emc_execute(){
 		{
 			#if EMC_EXECUTE_DEBUG
 				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("==================\n")
 					ORCS_PRINTF("EMC Trying Execute %s\n", emc_package->content_to_string().c_str())
+					ORCS_PRINTF("==================\n")
 				}
 			#endif
 			ERROR_ASSERT_PRINTF(emc_package->uop.status == PACKAGE_STATE_READY, "FU with Package not in ready state")
@@ -423,7 +430,6 @@ void emc_t::emc_execute(){
 				/// Remove from the Functional Units
 				this->unified_fus.erase(this->unified_fus.begin() + i);
 				i--;
-				emc_package->rob_ptr->emc_executed = true;
 			}
 			break;
 			// MEMORY LOAD/STORE ==========================================
@@ -439,7 +445,6 @@ void emc_t::emc_execute(){
 				/// Remove from the Functional Units
 				this->unified_fus.erase(this->unified_fus.begin() + i);
 				i--;
-				emc_package->rob_ptr->emc_executed = true;
 			}
 			break;
 			case INSTRUCTION_OPERATION_MEM_STORE:{
@@ -454,7 +459,6 @@ void emc_t::emc_execute(){
 				this->unified_fus.erase(this->unified_fus.begin() + i);
 				i--;
 				emc_package->rob_ptr->mob_ptr->uop_executed = true;
-				emc_package->rob_ptr->emc_executed = true;
 			}
 			break;
 			case INSTRUCTION_OPERATION_BARRIER:
@@ -466,7 +470,9 @@ void emc_t::emc_execute(){
 		}//end if ready package
 		#if EMC_EXECUTE_DEBUG
 				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("==================\n")
 					ORCS_PRINTF("EMC Executed %s\n", emc_package->content_to_string().c_str())
+					ORCS_PRINTF("==================\n")
 				}
 		#endif
 	}		  //end for
@@ -586,7 +592,9 @@ void emc_t::emc_commit(){
 void emc_t::solve_emc_dependencies(emc_opcode_package_t *emc_opcode){
 	#if EMC_EXECUTE_DEBUG
 	if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+		ORCS_PRINTF("==================\n")
 		ORCS_PRINTF("Solving %s\n", emc_opcode->content_to_string().c_str())
+		ORCS_PRINTF("==================\n")
 	}
 	#endif
 	// =========================================================================
@@ -690,7 +698,9 @@ void emc_t::lsq_read(){
 	if (emc_mob_line != NULL){
 	#if EMC_LSQ_DEBUG
 		if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-			ORCS_PRINTF("Memory Operation Selected %s\n", emc_mob_line->content_to_string().c_str())
+			ORCS_PRINTF("Memory Operation Selected\n==================\n %s\n", emc_mob_line->content_to_string().c_str())
+			ORCS_PRINTF("==================\n")
+
 		}
 	#endif
 		if (emc_mob_line->memory_operation == MEMORY_OPERATION_READ){
@@ -713,8 +723,10 @@ void emc_t::lsq_read(){
 			this->lsq_forward(emc_mob_line);
 		}
 		#if EMC_LSQ_DEBUG
-			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-				ORCS_PRINTF("Memory Operation After Send %s\n", emc_mob_line->content_to_string().c_str())
+			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){	
+				ORCS_PRINTF("==================\n")
+				ORCS_PRINTF("Memory Operation After Send\n %s\n", emc_mob_line->content_to_string().c_str())
+				ORCS_PRINTF("==================\n")
 			}
 	#endif
 	} //end if mob_line null
@@ -779,6 +791,7 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 			emc_opcode->uop.uop_operation == INSTRUCTION_OPERATION_NOP){
 				rob_line->uop = emc_opcode->uop;
 				rob_line->stage = emc_opcode->stage;
+				rob_line->emc_executed = true;
 				orcs_engine.processor[processor_id].solve_registers_dependency(rob_line);
 			}else{
 				ERROR_ASSERT_PRINTF(emc_opcode->mob_ptr !=NULL, "Error,emc  memory operation without mob value %s\n",emc_opcode->content_to_string().c_str())
@@ -803,6 +816,7 @@ void emc_t::emc_send_back_core(emc_opcode_package_t *emc_opcode){
 				rob_line->mob_ptr->processed = false;
 				rob_line->mob_ptr->emc_executed = true;
 				rob_line->sent = rob_line->mob_ptr->sent = true;
+				rob_line->emc_executed = true;
 				// ===========================================================================
 				// eliminar a flag para ser executado no core 
 				// ===========================================================================

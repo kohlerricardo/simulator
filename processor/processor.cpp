@@ -908,23 +908,24 @@ void processor_t::dispatch(){
 			//pointer to entry
 			reorder_buffer_line_t *rob_line = this->unified_reservation_station[i];
 			#if DISPATCH_DEBUG
-			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-				ORCS_PRINTF("cycle %lu\n", orcs_engine.get_global_cycle())
-				ORCS_PRINTF("=================\n")
-				ORCS_PRINTF("Trying Dispatch %s\n", rob_line->content_to_string().c_str())
-				ORCS_PRINTF("=================\n")
-			}
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("cycle %lu\n", orcs_engine.get_global_cycle())
+					ORCS_PRINTF("=================\n")
+					ORCS_PRINTF("Unified Reservations Station on use: %lu\n",this->unified_reservation_station.size())
+					ORCS_PRINTF("Trying Dispatch %s\n", rob_line->content_to_string().c_str())
+					ORCS_PRINTF("=================\n")
+				}
 			#endif
 			if (rob_line->emc_executed == true){
 				this->unified_reservation_station.erase(this->unified_reservation_station.begin() + i);
 				i--;
-			#if DISPATCH_DEBUG
-				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-					ORCS_PRINTF("=================\n")
-					ORCS_PRINTF("Removed By executed On EMC %s\n", rob_line->content_to_string().c_str())
-					ORCS_PRINTF("=================\n")
-				}
-			#endif
+				#if DISPATCH_DEBUG
+					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+						ORCS_PRINTF("=================\n")
+						ORCS_PRINTF("Removed By executed On EMC %s\n", rob_line->content_to_string().c_str())
+						ORCS_PRINTF("=================\n")
+					}
+				#endif
 				continue;
 			}
 			if (rob_line->sent_to_emc == true){
@@ -938,7 +939,7 @@ void processor_t::dispatch(){
 			
 			if ((rob_line->uop.readyAt <= orcs_engine.get_global_cycle()) &&
 				(rob_line->wait_reg_deps_number == 0)){
-				ERROR_ASSERT_PRINTF(rob_line->uop.status == PACKAGE_STATE_READY, "Error, uop not ready being dispatched\n")
+				ERROR_ASSERT_PRINTF(rob_line->uop.status == PACKAGE_STATE_READY, "Error, uop not ready being dispatched\n %s\n", rob_line->content_to_string().c_str())
 				ERROR_ASSERT_PRINTF(rob_line->stage == PROCESSOR_STAGE_RENAME, "Error, uop not in Rename to rename stage\n %s\n",rob_line->content_to_string().c_str())
 				//if dispatched
 				bool dispatched = false;
@@ -1262,7 +1263,9 @@ void processor_t::execute()
 					#if EMC_ACTIVE_DEBUG
 					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
 						ORCS_PRINTF("Locking Processor\n")
-						this->print_ROB();
+						#if PRINT_ROB
+							this->print_ROB();
+						#endif
 					}
 				#endif
 				// ERROR_ASSERT_PRINTF(orcs_engine.memory_controller->emc_active > EMC_PARALLEL_ACTIVATE,"Error, tentando executar mais EMCs em paralelo que o permitido\n ")
@@ -1392,7 +1395,7 @@ memory_order_buffer_line_t* processor_t::get_next_op_load(){
 		if(this->memory_order_buffer_read[pos].uop_executed && 
 			this->memory_order_buffer_read[pos].status == PACKAGE_STATE_WAIT && 
 			this->memory_order_buffer_read[pos].sent==false && 
-        	this->memory_order_buffer_read[pos].wait_mem_deps_number <= 0 &&
+        	this->memory_order_buffer_read[pos].wait_mem_deps_number == 0 &&
 			this->memory_order_buffer_read[pos].sent_to_emc == false &&
 			this->memory_order_buffer_read[pos].readyToGo <= orcs_engine.get_global_cycle()){
 				#if STORE_ONLY_ROB_HEAD
@@ -1407,7 +1410,6 @@ memory_order_buffer_line_t* processor_t::get_next_op_load(){
 		pos++;
 		if( pos >= MOB_READ) pos=0;
 	}
-
 	return NULL;
 }
 // ============================================================================
@@ -1615,7 +1617,9 @@ void processor_t::commit(){
 			ORCS_PRINTF("=========================================================================\n")
 			ORCS_PRINTF("========== Commit Stage ==========\n")
 			ORCS_PRINTF("Cycle %lu\n", orcs_engine.get_global_cycle())
-			this->print_ROB();
+			#if PRINT_ROB
+				this->print_ROB();
+			#endif
 			ORCS_PRINTF("==================================\n")
 		}
 	#endif
@@ -2131,7 +2135,7 @@ void processor_t::clean_rrt(){
 }
 // ============================================================================
 void processor_t::verify_loads_missed(){
-	for(uint8_t i = 0; i < this->rob_buffer.size();i++){
+	for(uint8_t i = 1; i < this->rob_buffer.size();i++){
 		if(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 			this->add_loads_missed_counter();
 		}
@@ -2146,6 +2150,7 @@ void processor_t::verify_started_emc_without_loads(){
 				return;
 			}
 		}
+	this->rob_buffer.clear();
 	this->add_started_emc_without_loads();
 	}
 }

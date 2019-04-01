@@ -54,7 +54,7 @@ int main (int argc,char **argv){
     ptr_this = array_matrix;
     for (i = 0; i < rep; i++) {
         ptr_this = array_matrix;
-        for (j = 0; j < size ; j +=8){
+        for (j = 0; j < size ; j +=16){
             ptr_this = ptr_this->next_element;
             ptr_this = ptr_this->next_element;
             ptr_this = ptr_this->next_element;
@@ -65,6 +65,16 @@ int main (int argc,char **argv){
             ptr_this = ptr_this->next_element;
             ptr_this = ptr_this->next_element;
 
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            ptr_this = ptr_this->next_element;
+            
             value = ptr_this->value;
         }
     }
