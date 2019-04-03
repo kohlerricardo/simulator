@@ -257,7 +257,7 @@ Arquivo definindo os parametros do modelo de processador
 #define FETCH_DEBUG 0
 #define DECODE_DEBUG 0
 #define RENAME_DEBUG 0
-#define DISPATCH_DEBUG 1
+#define DISPATCH_DEBUG 0
 #define EXECUTE_DEBUG 1
 #define MOB_DEBUG 1
 #define PRINT_MOB 0
@@ -276,8 +276,8 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 110000000
-// #define WAIT_CYCLE 67000
+// #define WAIT_CYCLE 110000000
+#define WAIT_CYCLE 66500
 // **************** END DEFINES ******************
 // **************** END DEFINES ******************
 #endif //_SKYLAKE_HPP_

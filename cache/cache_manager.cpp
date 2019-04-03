@@ -234,6 +234,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 this->LLC_data_cache[index_llc].add_cacheMiss();
                 orcs_engine.processor[mob_line->processor_id].has_llc_miss=true; // setting llc miss
                 mob_line->core_generate_miss=true;
+                mob_line->rob_ptr->original_miss=true;
                 //========================================= 
                 //request to Memory Controller
                 ttc = orcs_engine.memory_controller->requestDRAM();
@@ -441,6 +442,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             // ===================================
             // marcando access llc emc
             orcs_engine.memory_controller->emc[mob_line->processor_id].add_access_LLC_Hit();
+            mob_line->emc_generate_miss=false;
             // ===================================
         }else{
             latency_request += orcs_engine.memory_controller->requestDRAM();

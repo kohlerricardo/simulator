@@ -45,6 +45,7 @@ std::string emc_opcode_package_t::content_to_string(){
     content_string = content_string + " | ReadyAt: " + utils_t::uint64_to_string(this->uop.readyAt);
     if(this->rob_ptr != NULL){
         content_string = content_string + "| Rob Pointer: " + utils_t::bool_to_string(true);
+        content_string = content_string + "\n\n"+this->rob_ptr->content_to_string().c_str();
     }
     if(this->mob_ptr != NULL){
         content_string = content_string + this->mob_ptr->content_to_string();

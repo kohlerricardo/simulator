@@ -1241,7 +1241,6 @@ void processor_t::execute()
 					i--;
 				}
 				else{
-					rob_next->is_poisoned=true;
 					rob_next->sent_to_emc=true;
 					renamed_emc=true;
 					instruction_dispatched_emc++;
@@ -1686,14 +1685,29 @@ void processor_t::commit(){
 			this->commit_uop_counter++;
 			#if EMC_ACTIVE
 				if( (this->reorderBuffer[pos_buffer].mob_ptr != NULL) && 
-					(this->reorderBuffer[pos_buffer].is_poisoned)	  &&
-					((this->reorderBuffer[pos_buffer].mob_ptr->core_generate_miss) || 
-					(this->reorderBuffer[pos_buffer].mob_ptr->emc_generate_miss))
-					){
-					if(this->reorderBuffer[pos_buffer].uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
+					(this->reorderBuffer[pos_buffer].is_poisoned)){						
+						#if EMC_ACTIVE_DEBUG
+						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+							ORCS_PRINTF("EMC COUNTER  %hhd\n",this->counter_activate_emc)
+						}
+						#endif
+					if(this->reorderBuffer[pos_buffer].mob_ptr->core_generate_miss ||
+						this->reorderBuffer[pos_buffer].mob_ptr->emc_generate_miss ){
 						this->update_counter_emc(1);
+						#if EMC_ACTIVE_DEBUG
+							if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+								ORCS_PRINTF("\n Has Dependent Cache Miss\n")
+								ORCS_PRINTF("EMC COUNTER  %hhd\n",this->counter_activate_emc)
+							}
+						#endif
 					}else{
 						this->update_counter_emc(-1);
+						#if EMC_ACTIVE_DEBUG
+							if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
+								ORCS_PRINTF("\n Has No Dependent Cache Miss\n")
+								ORCS_PRINTF("EMC COUNTER  %hhd\n",this->counter_activate_emc)
+							}
+						#endif
 					}
 				}
 			#endif
@@ -1887,7 +1901,6 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 				}
 			#if !ALL_UOPS
 				if(
-				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_BRANCH ||
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD //|| //){
 				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE
@@ -2082,7 +2095,7 @@ int32_t processor_t::renameEMC(reorder_buffer_line_t *rob_line){
 		}
 		#if EMC_ACTIVE_DEBUG
 			if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-				ORCS_PRINTF("After Renamed Uop its %s\n\n",emc_package->content_to_string().c_str())
+				ORCS_PRINTF("After Renamed Uop its\n %s\n\n",emc_package->content_to_string().c_str())
 			}
 		#endif
 		return OK;
@@ -2150,7 +2163,6 @@ void processor_t::verify_started_emc_without_loads(){
 				return;
 			}
 		}
-	this->rob_buffer.clear();
 	this->add_started_emc_without_loads();
 	}
 }
