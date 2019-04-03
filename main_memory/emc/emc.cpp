@@ -562,15 +562,19 @@ void emc_t::emc_commit(){
 			// ==========================================================
 			// contar statistics from miss predictor
 			if((this->uop_buffer[pos_buffer].mob_ptr != NULL) &&(!this->uop_buffer[pos_buffer].rob_ptr->original_miss)){
-				if(this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && !this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
-					this->add_incorrect_prediction_LLC_access();
-					this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,-1);
-				}else if (this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
+				if(this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
 					this->add_direct_ram_access();
+					this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,1);
+				}else if (this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && !this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
+					this->add_incorrect_prediction_ram_access();
+					this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,-1);
 				}
 				else if (!this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss){
-					this->add_incorrect_prediction_ram_access();
+					this->add_incorrect_prediction_LLC_access();
 					this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,1);
+				}else if (!this->uop_buffer[pos_buffer].mob_ptr->emc_predict_access_ram && !this->uop_buffer[pos_buffer].mob_ptr->emc_generate_miss && !this->uop_buffer[pos_buffer].mob_ptr->l1_emc_hit){
+					this->add_emc_llc_access();
+					this->update_mact_entry(this->uop_buffer[pos_buffer].uop.opcode_address,-1);
 				}
 			}
 			// ==========================================================

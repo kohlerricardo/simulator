@@ -412,6 +412,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
         //========================================= 
         orcs_engine.memory_controller->data_cache->add_cacheAccess();
         orcs_engine.memory_controller->data_cache->add_cacheHit();
+        mob_line->l1_emc_hit=true;
         //========================================= 
     }else{
         // EMC CACHE MISS
@@ -428,7 +429,6 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             mob_line->emc_predict_access_ram = true;
         }else{
             mob_line->emc_predict_access_ram = false;
-            orcs_engine.memory_controller->emc[mob_line->processor_id].add_emc_llc_access();
         }
         //========================================= 
         hit = this->LLC_data_cache[index_llc].read(mob_line->memory_address,ttc); 

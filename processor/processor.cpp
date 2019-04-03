@@ -1649,17 +1649,29 @@ void processor_t::commit(){
 					std::sort(this->rob_buffer.begin(),this->rob_buffer.end(),[](const reorder_buffer_line_t *lhs, const reorder_buffer_line_t *rhs){
 						return lhs->uop.uop_number < rhs->uop.uop_number;
 					});
-				if(this->rob_buffer.size()>1){
-					if(this->counter_activate_emc >= EMC_THRESHOLD){
+				// ====================================================			
+				// Mecanismo original
+				// if(this->rob_buffer.size()>1){
+				// 	if(this->counter_activate_emc >= EMC_THRESHOLD){
+				// 		this->start_emc_module = true;
+				// 		this->add_started_emc_execution();
+				// 		this->verify_started_emc_without_loads();
+				// 	}else{
+				// 		this->add_cancel_counter_emc_execution();
+				// 		this->verify_loads_missed();
+				// 		this->rob_buffer.clear();
+				// 	}
+				// }
+				// ====================================================					
+				// Oraculo Core
+				if(this->oracle_emc()){
 						this->start_emc_module = true;
 						this->add_started_emc_execution();
-						this->verify_started_emc_without_loads();
-					}else{
-						this->add_cancel_counter_emc_execution();
-						this->verify_loads_missed();
-						this->rob_buffer.clear();
-					}
+				}else{
+					this->add_cancel_counter_emc_execution();
+					this->rob_buffer.clear();
 				}
+				// ====================================================					
 			}
 		#endif
 // #################################################################################
@@ -1684,7 +1696,7 @@ void processor_t::commit(){
 		#endif
 			this->commit_uop_counter++;
 			#if EMC_ACTIVE
-				if( (this->reorderBuffer[pos_buffer].mob_ptr != NULL) && 
+				if((this->reorderBuffer[pos_buffer].mob_ptr != NULL) && 
 					(this->reorderBuffer[pos_buffer].is_poisoned)){						
 						#if EMC_ACTIVE_DEBUG
 						if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
@@ -1976,11 +1988,13 @@ int32_t processor_t::get_next_uop_dependence(){
 	}
 	return position;
 }
+// =============================================================================
 void processor_t::print_RRT(){
 	for(uint32_t i =0;i<EMC_REGISTERS;i++){
 		this->rrt[i].print_rrt_entry();
 	}
 }
+// =============================================================================
 void processor_t::print_ROB(){
 	uint32_t pos = this->robStart;
 	for(size_t i = 0; i < this->robUsed; i++)
@@ -2347,6 +2361,7 @@ void processor_t::statistics(){
 				fprintf(output, "total_ambiguation_read: %d\n", this->get_counter_ambiguation_read());
 				fprintf(output, "total_ambiguation_write: %d\n", this->get_counter_ambiguation_write());
 				utils_t::smallSeparator(output);
+				fprintf(output, "oracle_llc_miss: %d\n", this->get_oracle_count_misses_llc());
 				fprintf(output, "loads_missed_counter: %d\n", this->get_loads_missed_counter());
 				fprintf(output, "started_emc_without_loads: %d\n", this->get_started_emc_without_loads());
 				utils_t::smallSeparator(output);
@@ -2514,3 +2529,23 @@ void processor_t::clock(){
 		}
 	#endif
 }
+// ========================================================================================================================================================================================
+bool processor_t::oracle_emc(){
+	bool has_load =  false;
+	uint32_t index_llc = orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC);
+	uint32_t ttc;
+	for(uint8_t i = 0; i < this->rob_buffer.size(); i++){
+		if(
+			(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD) &&
+			(!this->rob_buffer[i]->mob_ptr->core_generate_miss)
+			){
+			if(orcs_engine.cacheManager->LLC_data_cache[index_llc].read(this->rob_buffer[i]->mob_ptr->memory_address,ttc)==MISS){
+				has_load =true;
+				this->add_oracle_count_misses_llc();
+				break;
+			}
+		}
+	}
+	return has_load;
+}
+// ========================================================================================================================================================================================

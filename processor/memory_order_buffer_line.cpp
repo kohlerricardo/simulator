@@ -36,6 +36,7 @@ void memory_order_buffer_line_t::package_clean() {
         this->core_generate_miss=false;
         this->emc_generate_miss=false;
         this->emc_predict_access_ram=false;
+        this->l1_emc_hit = false;
         this->processor_id = 0;
         #if EMC_ACTIVE
         this->emc_opcode_ptr=NULL;
