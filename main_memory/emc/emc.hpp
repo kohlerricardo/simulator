@@ -120,6 +120,14 @@ class emc_t{
         // EMC Debug Methods
         // ==========================================================================
         void print_structures();
+        // ============================================================================
+        // Functions and attr for ORACLE
+        // ============================================================================
+        uint32_t oracle_emc_data_cache_misses;
+        uint32_t oracle_emc_LLC_misses;
+        INSTANTIATE_GET_SET_ADD(uint64_t,oracle_emc_data_cache_misses)
+		INSTANTIATE_GET_SET_ADD(uint64_t,oracle_emc_LLC_misses)
+        void oracle_access_emc(memory_order_buffer_line_t *emc_mob_line);
 };
 
 #endif // !EMC_H

@@ -708,6 +708,10 @@ void emc_t::lsq_read(){
 		}
 	#endif
 		if (emc_mob_line->memory_operation == MEMORY_OPERATION_READ){
+			// ==========================================================================================
+			// ORACLE
+			this->oracle_access_emc(emc_mob_line);
+			// ==========================================================================================
 			uint32_t ttc = 0;
 			ttc = orcs_engine.cacheManager->search_EMC_Data(emc_mob_line); //enviar que é do emc
 			emc_mob_line->updatePackageReady(ttc);
@@ -754,6 +758,10 @@ void emc_t::statistics(){
 		fprintf(output, "EMC_Correct_LLC_Prediction: %lu\n", this->get_emc_llc_access());
 		fprintf(output, "EMC_Incorrect_RAM_Prediction: %lu\n",this->get_incorrect_prediction_ram_access());
 		fprintf(output, "EMC_Incorrect_LLC_Prediction: %lu\n",this->get_incorrect_prediction_LLC_access());
+		utils_t::largestSeparator(output);
+		fprintf(output, "ORACLE_EMC_DATA_CACHE_MISS: %lu\n",this->get_oracle_emc_data_cache_misses());
+		fprintf(output, "ORACLE_EMC_LLC_CACHE_MISS: %lu\n",this->get_oracle_emc_LLC_misses());
+		
 		utils_t::largestSeparator(output);
 		fprintf(output,"INSTRUCTION_OPERATION_INT_ALU %lu\n",this->get_stat_inst_int_alu_completed());
 		fprintf(output,"INSTRUCTION_OPERATION_INT_MUL %lu\n",this->get_stat_inst_mul_alu_completed());
@@ -866,5 +874,14 @@ void emc_t::lsq_forward(memory_order_buffer_line_t *emc_mob_line){
 				#endif
 				break;
 		}
+	}
+}
+void  emc_t::oracle_access_emc(memory_order_buffer_line_t *emc_mob_line){
+	uint32_t index_llc = orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC);
+	if(orcs_engine.memory_controller->data_cache->read_oracle(emc_mob_line->memory_address)==MISS){
+		this->add_oracle_emc_data_cache_misses();
+	}
+	if(orcs_engine.cacheManager->LLC_data_cache[index_llc].read_oracle(emc_mob_line->memory_address)==MISS){
+		this->add_oracle_emc_LLC_misses();
 	}
 }

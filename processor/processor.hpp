@@ -253,6 +253,8 @@ class processor_t {
 		uint32_t cancel_counter_emc_execution;
 		uint32_t started_emc_execution;
 		uint32_t total_instruction_sent_emc;
+		uint32_t stores_included_chain;
+		uint32_t number_spill_registers;
 		// ====================================================================
 		//  Methods
 		// void
@@ -298,6 +300,8 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint32_t,counter_ambiguation_write)
 		INSTANTIATE_GET_SET_ADD(uint32_t,total_instruction_sent_emc)
 		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_without_loads)
+		INSTANTIATE_GET_SET_ADD(uint32_t,stores_included_chain)
+		INSTANTIATE_GET_SET_ADD(uint32_t,number_spill_registers)
 		// ====================================================================
 		// Oracle Functions
 		bool oracle_emc();

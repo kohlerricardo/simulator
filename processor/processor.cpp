@@ -1198,25 +1198,18 @@ void processor_t::execute()
 	
 	#if EMC_ACTIVE
 		if (this->start_emc_module){	
-		#if EMC_ACTIVE_DEBUG
-			if (orcs_engine.get_global_cycle() > WAIT_CYCLE){
-				for(uint32_t i=0;i<this->rob_buffer.size();i++){
-						ORCS_PRINTF("%s\n\n",this->rob_buffer[i]->content_to_string().c_str())
-					}
-				}
-		#endif
 		// ======================================================================
 		// Contando numero de loads dependentes nas cadeias elegiveis para execução
 			this->verify_dependent_loads();
 		// ======================================================================
 			uint32_t instruction_dispatched_emc = 0;
-			for(uint32_t i=0;i<this->rob_buffer.size();i++){
+			while(this->rob_buffer.size()){
 				bool renamed_emc=false;
 				reorder_buffer_line_t *rob_next = this->rob_buffer.front();	
 				if(rob_next->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE){
+					this->add_stores_included_chain();
 					if(!this->verify_spill_register(rob_next)){
 						this->rob_buffer.erase(this->rob_buffer.begin());
-						i--;
 						continue;
 					}else{
 						orcs_engine.memory_controller->emc[this->processor_id].has_store = true;
@@ -1224,7 +1217,9 @@ void processor_t::execute()
 				}
 				#if EMC_ACTIVE_DEBUG
 					if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+						ORCS_PRINTF("====================\n")
 						ORCS_PRINTF("Renaming to EMC %s\n\n",rob_next->content_to_string().c_str())
+						ORCS_PRINTF("====================\n")
 					}
 				#endif
 				////////////////////////////////////////
@@ -1232,13 +1227,12 @@ void processor_t::execute()
 				if( status == POSITION_FAIL){
 					#if EMC_ACTIVE_DEBUG
 						if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-							ORCS_PRINTF("Impossivel Renomear EMC, estruturas cheias\n %s\n",rob_next->content_to_string().c_str())
+							ORCS_PRINTF("\n\n\nImpossivel Renomear EMC, estruturas cheias\n %s\n\n\n",rob_next->content_to_string().c_str())
 						}
 					#endif
 					this->rob_buffer.clear();	
 				}else if(status == NOT_ALL_REGS){
 					this->rob_buffer.erase(this->rob_buffer.begin());
-					i--;
 				}
 				else{
 					rob_next->sent_to_emc=true;
@@ -1248,7 +1242,6 @@ void processor_t::execute()
 				////////////////////////////////////////
 				if(renamed_emc==true){
 					this->rob_buffer.erase(this->rob_buffer.begin());
-					i--;
 				}
 			}
 			// Verifica se o rob_buffer está vazio, ou uop buffer cheio
@@ -1664,10 +1657,16 @@ void processor_t::commit(){
 				// }
 				// ====================================================					
 				// Oraculo Core
+				if (this->start_emc_module != false){
+					printf("WTF!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+					}
+
 				if(this->oracle_emc()){
 						this->start_emc_module = true;
 						this->add_started_emc_execution();
+						// ORCS_PRINTF("Started\n")
 				}else{
+
 					this->add_cancel_counter_emc_execution();
 					this->rob_buffer.clear();
 				}
@@ -1887,7 +1886,7 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 	// ORCS_PRINTF("Miss Original %s\n", rob_line->content_to_string().c_str())
 	ERROR_ASSERT_PRINTF(rob_line->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD, "Error, making dependences from NON-LOAD operation\n%s\n", rob_line->content_to_string().c_str())
 	// ORCS_PRINTF("Cycle %lu\n",orcs_engine.get_global_cycle())
-	while(this->rob_buffer.size()<=EMC_UOP_BUFFER){
+	while(this->rob_buffer.size() <= EMC_UOP_BUFFER){
 		int32_t next_position = this->get_next_uop_dependence();
 		if(next_position==POSITION_FAIL){
 			break;
@@ -1914,30 +1913,28 @@ void processor_t::make_dependence_chain(reorder_buffer_line_t *rob_line){
 			#if !ALL_UOPS
 				if(
 				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_INT_ALU ||
-				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD //|| //){
-				// next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE
+				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD || //){
+				next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE
 				){
 			#endif
 					//verify memory ambiguation
 					if(next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_STORE || 
 						next_operation->reg_deps_ptr_array[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD){
 							if(this->verify_ambiguation(next_operation->reg_deps_ptr_array[i]->mob_ptr)){
-								#if EMC_ACTIVE_DEBUG
-									if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-									ORCS_PRINTF("\n\nTem_ambig %s\n\n",next_operation->reg_deps_ptr_array[i]->content_to_string().c_str())
-								}
-								#endif
 								// cancel chain execution
 								// neste ponto nenhuma das estruturas foram utilizadas ainda
-								this->add_cancel_emc_execution();
-								this->rob_buffer.clear();
-								return;
+								// this->add_cancel_emc_execution();
+								//this->rob_buffer.clear();
+								//return;
+								continue;
 							}
 					}
 					this->rob_buffer.push_back(next_operation->reg_deps_ptr_array[i]);
 					#if EMC_ACTIVE_DEBUG
 						if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+							ORCS_PRINTF("========================================\n")
 							ORCS_PRINTF("Adding %s\n",next_operation->reg_deps_ptr_array[i]->content_to_string().c_str())
+							ORCS_PRINTF("========================================\n")
 						}
 					#endif
 					next_operation->reg_deps_ptr_array[i]->op_on_emc_buffer++;
@@ -2187,12 +2184,21 @@ Verify register spill to include stores on chain;
 */
 bool processor_t::verify_spill_register(reorder_buffer_line_t *rob_line){
 	bool spill = false;
+	#if EMC_ACTIVE_DEBUG
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("===============================\n")
+					ORCS_PRINTF("\nVerificando Spill\n")
+					ORCS_PRINTF("\n %s \n\n",rob_line->content_to_string().c_str())
+					ORCS_PRINTF("===============================\n")
+				}
+	#endif
 	for (size_t i = 0; i < this->rob_buffer.size(); i++){
 		if (this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD && 
 			this->rob_buffer[i]->mob_ptr->memory_address == rob_line->mob_ptr->memory_address &&
 			this->rob_buffer[i]->mob_ptr->memory_size == rob_line->mob_ptr->memory_size &&
 			this->rob_buffer[i]->uop.uop_number > rob_line->uop.uop_number){
 			spill = true;
+			this->add_number_spill_registers();
 			break;
 		}
 	}
@@ -2294,6 +2300,13 @@ bool processor_t::verify_ambiguation(memory_order_buffer_line_t *mob_line){
 	for(uint32_t i = 0; i < this->memory_order_buffer_write_used; i++){
 		if(this->memory_order_buffer_write[pos].memory_address == mob_line->memory_address &&
 			this->memory_order_buffer_write[pos].uop_number < mob_line->uop_number){
+			#if EMC_ACTIVE_DEBUG
+				if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+					ORCS_PRINTF("\nAmbiguação Detected\n")
+					ORCS_PRINTF("\n %s \n",mob_line->rob_ptr->content_to_string().c_str())
+					ORCS_PRINTF("\n %s \n\n",this->memory_order_buffer_write[pos].rob_ptr->content_to_string().c_str())
+				}
+			#endif
 			this->add_counter_ambiguation_write();
 			return true;
 		}
@@ -2364,6 +2377,8 @@ void processor_t::statistics(){
 				fprintf(output, "oracle_llc_miss: %d\n", this->get_oracle_count_misses_llc());
 				fprintf(output, "loads_missed_counter: %d\n", this->get_loads_missed_counter());
 				fprintf(output, "started_emc_without_loads: %d\n", this->get_started_emc_without_loads());
+				fprintf(output, "stores_included_chain: %d\n", this->get_stores_included_chain());
+				fprintf(output, "number_spill_registers: %d\n", this->get_number_spill_registers());
 				utils_t::smallSeparator(output);
 			#endif
 			}
@@ -2533,16 +2548,15 @@ void processor_t::clock(){
 bool processor_t::oracle_emc(){
 	bool has_load =  false;
 	uint32_t index_llc = orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC);
-	uint32_t ttc;
 	for(uint8_t i = 0; i < this->rob_buffer.size(); i++){
 		if(
 			(this->rob_buffer[i]->uop.uop_operation == INSTRUCTION_OPERATION_MEM_LOAD) &&
 			(!this->rob_buffer[i]->mob_ptr->core_generate_miss)
 			){
-			if(orcs_engine.cacheManager->LLC_data_cache[index_llc].read(this->rob_buffer[i]->mob_ptr->memory_address,ttc)==MISS){
+			if(orcs_engine.cacheManager->LLC_data_cache[index_llc].read_oracle(this->rob_buffer[i]->mob_ptr->memory_address)==MISS){
 				has_load =true;
 				this->add_oracle_count_misses_llc();
-				break;
+				//break;
 			}
 		}
 	}

@@ -277,6 +277,6 @@ Arquivo definindo os parametros do modelo de processador
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
 // #define WAIT_CYCLE 110000000
-#define WAIT_CYCLE 1000
+#define WAIT_CYCLE 500
 // **************** END DEFINES ******************
 #endif //_SKYLAKE_HPP_

@@ -55,7 +55,10 @@ class cache_t
         INSTANTIATE_GET_SET_ADD(uint64_t,cacheWrite)
         INSTANTIATE_GET_SET_ADD(uint64_t,cacheWriteBack)
         INSTANTIATE_GET_SET_ADD(uint64_t,changeLine)
-   
+        // ============================================================================
+        // Functions for ORACLE
+        // ============================================================================
+        uint32_t read_oracle(uint64_t address);
 };
 
 #endif // CACHE_H

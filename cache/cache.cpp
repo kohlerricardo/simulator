@@ -204,7 +204,6 @@ uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
 						this->sets[idx].linhas[i].prefetched =0;
 					}
 				#endif
-				this->sets[idx].linhas[i].lru = orcs_engine.get_global_cycle();
 				//add cache hit
 				if(this->level == INST_CACHE){
 					ttc+=L1_INST_LATENCY;
@@ -495,4 +494,20 @@ void cache_t::statistics(){
 		utils_t::largeSeparator(output);
 	}
 	if(close) fclose(output);
+}
+// =====================================================================================================================================================================
+// ==================
+// @address -address to make a read
+// @return HIT or MISS
+// ==================
+uint32_t cache_t::read_oracle(uint64_t address){
+	uint32_t idx = this->idxSetCalculation(address);
+	uint64_t tag = this->tagSetCalculation(address);
+	// this->add_cacheRead();
+	for (size_t i = 0; i < this->nLines; i++){
+		if(this->sets[idx].linhas[i].tag == tag){		
+				return HIT;
+			}				
+	}//end search, se nao encontrou nada, retorna latencia do miss
+	return MISS;
 }
