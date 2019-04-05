@@ -26,6 +26,8 @@ void memory_controller_t::allocate(){
         this->emc[i].allocate();
     }
     #endif
+    // ======================= Configurando DRAM ======================= 
+    this->latency_burst = LINE_SIZE/BURST_WIDTH;
 }
 // ============================================================================
 void memory_controller_t::statistics(){
@@ -66,7 +68,50 @@ void memory_controller_t::clock(){
 
 }
 // ============================================================================
+void memory_controller_t::set_masks(){
+            
+            uint32_t channel_bits_shift,colbyte_bits_shift,colrow_bits_shift,bank_bits_shift,row_bits_shift=0;
+ERROR_ASSERT_PRINTF(this->get_total_controllers() == 1,
+                                "Wrong number of memory_controllers (%u).\n", this->get_total_controllers());
+            ERROR_ASSERT_PRINTF(this->get_channels_per_controller() > 1 &&
+                                utils_t::check_if_power_of_two(this->get_channels_per_controller()),
+                                "Wrong number of memory_channels (%u).\n", this->get_channels_per_controller());
 
+            this->controller_bits_shift = 0;
+            this->colbyte_bits_shift = 0;
+            this->channel_bits_shift = utils_t::get_power_of_two(this->get_line_size());
+            this->colrow_bits_shift = this->channel_bits_shift + utils_t::get_power_of_two(this->get_channels_per_controller());
+            this->bank_bits_shift = this->colrow_bits_shift + utils_t::get_power_of_two(this->get_bank_row_buffer_size() / this->get_line_size());
+            this->row_bits_shift = this->bank_bits_shift + utils_t::get_power_of_two(this->get_bank_per_channel());
+
+            /// COLBYTE MASK
+            for (i = 0; i < utils_t::get_power_of_two(this->get_line_size()); i++) {
+                this->colbyte_bits_mask |= 1 << (i + this->colbyte_bits_shift);
+            }
+
+            /// CHANNEL MASK
+            for (i = 0; i < utils_t::get_power_of_two(this->get_channels_per_controller()); i++) {
+                this->channel_bits_mask |= 1 << (i + channel_bits_shift);
+            }
+
+            /// COLROW MASK
+            for (i = 0; i < utils_t::get_power_of_two(this->get_bank_row_buffer_size() / this->get_line_size()); i++) {
+                this->colrow_bits_mask |= 1 << (i + this->colrow_bits_shift);
+            }
+
+            this->not_column_bits_mask = ~(colbyte_bits_mask | colrow_bits_mask);
+
+
+            /// BANK MASK
+            for (i = 0; i < utils_t::get_power_of_two(this->get_bank_per_channel()); i++) {
+                this->bank_bits_mask |= 1 << (i + bank_bits_shift);
+            }
+
+            /// ROW MASK
+            for (i = row_bits_shift; i < utils_t::get_power_of_two((uint64_t)INT64_MAX+1); i++) {
+                this->row_bits_mask |= 1 << i;
+            }
+}
 // ============================================================================
 uint64_t memory_controller_t::requestDRAM(){
     this->add_requests_made();

@@ -9,6 +9,16 @@ class memory_controller_t{
         uint64_t requests_emc; //Data Requests made to DRAM
         uint64_t requests_llc; //Data Requests made to LLC
         
+        // =================================================
+        // attr DRAM
+        // =================================================
+        uint32_t channel_bits_mask;
+        uint32_t rank_bits_mask;
+        uint32_t bank_bits_mask;
+        uint32_t row_bits_mask;
+        uint32_t col_row_bits_mask;
+        uint32_t latency_burst;
+        
     public:
         // ==========================================================================
         // Memory Controller Atributes
@@ -16,6 +26,10 @@ class memory_controller_t{
         emc_t *emc;
         uint8_t emc_active;
         cache_t *data_cache; 
+        // ==========================================================================
+        // Methods DRAM
+        // ==========================================================================
+        void set_masks();
         // ==========================================================================
         // Memory Controller Methods
         // ==========================================================================

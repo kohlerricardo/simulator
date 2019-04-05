@@ -151,6 +151,16 @@ Arquivo definindo os parametros do modelo de processador
 
 // =====================RAM=======================
 #define RAM_LATENCY 350
+#define CHANNEL 2
+#define RANK 1
+#define BANK 8
+// =====================Parametes Comandd=======================
+#define BURST_WIDTH 8
+#define RAS 44
+#define CAS 44
+#define ROW_PRECHARGE 44
+// ============================================
+
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
 #define MAX_PARALLEL_REQUESTS_CORE 10
