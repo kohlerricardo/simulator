@@ -1446,7 +1446,7 @@ uint32_t processor_t::mob_read(){
 	}
 	if (this->oldest_read_to_send != NULL){
 		#if PARALLEL_LIM_ACTIVE
-			if ((this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE) && (!this->get_all_mem_req())){
+			if(this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE){
 				this->add_times_reach_parallel_requests_read();
 				return FAIL;
 			}
@@ -2290,17 +2290,7 @@ bool processor_t::verify_ambiguation(memory_order_buffer_line_t *mob_line){
 	}
 	return false;
 }
-// ============================================================================
-bool processor_t::get_all_mem_req(){
-	uint32_t sum_num_req=0;
-	for(uint8_t i = 0; i < NUMBER_OF_PROCESSORS; i++){
-		sum_num_req += orcs_engine.processor[i].counter_mshr_read;
-	}
-	#if PREFETCHER_ACTIVE
-		sum_num_req+=orcs_engine.cacheManager->prefetcher->prefetch_waiting_complete.size();
-	#endif
-	return (sum_num_req < MAX_PARALLEL_ALL_CORES);
-}
+
 // ============================================================================
 void processor_t::statistics(){
 	bool close = false;

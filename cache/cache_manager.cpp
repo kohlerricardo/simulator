@@ -372,10 +372,6 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
                 // settign LLC
                 linha_llc->linha_ptr_l1=linha_l1;
                 linha_llc->linha_ptr_l2=linha_l2;
-                //NULLING POINTERS <LEAK MEMORY>
-                linha_l1 = NULL;
-                linha_l2 = NULL;
-                linha_llc = NULL;
                 this->L1_data_cache[index_l1].write(mob_line->memory_address);
             }
         }
