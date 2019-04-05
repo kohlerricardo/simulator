@@ -41,7 +41,7 @@ def get_values(dados,dicionario):
     return values
 def main():
     # fields_required=['benchmark','Total_Cycle','fetch_instructions',None,'Stage_Rename','INST_CACHE_Cache_Hits','INST_CACHE_Cache_Miss',None,'L1_DATA_CACHE_Cache_Hits','L1_DATA_CACHE_Cache_Miss',None,'LLC_Cache_Hits','LLC_Cache_Miss',None,'times_llc_rob_head','started_emc_execution','canceled_emc_execution'] 
-    fields_required=['benchmark','Total_Cycle','fetch_instructions',None,None,'times_llc_rob_head','started_emc_execution','LLC_Cache_Miss','numero_load_deps','oracle_llc_miss','total_instruction_sent_emc','loads_missed_counter','started_emc_without_loads','EMC_Access_LLC_MISS','EMC_Correct_Prediction_RAM'] 
+    fields_required=['benchmark','Total_Cycle','fetch_instructions',None,None,'times_llc_rob_head','started_emc_execution','LLC_Cache_Miss','numero_load_deps','oracle_llc_miss','total_instruction_sent_emc','loads_missed_counter','started_emc_without_loads','EMC_Access_LLC_MISS','EMC_Correct_Prediction_RAM','stores_included_chain','number_spill_registers'] 
     folder = sys.argv[1]
     files = get_list_file(folder)
     data_array = list()

@@ -130,7 +130,8 @@ uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instr
                 //request to Memory Controller
                 ttc = orcs_engine.memory_controller->requestDRAM();
                 orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
-                latency_request+=ttc;
+                // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
+                latency_request +=ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
                 #if CACHE_MANAGER_DEBUG
                     if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
                         ORCS_PRINTF("HIT LLC ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
@@ -240,7 +241,8 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 ttc = orcs_engine.memory_controller->requestDRAM();
                 orcs_engine.memory_controller->add_requests_llc();  // requests made by LLC
                 mob_line->waiting_DRAM=true;                        //Settind wait DRAM
-                latency_request +=ttc;                              // Add latency from RAM
+                // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
+                latency_request +=ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
                 // ====================
                 orcs_engine.processor[mob_line->processor_id].request_DRAM++;
                 // ====================
@@ -352,7 +354,8 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
                 this->LLC_data_cache[index_llc].add_cacheMiss();
                 ttc = orcs_engine.memory_controller->requestDRAM();
                 orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
-                latency_request +=ttc;
+                // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
+                latency_request +=ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
                 // ====================
                 // Install cache lines
                 // ====================

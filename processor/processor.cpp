@@ -1439,7 +1439,7 @@ uint32_t processor_t::mob_read(){
 	}
 	if (this->oldest_read_to_send != NULL){
 		#if PARALLEL_LIM_ACTIVE
-			if ((this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE) && (!this->get_all_mem_req())){
+			if(this->counter_mshr_read >= MAX_PARALLEL_REQUESTS_CORE){
 				this->add_times_reach_parallel_requests_read();
 				return FAIL;
 			}
@@ -2318,16 +2318,7 @@ bool processor_t::verify_ambiguation(memory_order_buffer_line_t *mob_line){
 	return false;
 }
 // ============================================================================
-bool processor_t::get_all_mem_req(){
-	uint32_t sum_num_req=0;
-	for(uint8_t i = 0; i < NUMBER_OF_PROCESSORS; i++){
-		sum_num_req += orcs_engine.processor[i].counter_mshr_read;
-	}
-	#if PREFETCHER_ACTIVE
-		sum_num_req+=orcs_engine.cacheManager->prefetcher->prefetch_waiting_complete.size();
-	#endif
-	return (sum_num_req < MAX_PARALLEL_ALL_CORES);
-}
+
 // ============================================================================
 void processor_t::statistics(){
 	bool close = false;
@@ -2546,7 +2537,7 @@ void processor_t::clock(){
 }
 // ========================================================================================================================================================================================
 bool processor_t::oracle_emc(){
-	bool has_load =  false;
+	int8_t num_loads=0;
 	uint32_t index_llc = orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC);
 	for(uint8_t i = 0; i < this->rob_buffer.size(); i++){
 		if(
@@ -2554,12 +2545,17 @@ bool processor_t::oracle_emc(){
 			(!this->rob_buffer[i]->mob_ptr->core_generate_miss)
 			){
 			if(orcs_engine.cacheManager->LLC_data_cache[index_llc].read_oracle(this->rob_buffer[i]->mob_ptr->memory_address)==MISS){
-				has_load =true;
+				num_loads+=1;
 				this->add_oracle_count_misses_llc();
-				//break;
 			}
 		}
 	}
-	return has_load;
+	if(num_loads>=1){
+		return true;
+	}else
+	{
+		return false;
+	}
+	
 }
 // ========================================================================================================================================================================================
