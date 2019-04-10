@@ -9,7 +9,9 @@ class memory_controller_t{
         uint64_t operations_executed; // number of operations executed
         uint64_t requests_emc; //Data Requests made to DRAM
         uint64_t requests_llc; //Data Requests made to LLC
+        uint64_t requests_prefetcher; //Data Requests made by prefetcher
         uint64_t row_buffer_miss; //Data Requests made to LLC
+        uint64_t row_buffer_hit; //Data Requests made to LLC
         
         // =================================================
         // attr DRAM
@@ -72,7 +74,9 @@ class memory_controller_t{
         INSTANTIATE_GET_SET_ADD(uint64_t,operations_executed)
         INSTANTIATE_GET_SET_ADD(uint64_t,requests_emc)
         INSTANTIATE_GET_SET_ADD(uint64_t,requests_llc)
+        INSTANTIATE_GET_SET_ADD(uint64_t,requests_prefetcher)
         INSTANTIATE_GET_SET_ADD(uint64_t,row_buffer_miss)
+        INSTANTIATE_GET_SET_ADD(uint64_t,row_buffer_hit)
         //request DRAM data
         uint64_t requestDRAM(uint64_t address);
         

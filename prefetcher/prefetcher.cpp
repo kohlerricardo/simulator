@@ -41,14 +41,16 @@ void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache)
         uint32_t status = cache->read(newAddress,sacrifice);
         if(status == MISS){
             this->add_totalPrefetched();
-            linha_t *linha = cache->installLine(newAddress,RAM_LATENCY);
+            uint64_t latency_prefetch = orcs_engine.memory_controller->requestDRAM(newAddress);
+            orcs_engine.memory_controller->add_requests_prefetcher();
+            linha_t *linha = cache->installLine(newAddress,latency_prefetch);
             #if EMC_ACTIVE
-                linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(newAddress,RAM_LATENCY);
+                linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(newAddress,latency_prefetch);
                 linha_emc->linha_ptr_llc = linha;
                 linha->linha_ptr_emc=linha_emc; 
             #endif
             linha->prefetched=1; 
-            this->prefetch_waiting_complete.push_back(cycle+RAM_LATENCY);
+            this->prefetch_waiting_complete.push_back(cycle+latency_prefetch);
         }
     }
 }

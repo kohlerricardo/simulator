@@ -138,7 +138,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LEVEL 2 =====================
 #define L2_SIZE 256*KILO
 #define L2_ASSOCIATIVITY 4
-#define L2_LATENCY 6
+#define L2_LATENCY 9
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
@@ -150,21 +150,20 @@ Arquivo definindo os parametros do modelo de processador
 // =====================CACHES=======================
 
 // =====================RAM=======================
-#define RAM_LATENCY 350
 #define CHANNEL 2
 #define RANK 1
 #define BANK 8
-#define ROW_BUFFER 8192
+#define ROW_BUFFER (RANK*BANK)*1024
 // =====================Parametes Comandd=======================
 #define BURST_WIDTH 8
 #define RAS 44
 #define CAS 44
 #define ROW_PRECHARGE 44
 // ============================================
-
+#define RAM_LATENCY 350
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
-#define MAX_PARALLEL_REQUESTS_CORE 10
+#define MAX_PARALLEL_REQUESTS_CORE 6
 
 // =====================RAM=======================
 // =====================PREFETCHER=======================

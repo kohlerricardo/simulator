@@ -113,12 +113,10 @@ Arquivo definindo os parametros do modelo de processador
 
 #define KILO 1024
 #define MEGA KILO*KILO
-
-
 // =====================CACHES=======================
 // ATTR COMMON
 #define LINE_SIZE 64
-#define CACHE_LEVELS 3
+#define CACHE_LEVELS 2
 #define INSTRUCTION_ENABLED 1
 #define OFFSET_SIZE 6
 // ==================== LEVEL 1 =====================
@@ -137,27 +135,38 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LEVEL 1 =====================
 // ==================== LEVEL 2 =====================
 #define L2_SIZE 256*KILO
-#define L2_ASSOCIATIVITY 8
+#define L2_ASSOCIATIVITY 4
 #define L2_LATENCY 6
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 4*MEGA
-#define LLC_ASSOCIATIVITY 8
-#define LLC_LATENCY 40
+#define LLC_SIZE 20*MEGA
+#define LLC_ASSOCIATIVITY 20
+#define LLC_LATENCY 44
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
 
 // =====================RAM=======================
 #define RAM_LATENCY 350
+#define CHANNEL 2
+#define RANK 1
+#define BANK 8
+#define ROW_BUFFER (RANK*BANK)*1024
+// =====================Parametes Comandd=======================
+#define BURST_WIDTH 8
+#define RAS 44
+#define CAS 44
+#define ROW_PRECHARGE 44
+// ============================================
+
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
-#define MAX_PARALLEL_REQUESTS_CORE 6
-#define MAX_PARALLEL_ALL_CORES 16
+#define MAX_PARALLEL_REQUESTS_CORE 10
+
 // =====================RAM=======================
 // =====================PREFETCHER=======================
-#define PREFETCHER_ACTIVE 1
+#define PREFETCHER_ACTIVE 0
 #define STRIDE_TABLE_SIZE 32*NUMBER_OF_PROCESSORS   
 #define DEGREE 1
 #define DISTANCE 4
@@ -191,6 +200,7 @@ Arquivo definindo os parametros do modelo de processador
 
 // ===================== EMC =======================================
 #define EMC_ACTIVE 0
+#define EMC_THRESHOLD 2
 #define EMC_PARALLEL_ACTIVATE 1
 #define EMC_ROB_HEAD 1
 #define ALL_UOPS 0
@@ -208,10 +218,10 @@ Arquivo definindo os parametros do modelo de processador
 //pipelines
 #define EMC_WAIT_NEXT_INTEGER_ALU 1
 #define EMC_WAIT_NEXT_INTEGER_MUL 1
-#define EMC_WAIT_NEXT_INTEGER_DIV 32
+#define EMC_WAIT_NEXT_INTEGER_DIV 1
 #define EMC_WAIT_NEXT_FP_ALU 1
 #define EMC_WAIT_NEXT_FP_MUL 1
-#define EMC_WAIT_NEXT_FP_DIV 10
+#define EMC_WAIT_NEXT_FP_DIV 1
 #define EMC_WAIT_NEXT_MEM_LOAD 1
 #define EMC_WAIT_NEXT_MEM_STORE 1
 //Functional Units QTDE
@@ -224,11 +234,11 @@ Arquivo definindo os parametros do modelo de processador
 //Latencies
 #define EMC_INTEGER_LATENCY_ALU 1
 #define EMC_INTEGER_LATENCY_MUL 3
-#define EMC_INTEGER_LATENCY_DIV 32
+#define EMC_INTEGER_LATENCY_DIV 8
 //Latencies FP
-#define EMC_FP_LATENCY_ALU 3
-#define EMC_FP_LATENCY_MUL 5
-#define EMC_FP_LATENCY_DIV 10
+#define EMC_FP_LATENCY_ALU 4
+#define EMC_FP_LATENCY_MUL 4
+#define EMC_FP_LATENCY_DIV 8
 // Structures
 #define EMC_UNIFIED_RS 8
 #define EMC_UOP_BUFFER 16
@@ -257,11 +267,13 @@ Arquivo definindo os parametros do modelo de processador
 #define DECODE_DEBUG 0
 #define RENAME_DEBUG 0
 #define DISPATCH_DEBUG 0
-#define EXECUTE_DEBUG 1
+#define EXECUTE_DEBUG 0
 #define MOB_DEBUG 0
+#define PRINT_MOB 0
+#define PRINT_ROB 0
 #define COMMIT_DEBUG 1
-#define CACHE_MANAGER_DEBUG 0
-#define MEM_CONTROLLER_DEBUG 0
+#define CACHE_MANAGER_DEBUG 1
+#define MEM_CONTROLLER_DEBUG 1
 // EMC Debugs
 #define EMC_DEBUG 1
 #define EMC_DISPATCH_DEBUG 0
@@ -273,6 +285,7 @@ Arquivo definindo os parametros do modelo de processador
 
 #define PERIODIC_CHECK 0
 #define CLOCKS_TO_CHECK 500
-#define WAIT_CYCLE 1118073450
+// #define WAIT_CYCLE 110000000
+#define WAIT_CYCLE 0
 // **************** END DEFINES ******************
 #endif //_SANDYBRIDGE_HPP

@@ -45,8 +45,10 @@ void memory_controller_t::statistics(){
         fprintf(output,"#Memory Controller\n");
         utils_t::largestSeparator(output);
         fprintf(output,"Requests_Made: %lu\n",this->get_requests_made());
+        fprintf(output,"Requests_from_Prefetcher: %lu\n",this->get_requests_prefetcher());
         fprintf(output,"Requests_from_LLC: %lu\n",this->get_requests_llc());
         fprintf(output,"Requests_from_EMC: %lu\n",this->get_requests_emc());
+        fprintf(output,"Row_Buffer_Hit: %lu\n",this->get_row_buffer_hit());
         fprintf(output,"Row_Buffer_Miss: %lu\n",this->get_row_buffer_miss());
         utils_t::largestSeparator(output);
         if(close) fclose(output);
@@ -153,6 +155,7 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
         if(actual_row == this->ram[bank].last_row_accessed){
             this->ram[bank].cycle_ready = orcs_engine.get_global_cycle()+CAS;
             latency_request += CAS;
+            this->add_row_buffer_hit();
             #if MEM_CONTROLLER_DEBUG
                 if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
                  ORCS_PRINTF("Same Row Cycle ready %lu, last row %lu, actual row %lu\n",this->ram[bank].cycle_ready, this->ram[bank].last_row_accessed,actual_row)
@@ -177,6 +180,7 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
             // latency is when row are ready(completed last req) + CAS
             latency_request += (this->ram[bank].cycle_ready-orcs_engine.get_global_cycle())+CAS;
             this->ram[bank].cycle_ready += CAS;
+            this->add_row_buffer_hit();
             #if MEM_CONTROLLER_DEBUG
                 if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
                  ORCS_PRINTF("Cycle ready %lu, last row %lu, actual row %lu\n",this->ram[bank].cycle_ready, this->ram[bank].last_row_accessed,actual_row)
