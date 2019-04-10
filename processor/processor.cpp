@@ -1609,6 +1609,7 @@ void processor_t::commit(){
 			ORCS_PRINTF("=========================================================================\n")
 			ORCS_PRINTF("========== Commit Stage ==========\n")
 			ORCS_PRINTF("Cycle %lu\n", orcs_engine.get_global_cycle())
+			ORCS_PRINTF("ROB Head %s\n",this->reorderBuffer[this->robStart].content_to_string().c_str())
 			#if PRINT_ROB
 				this->print_ROB();
 			#endif

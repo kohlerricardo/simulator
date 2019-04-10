@@ -128,13 +128,13 @@ uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instr
                 this->LLC_data_cache[index_llc].add_cacheAccess();
                 this->LLC_data_cache[index_llc].add_cacheMiss();
                 //request to Memory Controller
-                ttc = orcs_engine.memory_controller->requestDRAM();
+                ttc = orcs_engine.memory_controller->requestDRAM(instructionAddress);
                 orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
                 // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
                 latency_request +=ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
                 #if CACHE_MANAGER_DEBUG
                     if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-                        ORCS_PRINTF("HIT LLC ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
+                        ORCS_PRINTF("MISS LLC ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
                     }
                 #endif
                 // ====================
@@ -238,7 +238,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 mob_line->rob_ptr->original_miss=true;
                 //========================================= 
                 //request to Memory Controller
-                ttc = orcs_engine.memory_controller->requestDRAM();
+                ttc = orcs_engine.memory_controller->requestDRAM(mob_line->memory_address);
                 orcs_engine.memory_controller->add_requests_llc();  // requests made by LLC
                 mob_line->waiting_DRAM=true;                        //Settind wait DRAM
                 // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
@@ -352,7 +352,7 @@ uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
                 //llc miss
                 this->LLC_data_cache[index_llc].add_cacheAccess();
                 this->LLC_data_cache[index_llc].add_cacheMiss();
-                ttc = orcs_engine.memory_controller->requestDRAM();
+                ttc = orcs_engine.memory_controller->requestDRAM(mob_line->memory_address);
                 orcs_engine.memory_controller->add_requests_llc(); // requests made by LLC
                 // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
                 latency_request +=ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
@@ -448,7 +448,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             mob_line->emc_generate_miss=false;
             // ===================================
         }else{
-            latency_request += orcs_engine.memory_controller->requestDRAM();
+            latency_request += orcs_engine.memory_controller->requestDRAM(mob_line->memory_address);
             #if CACHE_MANAGER_DEBUG
                 if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
                     ORCS_PRINTF("To RAM ttc:[%u] Latency Request: [%u]\n",ttc,latency_request);
