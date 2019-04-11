@@ -151,9 +151,9 @@ Arquivo definindo os parametros do modelo de processador
 
 // =====================RAM=======================
 #define CHANNEL 2
-#define RANK 1
+#define RANK 2
 #define BANK 8
-#define ROW_BUFFER (RANK*BANK)*1024
+#define ROW_BUFFER BANK*1024
 // =====================Parametes Comandd=======================
 #define BURST_WIDTH 8
 #define RAS 44

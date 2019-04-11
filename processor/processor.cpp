@@ -1621,7 +1621,7 @@ void processor_t::commit(){
 		#if EMC_ACTIVE 
 			if( (this->reorderBuffer[this->robStart].uop.uop_operation==INSTRUCTION_OPERATION_MEM_LOAD) &&
 				(this->reorderBuffer[this->robStart].mob_ptr->core_generate_miss) &&
-				((this->reorderBuffer[this->robStart].mob_ptr->readyAt-RAM_LATENCY) == orcs_engine.get_global_cycle())
+				((this->reorderBuffer[this->robStart].mob_ptr->cycle_sent_to_DRAM) == orcs_engine.get_global_cycle())
 			){
 				this->add_llc_miss_rob_head();
 				#if EMC_ACTIVE_DEBUG
