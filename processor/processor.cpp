@@ -1756,6 +1756,11 @@ void processor_t::commit(){
 
 				// MEMORY OPERATIONS - READ
 				case INSTRUCTION_OPERATION_MEM_LOAD:{
+					if(this->reorderBuffer[pos_buffer].mob_ptr->waiting_DRAM){
+						this->ram_req_wait_cycles+=(this->reorderBuffer[pos_buffer].mob_ptr->readyAt - this->reorderBuffer[pos_buffer].mob_ptr->cycle_sent_to_DRAM);
+						this->add_ram_req();
+					}
+					this->mem_req_wait_cycles+=(this->reorderBuffer[pos_buffer].mob_ptr->readyAt - this->reorderBuffer[pos_buffer].mob_ptr->readyToGo);
 					this->add_stat_inst_load_completed();
 					break;
 				}
@@ -2348,6 +2353,8 @@ void processor_t::statistics(){
 		utils_t::largestSeparator(output);
 		fprintf(output, "Instruction_Per_Cycle_After_Warmup: %1.6lf\n", (float)this->fetchCounter/this->get_ended_cycle());	
 		fprintf(output, "MPKI: %lf\n", (float)orcs_engine.cacheManager->LLC_data_cache[orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC)].get_cacheMiss()/((float)this->fetchCounter/1000));
+		fprintf(output, "Average_wait_cycles_wait_mem_req: %lf\n", (float)this->mem_req_wait_cycles/this->get_stat_inst_load_completed());
+		fprintf(output, "Average_wait_cycles_wait_RAM_req: %lf\n", (float)this->ram_req_wait_cycles/this->get_ram_req());
 		utils_t::largestSeparator(output);
 			#if EMC_ACTIVE
 				fprintf(output, "\n======================== EMC INFOS ===========================\n");

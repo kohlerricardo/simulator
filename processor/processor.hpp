@@ -32,6 +32,9 @@ class processor_t {
 	uint64_t times_reach_parallel_requests_write;
 	float_t instruction_per_cycle;
 	uint64_t ended_cycle;
+	uint64_t mem_req_wait_cycles;
+	uint64_t ram_req_wait_cycles;
+	uint64_t ram_req;
 	//=============
 	//Statistics Commit
 	//=============
@@ -211,6 +214,7 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(float_t,instruction_per_cycle)
 		INSTANTIATE_GET_SET_ADD(uint64_t,ended_cycle)
 		INSTANTIATE_GET_SET_ADD(uint32_t,loads_sent_at_rob_head)
+		INSTANTIATE_GET_SET_ADD(uint32_t,ram_req)
 		// ====================================================================
 		// Statistics inst completed
 		// ====================================================================

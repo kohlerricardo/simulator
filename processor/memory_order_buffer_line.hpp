@@ -15,6 +15,9 @@ class memory_order_buffer_line_t {
         uint32_t wait_mem_deps_number;                      /// Must wait BEFORE execution
         memory_order_buffer_line_t* *mem_deps_ptr_array;    /// Elements to wake-up AFTER execution
         //==========================================================================================
+        // Statistics variables
+        uint64_t cycle_sent_to_DRAM;
+        //==========================================================================================
         //Control variables
         bool processed; 
         bool sent; //*

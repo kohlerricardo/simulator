@@ -132,7 +132,7 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
     //
     uint64_t channel,bank;
     channel = this->get_channel(address);
-    bank = (channel*BANK)+this->get_bank(address);
+    bank = (channel*BANK) + this->get_bank(address);
     // Get the row where "data" is
     uint64_t actual_row = this->get_row(address);
     #if MEM_CONTROLLER_DEBUG
@@ -153,7 +153,7 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
             }
         #endif
         if(actual_row == this->ram[bank].last_row_accessed){
-            this->ram[bank].cycle_ready = orcs_engine.get_global_cycle()+CAS;
+            this->ram[bank].cycle_ready = orcs_engine.get_global_cycle()+CAS+this->latency_burst;  
             latency_request += CAS;
             this->add_row_buffer_hit();
             #if MEM_CONTROLLER_DEBUG
@@ -163,7 +163,7 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
             #endif            
         }else{
         // else, need make precharge, access row and colum
-            this->ram[bank].cycle_ready = orcs_engine.get_global_cycle()+(ROW_PRECHARGE+RAS+CAS);
+            this->ram[bank].cycle_ready = orcs_engine.get_global_cycle()+(ROW_PRECHARGE+RAS+CAS)+this->latency_burst;
             this->ram[bank].last_row_accessed = actual_row;
             latency_request += CAS+RAS+ROW_PRECHARGE;
             this->add_row_buffer_miss();
@@ -178,8 +178,8 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
         // if new request is on same row
          if(actual_row == this->ram[bank].last_row_accessed){
             // latency is when row are ready(completed last req) + CAS
-            latency_request += (this->ram[bank].cycle_ready-orcs_engine.get_global_cycle())+CAS;
-            this->ram[bank].cycle_ready += CAS;
+            this->ram[bank].cycle_ready += CAS+this->latency_burst;
+            latency_request += (this->ram[bank].cycle_ready-orcs_engine.get_global_cycle()); 
             this->add_row_buffer_hit();
             #if MEM_CONTROLLER_DEBUG
                 if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
@@ -188,9 +188,9 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
             #endif   
         }else{
             // Get time to complete all requests pendents+RP+RAS+CAS
-            latency_request += (this->ram[bank].cycle_ready-orcs_engine.get_global_cycle())+(ROW_PRECHARGE+RAS+CAS);
-            this->ram[bank].cycle_ready +=(ROW_PRECHARGE+RAS+CAS);
+            this->ram[bank].cycle_ready +=(ROW_PRECHARGE+RAS+CAS)+this->latency_burst;
             this->ram[bank].last_row_accessed = actual_row;
+            latency_request += (this->ram[bank].cycle_ready-orcs_engine.get_global_cycle())+(ROW_PRECHARGE+RAS+CAS);
             this->add_row_buffer_miss();           
             #if MEM_CONTROLLER_DEBUG
                 if(orcs_engine.get_global_cycle()>WAIT_CYCLE){

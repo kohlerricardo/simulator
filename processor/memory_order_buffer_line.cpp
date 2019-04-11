@@ -38,6 +38,7 @@ void memory_order_buffer_line_t::package_clean() {
         this->emc_predict_access_ram=false;
         this->l1_emc_hit = false;
         this->processor_id = 0;
+        this->cycle_sent_to_DRAM = orcs_engine.get_global_cycle();
         #if EMC_ACTIVE
         this->emc_opcode_ptr=NULL;
         #endif
