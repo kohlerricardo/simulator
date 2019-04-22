@@ -231,6 +231,10 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 #endif
                 //========================================= 
             }else{
+                // ================================================================
+                // statistics
+                mob_line->cycle_sent_to_DRAM = orcs_engine.get_global_cycle()+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
+                // ================================================================
                 this->LLC_data_cache[index_llc].add_cacheAccess();
                 this->LLC_data_cache[index_llc].add_cacheMiss();
                 orcs_engine.processor[mob_line->processor_id].has_llc_miss=true; // setting llc miss

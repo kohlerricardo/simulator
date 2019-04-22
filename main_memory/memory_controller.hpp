@@ -10,8 +10,8 @@ class memory_controller_t{
         uint64_t requests_emc; //Data Requests made to DRAM
         uint64_t requests_llc; //Data Requests made to LLC
         uint64_t requests_prefetcher; //Data Requests made by prefetcher
-        uint64_t row_buffer_miss; //Data Requests made to LLC
-        uint64_t row_buffer_hit; //Data Requests made to LLC
+        uint64_t row_buffer_miss; //Counter row buffer misses
+        uint64_t row_buffer_hit; //Counter row buffer hits
         
         // =================================================
         // attr DRAM
@@ -29,13 +29,17 @@ class memory_controller_t{
         uint64_t colrow_bits_shift;
         uint64_t bank_bits_shift;
         uint64_t row_bits_shift;
-
+        // =================================================
         // Struct object defines RAM
+        // =================================================
         typedef struct RAM{
             uint64_t last_row_accessed;
             uint64_t cycle_ready;
         }RAM_t;
-        
+        typedef struct bus{
+            std::vector<uint64_t> requests;
+        }bus_t;
+
     public:
         // ==========================================================================
         // Memory Controller Atributes
@@ -44,10 +48,12 @@ class memory_controller_t{
         uint8_t emc_active;
         cache_t *data_cache;
         RAM_t *ram; 
+        bus_t *data_bus;//n_channel * N
         // ==========================================================================
         // Methods DRAM
         // ==========================================================================
         void set_masks();
+        uint64_t add_channel_bus(uint64_t address, uint64_t ready);
         // ==========================================================================
         // Memory Controller Methods
         // ==========================================================================

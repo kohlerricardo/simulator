@@ -142,7 +142,7 @@ Arquivo definindo os parametros do modelo de processador
 #define L2_SETS (L2_SIZE/LINE_SIZE)/L2_ASSOCIATIVITY
 // ==================== LEVEL 2 =====================
 // ==================== LLC     =====================
-#define LLC_SIZE 4*MEGA
+#define LLC_SIZE 1*MEGA
 #define LLC_ASSOCIATIVITY 8
 #define LLC_LATENCY 44
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
@@ -272,7 +272,7 @@ Arquivo definindo os parametros do modelo de processador
 #define MOB_DEBUG 0
 #define PRINT_MOB 0
 #define PRINT_ROB 0
-#define COMMIT_DEBUG 1
+#define COMMIT_DEBUG 0
 #define CACHE_MANAGER_DEBUG 1
 #define MEM_CONTROLLER_DEBUG 1
 // EMC Debugs

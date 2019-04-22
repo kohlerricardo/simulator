@@ -5,9 +5,9 @@ EXEC="orcs"
 TRACE_FOLDER="traces/"
 BENCHMARK_FOLDER="spec_cpu2006/"
 
-DIR=RESULTADOS/
-RESULT_ALONE=ALONE/
-RESULT_WORKOAD=WORKLOAD/
+DIR=Bundle_Milad/
+RESULT_ALONE=Copy/
+RESULT_WORKOAD=Random/
 #lista aplicacoes utilizadas
 APPS=(libquantum.CINT.PP200M mcf.CINT.PP200M lbm.CFP.PP200M milc.CFP.PP200M soplex.CFP.PP200M sphinx3.CFP.PP200M bwaves.CFP.PP200M omnetpp.CINT.PP200M)
 # Lista de workloads
@@ -24,8 +24,8 @@ W9=(libquantum.CINT.PP200M bwaves.CFP.PP200M soplex.CFP.PP200M omnetpp.CINT.PP20
 LOCATION=${TRACE_FOLDER}${BENCHMARK_FOLDER}
 COMANDO=${ROOT}/./${EXEC}
 
-# mkdir -p ${DIR}${RESULT_ALONE}
-# mkdir -p ${DIR}${RESULT_WORKOAD}
+mkdir -p ${DIR}${RESULT_ALONE}
+mkdir -p ${DIR}${RESULT_WORKOAD}
 # Executandoapps standalone
 for APP in ${APPS[@]}
 do 

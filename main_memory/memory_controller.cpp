@@ -15,11 +15,11 @@ memory_controller_t::~memory_controller_t() = default;
 // @allocate objects to EMC
 void memory_controller_t::allocate(){
     // ======================= data cache =======================
-	this->data_cache = new cache_t;
-	this->data_cache->allocate(EMC_DATA_CACHE);
 
     // ======================= EMC =======================
     #if EMC_ACTIVE
+	this->data_cache = new cache_t;
+	this->data_cache->allocate(EMC_DATA_CACHE);
     this->emc = new emc_t[NUMBER_OF_PROCESSORS];
     for (uint32_t i = 0; i < NUMBER_OF_PROCESSORS; i++)
     {
@@ -31,6 +31,12 @@ void memory_controller_t::allocate(){
     this->set_masks();
     this->ram = (RAM_t*)malloc(CHANNEL*BANK*sizeof(RAM_t));
     std::memset(this->ram,0,CHANNEL*BANK*sizeof(RAM_t));
+    // ======================= Configurando data BUS ======================= 
+    this->data_bus = new bus_t[CHANNEL];
+    for(uint8_t i = 0; i < CHANNEL; i++){
+        this->data_bus[i].requests.reserve(CHANNEL*NUMBER_OF_PROCESSORS*MAX_PARALLEL_REQUESTS_CORE);
+    }     
+
 }
 // ============================================================================
 void memory_controller_t::statistics(){
@@ -77,7 +83,7 @@ void memory_controller_t::clock(){
 void memory_controller_t::set_masks(){
         
     ERROR_ASSERT_PRINTF(CHANNEL > 1 && utils_t::check_if_power_of_two(CHANNEL),"Wrong number of memory_channels (%u).\n",CHANNEL);
-    uint32_t i;
+    uint64_t i;
     // =======================================================
     // Setting to zero
     // =======================================================
@@ -89,9 +95,9 @@ void memory_controller_t::set_masks(){
     this->colbyte_bits_shift = 0;
     // =======================================================
     this->channel_bits_shift = utils_t::get_power_of_two(LINE_SIZE);
-    this->colrow_bits_shift = this->channel_bits_shift + utils_t::get_power_of_two(CHANNEL);
-    this->bank_bits_shift = this->colrow_bits_shift + utils_t::get_power_of_two(ROW_BUFFER / LINE_SIZE);
-    this->row_bits_shift = this->bank_bits_shift + utils_t::get_power_of_two(BANK);
+    this->bank_bits_shift = this->channel_bits_shift+  utils_t::get_power_of_two(CHANNEL);
+    this->colrow_bits_shift = this->bank_bits_shift +utils_t::get_power_of_two(BANK);
+    this->row_bits_shift = this->bank_bits_shift + utils_t::get_power_of_two(ROW_BUFFER / LINE_SIZE);
 
     /// COLBYTE MASK
     for (i = 0; i < utils_t::get_power_of_two(LINE_SIZE); i++) {
@@ -102,17 +108,14 @@ void memory_controller_t::set_masks(){
     for (i = 0; i < utils_t::get_power_of_two(CHANNEL); i++) {
         this->channel_bits_mask |= 1 << (i + this->channel_bits_shift);
     }
-
-    /// COLROW MASK
-    for (i = 0; i < utils_t::get_power_of_two((ROW_BUFFER / LINE_SIZE)); i++) {
-        this->col_row_bits_mask |= 1 << (i + this->colrow_bits_shift);
-    }
-
     /// BANK MASK
     for (i = 0; i < utils_t::get_power_of_two(BANK); i++) {
         this->bank_bits_mask |= 1 << (i + this->bank_bits_shift);
     }
-
+    /// COLROW MASK
+    for (i = 0; i < utils_t::get_power_of_two((ROW_BUFFER / LINE_SIZE)); i++) {
+        this->col_row_bits_mask |= 1 << (i + this->colrow_bits_shift);
+    }
     /// ROW MASK
     for (i = row_bits_shift; i < utils_t::get_power_of_two((uint64_t)INT64_MAX+1); i++) {
         this->row_bits_mask |= 1 << i;
@@ -128,7 +131,7 @@ void memory_controller_t::set_masks(){
 // ============================================================================
 uint64_t memory_controller_t::requestDRAM(uint64_t address){
     //initializes in latency burst
-    uint64_t latency_request = this->latency_burst;
+    uint64_t latency_request = 0;
     //
     uint64_t channel,bank;
     channel = this->get_channel(address);
@@ -201,10 +204,47 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
     }
     #if MEM_CONTROLLER_DEBUG
         if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
-            ORCS_PRINTF("Latency Request %lu\n",latency_request)
+            ORCS_PRINTF("Latency Request Before %lu\n",latency_request)
+        }
+    #endif
+   latency_request= this->add_channel_bus(address,latency_request);
+   this->ram[bank].cycle_ready+=latency_request;
+    #if MEM_CONTROLLER_DEBUG
+        if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
+            ORCS_PRINTF("Latency Request After %lu\n",latency_request)
         }
     #endif
     this->add_requests_made();
+    return latency_request;
+}
+// ============================================================================
+uint64_t memory_controller_t::add_channel_bus(uint64_t address,uint64_t ready){
+    uint64_t latency_request = 0;
+    uint64_t request_start = orcs_engine.get_global_cycle()+ready;
+    uint64_t channel = this->get_channel(address);
+    uint32_t i=0;
+    #if MEM_CONTROLLER_DEBUG
+        ORCS_PRINTF("Channel %lu Bus Channel Size =  %lu\n",channel,this->data_bus[channel].requests.size())
+    #endif
+    for(i = 0; i < this->data_bus[channel].requests.size(); i++){
+        if(request_start >= this->data_bus[channel].requests[i]+latency_burst && 
+            request_start <= this->data_bus[channel].requests[i+1]
+            ){
+                break;
+        }else{
+            request_start+=this->latency_burst;
+        }
+    }
+    this->data_bus[channel].requests.insert(this->data_bus[channel].requests.begin()+i,request_start);
+    #if MEM_CONTROLLER_DEBUG
+        ORCS_PRINTF("\n\nInserted at %u position\nStart %lu, end %lu\n",i,b.start,b.end)
+    #endif
+    latency_request = request_start-orcs_engine.get_global_cycle()+this->latency_burst;
+
+        if( (this->data_bus[channel].requests.size()>0)&&
+        (this->data_bus[channel].requests.front() <= orcs_engine.get_global_cycle())){
+        this->data_bus[channel].requests.erase(this->data_bus[channel].requests.begin());
+    }
     return latency_request;
 }
 // ============================================================================
