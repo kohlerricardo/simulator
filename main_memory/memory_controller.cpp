@@ -208,18 +208,17 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
         }
     #endif
    latency_request= this->add_channel_bus(address,latency_request);
-   this->ram[bank].cycle_ready+=latency_request;
+   this->ram[bank].cycle_ready=latency_request;
     #if MEM_CONTROLLER_DEBUG
         if(orcs_engine.get_global_cycle()>WAIT_CYCLE){
             ORCS_PRINTF("Latency Request After %lu\n",latency_request)
         }
     #endif
     this->add_requests_made();
-    return latency_request;
+    return this->ram[bank].cycle_ready-orcs_engine.get_global_cycle();
 }
 // ============================================================================
 uint64_t memory_controller_t::add_channel_bus(uint64_t address,uint64_t ready){
-    uint64_t latency_request = 0;
     uint64_t request_start = orcs_engine.get_global_cycle()+ready;
     uint64_t channel = this->get_channel(address);
     uint32_t i=0;
@@ -227,24 +226,23 @@ uint64_t memory_controller_t::add_channel_bus(uint64_t address,uint64_t ready){
         ORCS_PRINTF("Channel %lu Bus Channel Size =  %lu\n",channel,this->data_bus[channel].requests.size())
     #endif
     for(i = 0; i < this->data_bus[channel].requests.size(); i++){
-        if(request_start >= this->data_bus[channel].requests[i]+latency_burst && 
-            request_start <= this->data_bus[channel].requests[i+1]
+        if(request_start >= this->data_bus[channel].requests[i] && 
+            request_start <= this->data_bus[channel].requests[i]+this->latency_burst
             ){
-                break;
+                request_start = this->data_bus[channel].requests[i]+this->latency_burst;
         }else{
-            request_start+=this->latency_burst;
+            break;
         }
     }
     this->data_bus[channel].requests.insert(this->data_bus[channel].requests.begin()+i,request_start);
     #if MEM_CONTROLLER_DEBUG
         ORCS_PRINTF("\n\nInserted at %u position\nStart %lu, end %lu\n",i,b.start,b.end)
     #endif
-    latency_request = request_start-orcs_engine.get_global_cycle()+this->latency_burst;
 
         if( (this->data_bus[channel].requests.size()>0)&&
         (this->data_bus[channel].requests.front() <= orcs_engine.get_global_cycle())){
         this->data_bus[channel].requests.erase(this->data_bus[channel].requests.begin());
     }
-    return latency_request;
+    return request_start+this->latency_burst;
 }
 // ============================================================================

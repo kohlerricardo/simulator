@@ -5,28 +5,28 @@ EXEC="orcs"
 TRACE_FOLDER="traces/"
 BENCHMARK_FOLDER="spec_cpu2006/"
 
-DIR=Bundle_Milad_${1}/
+DIR=Bundle_Ricardo_${1}/
 RESULT_ALONE=Copy/
 RESULT_WORKOAD=Random/
 #lista aplicacoes utilizadas
-APPS=(libquantum.CINT.PP200M mcf.CINT.PP200M lbm.CFP.PP200M milc.CFP.PP200M soplex.CFP.PP200M sphinx3.CFP.PP200M bwaves.CFP.PP200M omnetpp.CINT.PP200M)
+APPS=(astar.CINT.PP200M gcc.CINT.PP200M gobmk.CINT.PP200M gromacs.CFP.PP200M milc.CFP.PP200M mcf.CINT.PP200M omnetpp.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
 # Lista de workloads
-W0=(bwaves.CFP.PP200M lbm.CFP.PP200M milc.CFP.PP200M omnetpp.CINT.PP200M)
-W1=(soplex.CFP.PP200M omnetpp.CINT.PP200M bwaves.CFP.PP200M libquantum.CINT.PP200M)
-W2=(sphinx3.CFP.PP200M mcf.CINT.PP200M omnetpp.CINT.PP200M milc.CFP.PP200M)
-W3=(mcf.CINT.PP200M sphinx3.CFP.PP200M soplex.CFP.PP200M libquantum.CINT.PP200M)
-W4=(lbm.CFP.PP200M mcf.CINT.PP200M libquantum.CINT.PP200M bwaves.CFP.PP200M)
-W5=(lbm.CFP.PP200M soplex.CFP.PP200M mcf.CINT.PP200M milc.CFP.PP200M)
-W6=(bwaves.CFP.PP200M libquantum.CINT.PP200M sphinx3.CFP.PP200M omnetpp.CINT.PP200M)
-W7=(omnetpp.CINT.PP200M soplex.CFP.PP200M mcf.CINT.PP200M bwaves.CFP.PP200M)
-W8=(lbm.CFP.PP200M mcf.CINT.PP200M libquantum.CINT.PP200M soplex.CFP.PP200M)
-W9=(libquantum.CINT.PP200M bwaves.CFP.PP200M soplex.CFP.PP200M omnetpp.CINT.PP200M)
+W0=(gobmk.CINT.PP200M gromacs.CFP.PP200M mcf.CINT.PP200M soplex.CFP.PP200M)
+W1=(astar.CINT.PP200M gobmk.CINT.PP200M mcf.CINT.PP200M xalancbmk.CINT.PP200M)
+W2=(astar.CINT.PP200M gcc.CINT.PP200M gobmk.CINT.PP200M mcf.CINT.PP200M)
+W3=(milc.CFP.PP200M mcf.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
+W4=(gcc.CINT.PP200M gobmk.CINT.PP200M omnetpp.CINT.PP200M soplex.CFP.PP200M)
+W5=(astar.CINT.PP200M gcc.CINT.PP200M gobmk.CINT.PP200M xalancbmk.CINT.PP200M)
+W6=(gcc.CINT.PP200M gobmk.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
+W7=(gcc.CINT.PP200M gromacs.CFP.PP200M milc.CFP.PP200M mcf.CINT.PP200M)
+W8=(gobmk.CINT.PP200M mcf.CINT.PP200M omnetpp.CINT.PP200M soplex.CFP.PP200M)
+W9=(gromacs.CFP.PP200M milc.CFP.PP200M mcf.CINT.PP200M omnetpp.CINT.PP200M)
 LOCATION=${TRACE_FOLDER}${BENCHMARK_FOLDER}
 COMANDO=${ROOT}/./${EXEC}
 
 mkdir -p ${DIR}${RESULT_ALONE}
 mkdir -p ${DIR}${RESULT_WORKOAD}
-# # Executandoapps standalone
+# Executandoapps standalone
 # for APP in ${APPS[@]}
 # do 
 # byobu new-window ${COMANDO} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -f ${DIR}${RESULT_ALONE}${APP}.txt
