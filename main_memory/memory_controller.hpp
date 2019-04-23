@@ -36,8 +36,13 @@ class memory_controller_t{
             uint64_t last_row_accessed;
             uint64_t cycle_ready;
         }RAM_t;
+        typedef struct request{
+            uint64_t request_start;
+            uint64_t request_end;
+
+        }request_t;
         typedef struct bus{
-            std::vector<uint64_t> requests;
+            std::vector<request_t> requests;
         }bus_t;
 
     public:

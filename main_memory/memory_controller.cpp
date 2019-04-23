@@ -221,26 +221,42 @@ uint64_t memory_controller_t::requestDRAM(uint64_t address){
 uint64_t memory_controller_t::add_channel_bus(uint64_t address,uint64_t ready){
     uint64_t request_start = orcs_engine.get_global_cycle()+ready;
     uint64_t channel = this->get_channel(address);
-    uint32_t i=0;
+    uint32_t i=0,pos=0;
+    size_t end = 0;
     #if MEM_CONTROLLER_DEBUG
         ORCS_PRINTF("Channel %lu Bus Channel Size =  %lu\n",channel,this->data_bus[channel].requests.size())
+        ORCS_PRINTF("Request Start %lu\n",request_start)
     #endif
-    for(i = 0; i < this->data_bus[channel].requests.size(); i++){
-        if(request_start >= this->data_bus[channel].requests[i] && 
-            request_start <= this->data_bus[channel].requests[i]+this->latency_burst
-            ){
-                request_start = this->data_bus[channel].requests[i]+this->latency_burst;
+    end = this->data_bus[channel].requests.size();
+    for(i = 0; i < end; i++){
+        if(request_start < this->data_bus[channel].requests[i].request_end ){
+            if(request_start+this->latency_burst < this->data_bus[channel].requests[i].request_start){
+                break;
+            }
+            request_start = this->data_bus[channel].requests[i].request_end+1;
         }else{
-            break;
         }
     }
-    this->data_bus[channel].requests.insert(this->data_bus[channel].requests.begin()+i,request_start);
+    pos=i;
     #if MEM_CONTROLLER_DEBUG
-        ORCS_PRINTF("\n\nInserted at %u position\nStart %lu, end %lu\n",i,b.start,b.end)
+        ORCS_PRINTF("Position acquired %u \n",pos)
+    #endif
+        
+        this->data_bus[channel].requests.insert(this->data_bus[channel].requests.begin()+pos,{request_start,request_start+this->latency_burst});
+
+    #if MEM_CONTROLLER_DEBUG
+        ORCS_PRINTF("\n\nInserted at %u position\n",i)
+        for(i = 0; i < this->data_bus[channel].requests.size(); i++){
+            ORCS_PRINTF("Start At: %lu End At %lu\n",this->data_bus[channel].requests[i].request_start,this->data_bus[channel].requests[i].request_end)
+        }   
     #endif
 
-        if( (this->data_bus[channel].requests.size()>0)&&
-        (this->data_bus[channel].requests.front() <= orcs_engine.get_global_cycle())){
+    if( (this->data_bus[channel].requests.size()>0) &&
+        (this->data_bus[channel].requests[0].request_end <= orcs_engine.get_global_cycle())){
+        #if MEM_CONTROLLER_DEBUG
+            ORCS_PRINTF("\n\nDeleted from channel %lu request %lu \n",channel,this->data_bus[channel].requests[0].request_end)
+        
+        #endif
         this->data_bus[channel].requests.erase(this->data_bus[channel].requests.begin());
     }
     return request_start+this->latency_burst;
