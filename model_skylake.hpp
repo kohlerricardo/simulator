@@ -148,7 +148,7 @@ Arquivo definindo os parametros do modelo de processador
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
-
+#define CACHE_LLC_BYPASS 1
 // =====================RAM=======================
 #define CHANNEL 2
 #define RANK 2

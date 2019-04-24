@@ -181,6 +181,25 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
     if((index_l1 == POSITION_FAIL)||(index_l2==POSITION_FAIL)||(index_llc==POSITION_FAIL)){
         ERROR_PRINTF("Error on generate index to access array")
     }
+    #if CACHE_LLC_BYPASS
+        if(this->LLC_data_cache[index_llc].read_oracle(mob_line->memory_address)){
+            // ================================================================
+            // statistics
+            mob_line->cycle_sent_to_DRAM = orcs_engine.get_global_cycle();
+            // ================================================================
+            mob_line->core_generate_miss=true;
+            //========================================= 
+            //request to Memory Controller
+            ttc = orcs_engine.memory_controller->requestDRAM(mob_line->memory_address);
+            orcs_engine.memory_controller->add_requests_llc();  // requests made by LLC
+            mob_line->waiting_DRAM=true;                        //Settind wait DRAM
+            // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
+            latency_request +=ttc;
+            // ====================
+            orcs_engine.processor[mob_line->processor_id].request_DRAM++;
+            return latency_request;
+        }
+    #endif
 
     uint32_t hit = this->L1_data_cache[index_l1].read(mob_line->memory_address,ttc);
     this->L1_data_cache[index_l1].add_cacheRead();
@@ -284,10 +303,6 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 linha_emc->linha_ptr_llc=linha_llc;
                 linha_emc=NULL;
                 #endif
-                //NULLING POINTERS <LEAK MEMORY>
-                linha_l1 = NULL;
-                linha_l2 = NULL;
-                linha_llc = NULL;
             }
         }
     }

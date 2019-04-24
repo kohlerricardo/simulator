@@ -29,7 +29,7 @@ mkdir -p ${DIR}${RESULT_WORKOAD}
 # Executandoapps standalone
 for APP in ${APPS[@]}
 do 
-nohup byobu new-window ${COMANDO} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -f ${DIR}${RESULT_ALONE}${APP}.txt&
+# nohup byobu new-window ${COMANDO} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -f ${DIR}${RESULT_ALONE}${APP}.txt&
 done
 
 #Executando simulacao workloads
