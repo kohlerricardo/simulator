@@ -50,12 +50,13 @@ void memory_controller_t::statistics(){
         utils_t::largestSeparator(output);
         fprintf(output,"#Memory Controller\n");
         utils_t::largestSeparator(output);
-        fprintf(output,"Requests_Made: %lu\n",this->get_requests_made());
-        fprintf(output,"Requests_from_Prefetcher: %lu\n",this->get_requests_prefetcher());
-        fprintf(output,"Requests_from_LLC: %lu\n",this->get_requests_llc());
-        fprintf(output,"Requests_from_EMC: %lu\n",this->get_requests_emc());
-        fprintf(output,"Row_Buffer_Hit: %lu\n",this->get_row_buffer_hit());
-        fprintf(output,"Row_Buffer_Miss: %lu\n",this->get_row_buffer_miss());
+        fprintf(output,"Requests_Made:              %lu\n",this->get_requests_made());
+        fprintf(output,"Requests_from_Prefetcher:   %lu\n",this->get_requests_prefetcher());
+        fprintf(output,"Requests_from_LLC:          %lu\n",this->get_requests_llc());
+        fprintf(output,"Requests_from_Bypass_LLC:   %lu\n",this->get_requests_bypass());
+        fprintf(output,"Requests_from_EMC:          %lu\n",this->get_requests_emc());
+        fprintf(output,"Row_Buffer_Hit:             %lu\n",this->get_row_buffer_hit());
+        fprintf(output,"Row_Buffer_Miss:            %lu\n",this->get_row_buffer_miss());
         utils_t::largestSeparator(output);
         if(close) fclose(output);
         #if EMC_ACTIVE

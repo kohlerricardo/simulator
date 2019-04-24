@@ -191,12 +191,34 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             //========================================= 
             //request to Memory Controller
             ttc = orcs_engine.memory_controller->requestDRAM(mob_line->memory_address);
-            orcs_engine.memory_controller->add_requests_llc();  // requests made by LLC
+            orcs_engine.memory_controller->add_requests_bypass();  // requests made by LLC
             mob_line->waiting_DRAM=true;                        //Settind wait DRAM
             // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
             latency_request +=ttc;
             // ====================
             orcs_engine.processor[mob_line->processor_id].request_DRAM++;
+            // ====================
+            // Install cache lines
+            // ====================
+            linha_t *linha_l1 = NULL;
+            linha_t *linha_l2 = NULL;
+            linha_t *linha_llc = NULL;
+            linha_l1 = this->L1_data_cache[index_l1].installLine(mob_line->memory_address,latency_request);
+            linha_l2 = this->L2_data_cache[index_l2].installLine(mob_line->memory_address,latency_request);
+            linha_llc = this->LLC_data_cache[index_llc].installLine(mob_line->memory_address,latency_request);
+            // SETTING POINTERS
+            //setting linha_l1
+            linha_l1->linha_ptr_l2=linha_l2;
+            linha_l1->linha_ptr_llc=linha_llc;
+            // setting level l2
+            linha_l2->linha_ptr_l1=linha_l1;
+            linha_l2->linha_ptr_llc=linha_llc;
+            // settign LLC
+            linha_llc->linha_ptr_l1=linha_l1;
+            linha_llc->linha_ptr_l2=linha_l2;
+            // =====================================
+            //EMC
+            // =====================================
             return latency_request;
         }
     #endif
