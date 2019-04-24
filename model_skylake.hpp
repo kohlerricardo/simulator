@@ -273,7 +273,7 @@ Arquivo definindo os parametros do modelo de processador
 #define PRINT_MOB 0
 #define PRINT_ROB 0
 #define COMMIT_DEBUG 0
-#define CACHE_MANAGER_DEBUG 1
+#define CACHE_MANAGER_DEBUG 0
 #define MEM_CONTROLLER_DEBUG 1
 // EMC Debugs
 #define EMC_DEBUG 1

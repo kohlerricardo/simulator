@@ -25,6 +25,7 @@ void memory_order_buffer_line_t::package_clean() {
         this->status = PACKAGE_STATE_FREE;
         this->memory_operation = MEMORY_OPERATION_FREE;
         this->readyToGo = orcs_engine.get_global_cycle();
+        this->cycle_send_request = orcs_engine.get_global_cycle();
         this->wait_mem_deps_number = 0;
         //control variables
         this->processed = false;

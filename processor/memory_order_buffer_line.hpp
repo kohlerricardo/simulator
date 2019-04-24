@@ -9,6 +9,7 @@ class memory_order_buffer_line_t {
         bool uop_executed; //*
         uint64_t uop_number;
         uint64_t readyAt;     //*                          // operation ready cycle time
+        uint64_t cycle_send_request;                                 /// Cycle of send request
         package_state_t status; //*
         memory_operation_t memory_operation;
         uint64_t readyToGo;                                 /// Cycles of waiting

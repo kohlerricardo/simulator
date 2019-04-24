@@ -97,7 +97,7 @@ void memory_controller_t::set_masks(){
     this->channel_bits_shift = utils_t::get_power_of_two(LINE_SIZE);
     this->bank_bits_shift = this->channel_bits_shift+  utils_t::get_power_of_two(CHANNEL);
     this->colrow_bits_shift = this->bank_bits_shift +utils_t::get_power_of_two(BANK);
-    this->row_bits_shift = this->bank_bits_shift + utils_t::get_power_of_two(ROW_BUFFER / LINE_SIZE);
+    this->row_bits_shift = this->colrow_bits_shift + utils_t::get_power_of_two(ROW_BUFFER / LINE_SIZE);
 
     /// COLBYTE MASK
     for (i = 0; i < utils_t::get_power_of_two(LINE_SIZE); i++) {
@@ -121,11 +121,11 @@ void memory_controller_t::set_masks(){
         this->row_bits_mask |= 1 << i;
     }
     #if MEM_CONTROLLER_DEBUG
-            ORCS_PRINTF("ColByte Shitf %lu -> ColByte Mask %lu - %s\n",this->colbyte_bits_shift,this->col_byte_bits_mask,utils_t::address_to_binary(this->col_byte_bits_mask).c_str())
-            ORCS_PRINTF("Channel Shift %lu -> Channel Mask %lu - %s\n",this->channel_bits_shift,this->channel_bits_mask,utils_t::address_to_binary(this->channel_bits_mask).c_str())
-            ORCS_PRINTF("ColRow Shift %lu -> ColRow Mask %lu - %s\n",this->colrow_bits_shift,this->col_row_bits_mask,utils_t::address_to_binary(this->col_row_bits_mask).c_str())
-            ORCS_PRINTF("Bank Shift %lu -> Bank Mask %lu - %s\n",this->bank_bits_shift,this->bank_bits_mask,utils_t::address_to_binary(this->bank_bits_mask).c_str())
-            ORCS_PRINTF("Row Shift %lu -> Row Mask %lu - %s\n",this->row_bits_shift,this->row_bits_mask,utils_t::address_to_binary(this->row_bits_mask).c_str())
+            ORCS_PRINTF("ColByte Shitf %03lu -> ColByte Mask %07lu - %s\n",this->colbyte_bits_shift,this->col_byte_bits_mask,utils_t::address_to_binary(this->col_byte_bits_mask).c_str())
+            ORCS_PRINTF("Channel Shift %03lu -> Channel Mask %07lu - %s\n",this->channel_bits_shift,this->channel_bits_mask,utils_t::address_to_binary(this->channel_bits_mask).c_str())
+            ORCS_PRINTF("Bank Shift    %03lu -> Bank Mask    %07lu - %s\n",this->bank_bits_shift,this->bank_bits_mask,utils_t::address_to_binary(this->bank_bits_mask).c_str())
+            ORCS_PRINTF("ColRow Shift  %03lu -> ColRow Mask  %07lu - %s\n",this->colrow_bits_shift,this->col_row_bits_mask,utils_t::address_to_binary(this->col_row_bits_mask).c_str())
+            ORCS_PRINTF("Row Shift     %03lu -> Row Mask     %07lu - %s\n",this->row_bits_shift,this->row_bits_mask,utils_t::address_to_binary(this->row_bits_mask).c_str())
     #endif
 }
 // ============================================================================

@@ -1453,6 +1453,7 @@ uint32_t processor_t::mob_read(){
 			}
 		#endif
 		uint32_t ttc = orcs_engine.cacheManager->searchData(this->oldest_read_to_send);
+		this->oldest_read_to_send->cycle_send_request = orcs_engine.get_global_cycle(); //Cycle which sent request to memory system
 		this->oldest_read_to_send->updatePackageReady(ttc);
 		this->oldest_read_to_send->sent=true;
 		this->oldest_read_to_send->rob_ptr->sent=true;								///Setting flag which marks sent request. set to remove entry on mob at commit
@@ -1759,11 +1760,11 @@ void processor_t::commit(){
 					if(this->reorderBuffer[pos_buffer].mob_ptr->waiting_DRAM){
 						#if EMC_ACTIVE
 							if(this->reorderBuffer[pos_buffer].mob_ptr->emc_generate_miss){
-								this->emc_ram_request_wait_cycles+=(this->reorderBuffer[pos_buffer].mob_ptr->readyAt - this->reorderBuffer[pos_buffer].mob_ptr->cycle_sent_to_DRAM);
+								this->emc_ram_request_wait_cycles+=(this->reorderBuffer[pos_buffer].mob_ptr->readyAt - this->reorderBuffer[pos_buffer].mob_ptr->cycle_send_request);
 								this->add_emc_ram_requests();
 							}else{
 						#endif
-							this->core_ram_request_wait_cycles+=(this->reorderBuffer[pos_buffer].mob_ptr->readyAt - this->reorderBuffer[pos_buffer].mob_ptr->cycle_sent_to_DRAM);
+							this->core_ram_request_wait_cycles+=(this->reorderBuffer[pos_buffer].mob_ptr->readyAt - this->reorderBuffer[pos_buffer].mob_ptr->cycle_send_request);
 							this->add_core_ram_requests();
 						#if EMC_ACTIVE
 							}
@@ -2360,7 +2361,7 @@ void processor_t::statistics(){
 
 			#endif
 		utils_t::largestSeparator(output);
-		fprintf(output, "Instruction_Per_Cycle_After_Warmup: %1.6lf\n", (float)this->fetchCounter/this->get_ended_cycle());	
+		fprintf(output, "Instruction_Per_Cycle: %1.6lf\n", (float)this->fetchCounter/this->get_ended_cycle());	
 		fprintf(output, "MPKI: %lf\n", (float)orcs_engine.cacheManager->LLC_data_cache[orcs_engine.cacheManager->generate_index_array(this->processor_id,LLC)].get_cacheMiss()/((float)this->fetchCounter/1000));
 		fprintf(output, "Average_wait_cycles_wait_mem_req: %lf\n", (float)this->mem_req_wait_cycles/this->get_stat_inst_load_completed());
 		fprintf(output, "Core_Request_RAM_AVG_Cycle: %lf\n", (float)this->core_ram_request_wait_cycles/this->get_core_ram_requests());
