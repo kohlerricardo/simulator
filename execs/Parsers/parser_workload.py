@@ -16,8 +16,8 @@ def get_list_file(path):
 def get_data(path,files):
     dados=list()
     for file in files:
-        # data = subprocess.run(['egrep','Core_Request',path+file],stdout=subprocess.PIPE,universal_newlines=True)
-        data = subprocess.run(['egrep','Core_Request|EMC_Request',path+file],stdout=subprocess.PIPE,universal_newlines=True)
+        data = subprocess.run(['egrep','Instruction_Per_Cycle',path+file],stdout=subprocess.PIPE,universal_newlines=True)
+        # data = subprocess.run(['egrep','Core_Request|EMC_Request',path+file],stdout=subprocess.PIPE,universal_newlines=True)
         dados.append((data.args[2],data.stdout))
     out_file = list()
     for a in dados:    

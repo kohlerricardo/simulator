@@ -194,7 +194,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             orcs_engine.memory_controller->add_requests_bypass();  // requests made by LLC
             mob_line->waiting_DRAM=true;                        //Settind wait DRAM
             // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
-            latency_request +=ttc;
+            latency_request +=ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
             // ====================
             orcs_engine.processor[mob_line->processor_id].request_DRAM++;
             // ====================

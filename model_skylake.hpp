@@ -148,7 +148,7 @@ Arquivo definindo os parametros do modelo de processador
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
-#define CACHE_LLC_BYPASS 1
+#define CACHE_LLC_BYPASS 0
 // =====================RAM=======================
 #define CHANNEL 2
 #define RANK 2
@@ -163,7 +163,7 @@ Arquivo definindo os parametros do modelo de processador
 #define RAM_LATENCY 350
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
-#define MAX_PARALLEL_REQUESTS_CORE 6
+#define MAX_PARALLEL_REQUESTS_CORE 32
 
 // =====================RAM=======================
 // =====================PREFETCHER=======================
