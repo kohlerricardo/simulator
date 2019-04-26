@@ -505,11 +505,13 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             mob_line->emc_generate_miss=true;
             mob_line->cycle_sent_to_DRAM = orcs_engine.get_global_cycle();
             // ===================================
-            linha_t *linha_llc = this->LLC_data_cache[index_llc].installLine(mob_line->memory_address,latency_request);
-            linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,latency_request);
-            // linking emc and llc
-            linha_llc->linha_ptr_emc = linha_emc;
-            linha_emc->linha_ptr_llc = linha_llc;
+            #if !CACHE_BYPASS_EMC
+                linha_t *linha_llc = this->LLC_data_cache[index_llc].installLine(mob_line->memory_address,latency_request);
+                linha_t *linha_emc = orcs_engine.memory_controller->data_cache->installLine(mob_line->memory_address,latency_request);
+                // linking emc and llc
+                linha_llc->linha_ptr_emc = linha_emc;
+                linha_emc->linha_ptr_llc = linha_llc;
+            #endif
             orcs_engine.memory_controller->add_requests_emc();//number of requests made by emc
         }
     }

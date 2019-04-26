@@ -149,6 +149,7 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LLC     =====================
 // =====================CACHES=======================
 #define CACHE_LLC_BYPASS 0
+#define CACHE_BYPASS_EMC 1
 // =====================RAM=======================
 #define CHANNEL 2
 #define RANK 2
@@ -163,7 +164,7 @@ Arquivo definindo os parametros do modelo de processador
 #define RAM_LATENCY 350
 #define RAM_SIZE 4 * MEGA * KILO
 #define PARALLEL_LIM_ACTIVE 1
-#define MAX_PARALLEL_REQUESTS_CORE 32
+#define MAX_PARALLEL_REQUESTS_CORE 16
 
 // =====================RAM=======================
 // =====================PREFETCHER=======================
@@ -200,7 +201,7 @@ Arquivo definindo os parametros do modelo de processador
 
 
 // ===================== EMC =======================================
-#define ORACLE_EMC 1
+#define ORACLE_EMC 0
 #define EMC_ACTIVE 1
 #define EMC_THRESHOLD 2
 #define EMC_PARALLEL_ACTIVATE 1
