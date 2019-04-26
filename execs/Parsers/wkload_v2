@@ -1,0 +1,86 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+import sys
+from os import listdir
+from os.path import isfile,isdir,join
+import subprocess
+import csv
+import json
+
+def get_list_of_directories(path):
+    if isdir(path):
+        list_of_directories = [f for f in listdir(path) if isdir(join(path,f))]
+    else:
+        raise Exception("Forneça o diretório Raiz")
+    
+    return list_of_directories
+def get_list_file(path):
+    if isdir(path):
+        onlyfiles = [f for f in listdir(path) if isfile(join(path, f))]
+    else:
+        exit("Not a Dir")
+
+    return onlyfiles
+
+def get_data(path,files,fields_required):
+    dados=list()
+    fields=""
+    for i in fields_required:
+        fields+=i+" "
+    fields=fields.replace(' ','|',len(fields_required)-1).replace(' ','')    
+    for file in files:
+        data = subprocess.run(['egrep',fields,path+file],stdout=subprocess.PIPE,universal_newlines=True)
+        dados.append((data.args[2],data.stdout))
+    out_file = list()
+
+    for a in dados:
+        print(a)    
+        ipc = a[1].split('\n')
+        data=list(json.loads(json.dumps(ipc)))
+        print('\n\n\n')
+        for i in range(len(data)):
+        
+        print()
+        print('\n\n\n')
+
+        # out_file.append([a[0],ipc])
+    return out_file
+def sort_func(e):
+    return e[0]
+def main():
+    # fields_required=['Total_Cycle','fetch_instructions']    
+    fields_required=['Instruction_Per_Cycle']    
+    folder = sys.argv[1]
+    list_of_directories = get_list_of_directories(folder)
+    print(list_of_directories)
+    for dir_item in list_of_directories:
+        files = get_list_file(folder+dir_item)
+        print(folder+dir_item+'/')
+        print(files,len(files))
+        get_data(folder+dir_item+'/',files,fields_required)
+
+
+    # data_array = list()
+    # with open(sys.argv[2],'a') as csv_file:
+    #     spaw_writter = csv.writer(csv_file,delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    #     spaw_writter.writerow(fields_required)
+    # csv_file.close()
+
+    # data_array = get_data(folder,files)
+    # data_array.sort(key=sort_func)
+    # # print(data_array)
+
+      
+    # for d in data_array:
+    #     with open(sys.argv[2],'a') as csv_file:
+    #         spaw_writter = csv.writer(csv_file,delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    #         spaw_writter.writerow(d)
+
+
+
+if __name__ == '__main__':
+    if sys.version_info.major < 3:
+        raise Exception("Must be using Python 3")
+    if(len(sys.argv)!=3):
+        exit("Use python3 parser_baseline.py <input folder> <output file>")
+    main()

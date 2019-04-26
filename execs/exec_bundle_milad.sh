@@ -5,9 +5,9 @@ EXEC="orcs"
 TRACE_FOLDER="traces/"
 BENCHMARK_FOLDER="spec_cpu2006/"
 
-DIR=Bundle_Milad_${1}/
-RESULT_ALONE=Copy/
-RESULT_WORKOAD=Random/
+DIR=Bundle_Milad/
+# RESULT_ALONE=Copy/
+RESULT_WORKOAD=${1}/
 #lista aplicacoes utilizadas
 APPS=(libquantum.CINT.PP200M mcf.CINT.PP200M lbm.CFP.PP200M milc.CFP.PP200M soplex.CFP.PP200M sphinx3.CFP.PP200M bwaves.CFP.PP200M omnetpp.CINT.PP200M)
 # Lista de workloads
@@ -24,13 +24,13 @@ W9=(libquantum.CINT.PP200M bwaves.CFP.PP200M soplex.CFP.PP200M omnetpp.CINT.PP20
 LOCATION=${TRACE_FOLDER}${BENCHMARK_FOLDER}
 COMANDO=${ROOT}/./${EXEC}
 
-mkdir -p ${DIR}${RESULT_ALONE}
+# mkdir -p ${DIR}${RESULT_ALONE}
 mkdir -p ${DIR}${RESULT_WORKOAD}
 # Executandoapps standalone
-for APP in ${APPS[@]}
-do 
+# for APP in ${APPS[@]}
+# do 
 # nohup byobu new-window ${COMANDO} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -f ${DIR}${RESULT_ALONE}${APP}.txt&
-done
+# done
 
 #Executando simulacao workloads
 nohup byobu new-window ${COMANDO} -t ${LOCATION}${W0[0]}/${W0[0]} -t ${LOCATION}${W0[1]}/${W0[1]} -t ${LOCATION}${W0[2]}/${W0[2]} -t ${LOCATION}${W0[3]}/${W0[3]} -f ${DIR}${RESULT_WORKOAD}W0.txt&

@@ -200,7 +200,8 @@ Arquivo definindo os parametros do modelo de processador
 
 
 // ===================== EMC =======================================
-#define EMC_ACTIVE 0
+#define ORACLE_EMC 1
+#define EMC_ACTIVE 1
 #define EMC_THRESHOLD 2
 #define EMC_PARALLEL_ACTIVATE 1
 #define EMC_ROB_HEAD 1

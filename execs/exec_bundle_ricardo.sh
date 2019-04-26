@@ -27,10 +27,10 @@ COMANDO=${ROOT}/./${EXEC}
 mkdir -p ${DIR}${RESULT_ALONE}
 mkdir -p ${DIR}${RESULT_WORKOAD}
 # Executandoapps standalone
-for APP in ${APPS[@]}
-do 
+# for APP in ${APPS[@]}
+# do 
 # nohup byobu new-window ${COMANDO} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -f ${DIR}${RESULT_ALONE}${APP}.txt&
-done
+# done
 
 #Executando simulacao workloads
 nohup byobu new-window ${COMANDO} -t ${LOCATION}${W0[0]}/${W0[0]} -t ${LOCATION}${W0[1]}/${W0[1]} -t ${LOCATION}${W0[2]}/${W0[2]} -t ${LOCATION}${W0[3]}/${W0[3]} -f ${DIR}${RESULT_WORKOAD}W0.txt&

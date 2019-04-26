@@ -1644,35 +1644,38 @@ void processor_t::commit(){
 					std::sort(this->rob_buffer.begin(),this->rob_buffer.end(),[](const reorder_buffer_line_t *lhs, const reorder_buffer_line_t *rhs){
 						return lhs->uop.uop_number < rhs->uop.uop_number;
 					});
-				// ====================================================			
-				// Mecanismo original
-				// if(this->rob_buffer.size()>1){
-				// 	if(this->counter_activate_emc >= EMC_THRESHOLD){
-				// 		this->start_emc_module = true;
-				// 		this->add_started_emc_execution();
-				// 		this->verify_started_emc_without_loads();
-				// 	}else{
-				// 		this->add_cancel_counter_emc_execution();
-				// 		this->verify_loads_missed();
-				// 		this->rob_buffer.clear();
-				// 	}
-				// }
-				// ====================================================					
-				// Oraculo Core
-				if (this->start_emc_module != false){
-					printf("WTF!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+					// Mecanismo original
+					#if !ORACLE_EMC
+					if(this->rob_buffer.size()>1){
+						if(this->counter_activate_emc >= EMC_THRESHOLD){
+							this->start_emc_module = true;
+							this->add_started_emc_execution();
+							this->verify_started_emc_without_loads();
+						}else{
+							this->add_cancel_counter_emc_execution();
+							this->verify_loads_missed();
+							this->rob_buffer.clear();
+						}
 					}
+					#endif
+				#if ORACLE_EMC
+					// ====================================================					
+					// Oraculo Core
+					if (this->start_emc_module != false){
+							printf("WTF!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+					}
+					// ====================================================		
+					if(this->oracle_emc()){
+							this->start_emc_module = true;
+							this->add_started_emc_execution();
+							// ORCS_PRINTF("Started\n")
+					}else{
 
-				if(this->oracle_emc()){
-						this->start_emc_module = true;
-						this->add_started_emc_execution();
-						// ORCS_PRINTF("Started\n")
-				}else{
-
-					this->add_cancel_counter_emc_execution();
-					this->rob_buffer.clear();
-				}
-				// ====================================================					
+						this->add_cancel_counter_emc_execution();
+						this->rob_buffer.clear();
+					}
+					// ====================================================
+				#endif
 			}
 		#endif
 // #################################################################################
