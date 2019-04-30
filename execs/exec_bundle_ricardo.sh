@@ -9,28 +9,28 @@ DIR=Bundle_Ricardo_${1}/
 RESULT_ALONE=Copy/
 RESULT_WORKOAD=Random/
 #lista aplicacoes utilizadas
-APPS=(astar.CINT.PP200M gcc.CINT.PP200M gobmk.CINT.PP200M gromacs.CFP.PP200M milc.CFP.PP200M mcf.CINT.PP200M omnetpp.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
+APPS=(astar.CINT.PP200M gcc.CINT.PP200M mcf.CINT.PP200M milc.CFP.PP200M omnetpp.CINT.PP200M perlbench.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
 # Lista de workloads
-W0=(gobmk.CINT.PP200M gromacs.CFP.PP200M mcf.CINT.PP200M soplex.CFP.PP200M)
-W1=(astar.CINT.PP200M gobmk.CINT.PP200M mcf.CINT.PP200M xalancbmk.CINT.PP200M)
-W2=(astar.CINT.PP200M gcc.CINT.PP200M gobmk.CINT.PP200M mcf.CINT.PP200M)
-W3=(milc.CFP.PP200M mcf.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
-W4=(gcc.CINT.PP200M gobmk.CINT.PP200M omnetpp.CINT.PP200M soplex.CFP.PP200M)
-W5=(astar.CINT.PP200M gcc.CINT.PP200M gobmk.CINT.PP200M xalancbmk.CINT.PP200M)
-W6=(gcc.CINT.PP200M gobmk.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
-W7=(gcc.CINT.PP200M gromacs.CFP.PP200M milc.CFP.PP200M mcf.CINT.PP200M)
-W8=(gobmk.CINT.PP200M mcf.CINT.PP200M omnetpp.CINT.PP200M soplex.CFP.PP200M)
-W9=(gromacs.CFP.PP200M milc.CFP.PP200M mcf.CINT.PP200M omnetpp.CINT.PP200M)
+W0=(astar.CINT.PP200M gcc.CINT.PP200M mcf.CINT.PP200M milc.CFP.PP200M)
+W1=(astar.CINT.PP200M omnetpp.CINT.PP200M perlbench.CINT.PP200M xalancbmk.CINT.PP200M)
+W2=(milc.CFP.PP200M omnetpp.CINT.PP200M perlbench.CINT.PP200M xalancbmk.CINT.PP200M)
+W3=(mcf.CINT.PP200M milc.CFP.PP200M perlbench.CINT.PP200M xalancbmk.CINT.PP200M)
+W4=(milc.CFP.PP200M perlbench.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
+W5=(astar.CINT.PP200M gcc.CINT.PP200M milc.CFP.PP200M perlbench.CINT.PP200M)
+W6=(gcc.CINT.PP200M mcf.CINT.PP200M milc.CFP.PP200M xalancbmk.CINT.PP200M)
+W7=(milc.CFP.PP200M omnetpp.CINT.PP200M perlbench.CINT.PP200M soplex.CFP.PP200M)
+W8=(astar.CINT.PP200M gcc.CINT.PP200M omnetpp.CINT.PP200M perlbench.CINT.PP200M)
+W9=(gcc.CINT.PP200M mcf.CINT.PP200M soplex.CFP.PP200M xalancbmk.CINT.PP200M)
 LOCATION=${TRACE_FOLDER}${BENCHMARK_FOLDER}
 COMANDO=${ROOT}/./${EXEC}
 
 mkdir -p ${DIR}${RESULT_ALONE}
 mkdir -p ${DIR}${RESULT_WORKOAD}
 # Executandoapps standalone
-# for APP in ${APPS[@]}
-# do 
-# nohup byobu new-window ${COMANDO} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -f ${DIR}${RESULT_ALONE}${APP}.txt&
-# done
+for APP in ${APPS[@]}
+do 
+nohup byobu new-window ${COMANDO} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -t ${LOCATION}${APP}/${APP} -f ${DIR}${RESULT_ALONE}${APP}.txt&
+done
 
 #Executando simulacao workloads
 nohup byobu new-window ${COMANDO} -t ${LOCATION}${W0[0]}/${W0[0]} -t ${LOCATION}${W0[1]}/${W0[1]} -t ${LOCATION}${W0[2]}/${W0[2]} -t ${LOCATION}${W0[3]}/${W0[3]} -f ${DIR}${RESULT_WORKOAD}W0.txt&
