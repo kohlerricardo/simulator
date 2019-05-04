@@ -149,7 +149,8 @@ Arquivo definindo os parametros do modelo de processador
 // ==================== LLC     =====================
 // =====================CACHES=======================
 #define CACHE_LLC_BYPASS 0
-#define CACHE_BYPASS_EMC 1
+#define CACHE_LLC_BYPASS_ORACLE 0
+#define CACHE_BYPASS_EMC 0
 // =====================RAM=======================
 #define CHANNEL 2
 #define RANK 2
@@ -202,7 +203,7 @@ Arquivo definindo os parametros do modelo de processador
 
 // ===================== EMC =======================================
 #define ORACLE_EMC 0
-#define EMC_ACTIVE 1
+#define EMC_ACTIVE 0
 #define EMC_THRESHOLD 2
 #define EMC_PARALLEL_ACTIVATE 1
 #define EMC_ROB_HEAD 1

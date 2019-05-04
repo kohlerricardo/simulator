@@ -27,7 +27,9 @@ class memory_order_buffer_line_t {
         bool core_generate_miss;
         bool emc_generate_miss;
         bool l1_emc_hit;
-        uint32_t processor_id; //*
+        uint32_t processor_id; //
+        bool llc_bypass_prediction;
+        bool llc_hit;
         //==========================================================================================
         emc_opcode_package_t* emc_opcode_ptr;  //emc opcode pointer 
         bool emc_executed;

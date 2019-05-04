@@ -32,6 +32,11 @@ processor_t::processor_t()
 	this->counter_make_dep_chain = 0;
 	this->rrt = NULL;
 	// =============== EMC Module ======================
+	// =============== Cache_bypass structures ======================
+	this->mact_bits_mask = 0;
+	this->memory_access_counter_table = NULL;
+	// =============== Cache_bypass structures ======================
+	
 }
 processor_t::~processor_t()
 {
@@ -186,6 +191,12 @@ void processor_t::allocate()
 	// =====================================================================
 	this->cycle_start_mechanism = 0;
 	// =====================================================================
+	
+	// ==========================Cache Bypass Mec.=============================
+	this->memory_access_counter_table = utils_t::template_allocate_initialize_array<int8_t>(MACT_SIZE,0);
+	this->mact_bits_mask = utils_t::get_power_of_two(MACT_SIZE);
+	
+	// ==========================Cache Bypass Mec.=============================
 }
 // =====================================================================
 bool processor_t::isBusy(){
@@ -1168,6 +1179,28 @@ void processor_t::execute()
 					ORCS_PRINTF("\nSolving_EMC_REQ %s\n\n", this->memory_order_buffer_read[pos].rob_ptr->content_to_string().c_str())
 				}
 			#endif
+			#if CACHE_LLC_BYPASS
+				if(this->memory_order_buffer_read[pos].core_generate_miss){
+					if(this->memory_order_buffer_read[pos].llc_bypass_prediction){
+						this->update_mact_entry(this->memory_order_buffer_read[pos].opcode_address,1);
+						this->add_llc_correct_bypass();
+					}else{
+						this->update_mact_entry(this->memory_order_buffer_read[pos].opcode_address,1);
+						this->add_llc_incorrect_bypass();
+					}
+				}
+				else{
+					if(this->memory_order_buffer_read[pos].llc_hit){
+						if(this->memory_order_buffer_read[pos].llc_bypass_prediction){
+							this->update_mact_entry(this->memory_order_buffer_read[pos].opcode_address,-1);
+							this->add_llc_incorrect_bypass();
+						}else{
+							this->update_mact_entry(this->memory_order_buffer_read[pos].opcode_address,-1);
+							this->add_llc_correct_bypass();
+						}
+					}
+				}				
+			#endif
 			this->memory_order_buffer_read[pos].rob_ptr->stage = PROCESSOR_STAGE_COMMIT;
 			this->memory_order_buffer_read[pos].rob_ptr->uop.updatePackageReady(COMMIT_LATENCY);
 			this->memory_order_buffer_read[pos].processed=true;
@@ -1451,6 +1484,17 @@ uint32_t processor_t::mob_read(){
 				ORCS_PRINTF("%s\n",this->oldest_read_to_send->content_to_string().c_str())
 				ORCS_PRINTF("=================================\n")
 			}
+		#endif
+
+		#if CACHE_LLC_BYPASS  
+			uint64_t index = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,oldest_read_to_send->opcode_address>>2,0,this->get_mact_bits_mask());
+			if(this->memory_access_counter_table[index]>=MACT_THRESHOLD){
+				//add statistics do preditor		
+				oldest_read_to_send->llc_bypass_prediction = true;
+			}else{
+				oldest_read_to_send->llc_bypass_prediction = false;
+			}
+			//=========================================     
 		#endif
 		uint32_t ttc = orcs_engine.cacheManager->searchData(this->oldest_read_to_send);
 		this->oldest_read_to_send->cycle_send_request = orcs_engine.get_global_cycle(); //Cycle which sent request to memory system
@@ -2396,6 +2440,11 @@ void processor_t::statistics(){
 				fprintf(output, "number_spill_registers: %d\n", this->get_number_spill_registers());
 				utils_t::smallSeparator(output);
 			#endif
+			#if CACHE_LLC_BYPASS
+				fprintf(output, "\n======================== Cache Bypass INFOS ===========================\n");
+				fprintf(output, "cache_bypass_correct_prediction: %lu\n",this->get_llc_correct_bypass());
+				fprintf(output, "cache_bypass_incorrect_prediction: %lu\n",this->get_llc_incorrect_bypass());
+			#endif
 			}
 		if(close) fclose(output);
 		this->desambiguator->statistics();
@@ -2581,5 +2630,18 @@ bool processor_t::oracle_emc(){
 		return false;
 	}
 	
+}
+// ========================================================================================================================================================================================
+void processor_t::update_mact_entry(uint64_t pc,int32_t value){
+	
+	uint64_t index  = utils_t::hash_function(HASH_FUNCTION_INPUT1_ONLY,pc>>2,0,this->mact_bits_mask);
+
+	this->memory_access_counter_table[index]+=value;
+
+	if(this->memory_access_counter_table[index]>(signed)(this->mact_bits_mask-1)){
+		this->memory_access_counter_table[index]=(signed)(this->mact_bits_mask-1);	
+	}else if(this->memory_access_counter_table[index]<0){
+		this->memory_access_counter_table[index]=0;
+	}
 }
 // ========================================================================================================================================================================================

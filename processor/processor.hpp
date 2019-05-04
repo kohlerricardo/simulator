@@ -58,6 +58,12 @@ class processor_t {
 	uint32_t loads_sent_at_rob_head; //Count number of load which are sent to memory at rob head
 	uint32_t loads_missed_counter; //count number of loads misspredicted
 	uint32_t started_emc_without_loads;
+	// ====================================================================
+	/// CacheBypass Attributes
+	// ====================================================================
+	uint64_t llc_correct_bypass;
+	uint64_t llc_incorrect_bypass;
+	uint64_t mact_bits_mask;
     public:
 		
 		// ====================================================================
@@ -308,6 +314,13 @@ class processor_t {
 		INSTANTIATE_GET_SET_ADD(uint32_t,started_emc_without_loads)
 		INSTANTIATE_GET_SET_ADD(uint32_t,stores_included_chain)
 		INSTANTIATE_GET_SET_ADD(uint32_t,number_spill_registers)
+		// ====================================================================
+		// Cache Bypass
+		INSTANTIATE_GET_SET_ADD(uint64_t,llc_correct_bypass)
+		INSTANTIATE_GET_SET_ADD(uint64_t,llc_incorrect_bypass)
+		INSTANTIATE_GET_SET_ADD(uint64_t,mact_bits_mask)
+		void update_mact_entry(uint64_t pc,int32_t value);
+		int8_t *memory_access_counter_table;
 		// ====================================================================
 		// Oracle Functions
 		bool oracle_emc();

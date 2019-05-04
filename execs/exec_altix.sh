@@ -24,4 +24,5 @@ else
     #   { time ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} -f ${ORCS_D}'/'${i}.txt ; } 2>> ${ORCS_D}'/'${i}.txt &
     #   { time ${ROOT}'/'./${EXEC} ${TRACE_FOLDER}${BENCHMARK_FOLDER}${i}'/'${i} >> /dev/null ; } 2>> ${ORCS_D}'/'${i}.txt & # salvar o tempo de execucao dos benchnmars
     done
+    echo "Started All"
 fi

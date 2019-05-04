@@ -708,10 +708,12 @@ void emc_t::lsq_read(){
 		}
 	#endif
 		if (emc_mob_line->memory_operation == MEMORY_OPERATION_READ){
+			#if ORACLE_EMC
 			// ==========================================================================================
 			// ORACLE
 			this->oracle_access_emc(emc_mob_line);
 			// ==========================================================================================
+			#endif
 			uint32_t ttc = 0;
 			ttc = orcs_engine.cacheManager->search_EMC_Data(emc_mob_line); //enviar que é do emc
 			emc_mob_line->cycle_send_request=orcs_engine.get_global_cycle(); //Cycle which sent request to memory system
