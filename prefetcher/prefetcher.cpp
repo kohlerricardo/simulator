@@ -33,7 +33,7 @@ void prefetcher_t::prefecht(memory_order_buffer_line_t *mob_line,cache_t *cache)
         this->prefetch_waiting_complete.erase(this->prefetch_waiting_complete.begin());
     }
     int64_t newAddress = this->prefetcher->verify(mob_line->opcode_address,mob_line->memory_address);
-    uint32_t sacrifice;
+    uint64_t sacrifice;
     if(this->prefetch_waiting_complete.size()>= PARALLEL_PREFETCH){
         return;
     }

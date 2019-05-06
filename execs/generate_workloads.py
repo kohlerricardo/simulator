@@ -2,7 +2,9 @@
 
 import itertools
 import random
-apps=['astar.CINT.PP200M', 'gcc.CINT.PP200M','mcf.CINT.PP200M','milc.CFP.PP200M','omnetpp.CINT.PP200M','perlbench.CINT.PP200M','soplex.CFP.PP200M','xalancbmk.CINT.PP200M']
+# apps=['bwaves.CFP.PP200M', 'gcc.CINT.PP200M','libquantum.CINT.PP200M','mcf.CINT.PP200M','omnetpp.CINT.PP200M','soplex.CFP.PP200M','sphinx3.CFP.PP200M','wrf.CFP.PP200M']
+# apps=['astar.CINT.PP200M', 'cactusADM.CFP.PP200M','bwaves.CFP.PP200M', 'gcc.CINT.PP200M','libquantum.CINT.PP200M','mcf.CINT.PP200M','omnetpp.CINT.PP200M','soplex.CFP.PP200M','sphinx3.CFP.PP200M','wrf.CFP.PP200M']
+apps=['xalancbmk.CINT.PP200M', 'gromacs.CFP.PP200M','bwaves.CFP.PP200M', 'gcc.CINT.PP200M','libquantum.CINT.PP200M','mcf.CINT.PP200M','omnetpp.CINT.PP200M','soplex.CFP.PP200M','sphinx3.CFP.PP200M','wrf.CFP.PP200M']
 tmp=[' '.join(lista) for lista in itertools.combinations(apps,4)]
 workloads=list()
 for a in tmp:
@@ -15,7 +17,7 @@ selected=list(selected)
 for i in range(len(selected)):
     selected[i] = workloads[selected[i]]
 
-for i in range(10):
+for i in range(5):
     print selected[i]
 
 workloads = list(itertools.chain.from_iterable(selected))

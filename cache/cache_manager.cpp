@@ -50,7 +50,7 @@ void cache_manager_t::allocate(){
     #endif
 }
 uint32_t cache_manager_t::searchInstruction(uint32_t processor_id,uint64_t instructionAddress){
-    uint32_t ttc = 0;
+    uint64_t ttc = 0;
     uint32_t latency_request = 0;
     int32_t index_inst = this->generate_index_array(processor_id,INST_CACHE);
     int32_t index_l2 = this->generate_index_array(processor_id,L2);
@@ -173,8 +173,8 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
 		}
 
     #endif
-    uint32_t ttc = 0;
-    uint32_t latency_request = 0;
+    uint64_t ttc = 0;
+    uint64_t latency_request = 0;
     int32_t index_l1 = this->generate_index_array(mob_line->processor_id,L1);
     int32_t index_l2 = this->generate_index_array(mob_line->processor_id,L2);
     int32_t index_llc = this->generate_index_array(mob_line->processor_id,LLC);
@@ -196,7 +196,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
             orcs_engine.memory_controller->add_requests_bypass();  // requests made by LLC
             mob_line->waiting_DRAM=true;                        //Settind wait DRAM
             // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
-            latency_request +=ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
+            latency_request =ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
             // ====================
             orcs_engine.processor[mob_line->processor_id].request_DRAM++;
             // ====================
@@ -281,8 +281,11 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                 mob_line->core_generate_miss=true;
                 mob_line->rob_ptr->original_miss=true;
                 //========================================= 
-                //request to Memory Controller
-                ttc = orcs_engine.memory_controller->requestDRAM(mob_line->memory_address);
+                //request to Memory Controller 
+                #if CACHE_LLC_BYPASS
+                    // control parallel requests to bypass cache
+                    ttc = orcs_engine.memory_controller->requestDRAM(mob_line->memory_address);
+                #endif
                 if(mob_line->llc_bypass_prediction){
                     // ================================================================
                     // statistics
@@ -294,6 +297,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
                     // ================================================================
                     // statistics
                     mob_line->cycle_sent_to_DRAM = orcs_engine.get_global_cycle()+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
+                    ttc = orcs_engine.memory_controller->requestDRAM(mob_line->memory_address);
                     orcs_engine.memory_controller->add_requests_llc();  // requests made by LLC
                     // Latency is RAM LATENCY + PATH OUT/IN ON CHIP TO MEM REQUEST REACH THE CORE
                     latency_request += ttc+(L1_DATA_LATENCY+L2_LATENCY+LLC_LATENCY);
@@ -343,7 +347,7 @@ uint32_t cache_manager_t::searchData(memory_order_buffer_line_t *mob_line){
 }
 uint32_t cache_manager_t::writeData(memory_order_buffer_line_t *mob_line){
 
-    uint32_t ttc = 0;
+    uint64_t ttc = 0;
     uint32_t latency_request = 0;
 
     int32_t index_l1 = this->generate_index_array(mob_line->processor_id,L1);
@@ -446,7 +450,7 @@ uint32_t cache_manager_t::search_EMC_Data(memory_order_buffer_line_t *mob_line){
             }
 
         #endif
-    uint32_t ttc = 0;
+    uint64_t ttc = 0;
     uint32_t latency_request = 0;
     
     int32_t index_llc = this->generate_index_array(mob_line->processor_id,LLC);

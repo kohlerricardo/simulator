@@ -182,7 +182,7 @@ inline uint32_t cache_t::idxSetCalculation(uint64_t address){
 // @ttc latency to complete
 // @return HIT or MISS
 // ==================
-uint32_t cache_t::read(uint64_t address,uint32_t &ttc){
+uint32_t cache_t::read(uint64_t address,uint64_t &ttc){
 	uint32_t idx = this->idxSetCalculation(address);
 	uint64_t tag = this->tagSetCalculation(address);
 	// this->add_cacheRead();

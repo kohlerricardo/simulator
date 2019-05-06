@@ -45,7 +45,7 @@ class cache_t
         uint64_t tagSetCalculation(uint64_t address);//makes tag from address
         uint32_t searchLru(cacheSet_t *set);//searh LRU to substitue
         linha_t* installLine(uint64_t address,uint64_t latency);//install line of cache |mem_controller -> caches|
-        uint32_t read(uint64_t address,uint32_t &ttc);
+        uint32_t read(uint64_t address,uint64_t &ttc);
         uint32_t write(uint64_t address);
         //getters setters
         INSTANTIATE_GET_SET_ADD(uint64_t,cacheHit)
