@@ -30,6 +30,7 @@ M2=(mcf.CINT.PP200M astar.CINT.PP200M cactusADM.CFP.PP200M sphinx3.CFP.PP200M)
 M3=(astar.CINT.PP200M cactusADM.CFP.PP200M gcc.CINT.PP200M soplex.CFP.PP200M)
 M4=(cactusADM.CFP.PP200M bwaves.CFP.PP200M omnetpp.CINT.PP200M astar.CINT.PP200M)
 
+
 L0=(xalancbmk.CINT.PP200M gromacs.CFP.PP200M bwaves.CFP.PP200M soplex.CFP.PP200M)
 L1=(gromacs.CFP.PP200M bwaves.CFP.PP200M omnetpp.CINT.PP200M xalancbmk.CINT.PP200M)
 L2=(soplex.CFP.PP200M xalancbmk.CINT.PP200M gromacs.CFP.PP200M sphinx3.CFP.PP200M)
@@ -63,10 +64,10 @@ byobu new-window ${COMANDO} -t ${LOCATION}${M0[0]}/${M0[0]} -t ${LOCATION}${M0[1
 byobu new-window ${COMANDO} -t ${LOCATION}${M1[0]}/${M1[0]} -t ${LOCATION}${M1[1]}/${M1[1]} -t ${LOCATION}${M1[2]}/${M1[2]} -t ${LOCATION}${M1[3]}/${M1[3]} -f ${DIR}${RESULT_WORKOAD}M1.txt
 byobu new-window ${COMANDO} -t ${LOCATION}${M2[0]}/${M2[0]} -t ${LOCATION}${M2[1]}/${M2[1]} -t ${LOCATION}${M2[2]}/${M2[2]} -t ${LOCATION}${M2[3]}/${M2[3]} -f ${DIR}${RESULT_WORKOAD}M2.txt
 byobu new-window ${COMANDO} -t ${LOCATION}${M3[0]}/${M3[0]} -t ${LOCATION}${M3[1]}/${M3[1]} -t ${LOCATION}${M3[2]}/${M3[2]} -t ${LOCATION}${M3[3]}/${M3[3]} -f ${DIR}${RESULT_WORKOAD}M3.txt
-byobu new-window ${COMANDO} -t ${LOCATION}${M4[0]}/${M4[0]} -t ${LOCATION}${M4[1]}/${M4[1]} -t ${LOCATION}${M4[2]}/${M4[2]} -t ${LOCATION}${M4[3]}/${M4[3]} -f ${DIR}
+byobu new-window ${COMANDO} -t ${LOCATION}${M4[0]}/${M4[0]} -t ${LOCATION}${M4[1]}/${M4[1]} -t ${LOCATION}${M4[2]}/${M4[2]} -t ${LOCATION}${M4[3]}/${M4[3]} -f ${DIR}${RESULT_WORKOAD}M4.txt
 # Workload media intensidade
-byobu new-window ${COLANDO} -t ${LOCATION}${L0[0]}/${L0[0]} -t ${LOCATION}${L0[1]}/${L0[1]} -t ${LOCATION}${L0[2]}/${L0[2]} -t ${LOCATION}${L0[3]}/${L0[3]} -f ${DIR}${RESULT_WORKOAD}L0.txt
-byobu new-window ${COLANDO} -t ${LOCATION}${L1[0]}/${L1[0]} -t ${LOCATION}${L1[1]}/${L1[1]} -t ${LOCATION}${L1[2]}/${L1[2]} -t ${LOCATION}${L1[3]}/${L1[3]} -f ${DIR}${RESULT_WORKOAD}L1.txt
-byobu new-window ${COLANDO} -t ${LOCATION}${L2[0]}/${L2[0]} -t ${LOCATION}${L2[1]}/${L2[1]} -t ${LOCATION}${L2[2]}/${L2[2]} -t ${LOCATION}${L2[3]}/${L2[3]} -f ${DIR}${RESULT_WORKOAD}L2.txt
-byobu new-window ${COLANDO} -t ${LOCATION}${L3[0]}/${L3[0]} -t ${LOCATION}${L3[1]}/${L3[1]} -t ${LOCATION}${L3[2]}/${L3[2]} -t ${LOCATION}${L3[3]}/${L3[3]} -f ${DIR}${RESULT_WORKOAD}L3.txt
-byobu new-window ${COLANDO} -t ${LOCATION}${L4[0]}/${L4[0]} -t ${LOCATION}${L4[1]}/${L4[1]} -t ${LOCATION}${L4[2]}/${L4[2]} -t ${LOCATION}${L4[3]}/${L4[3]} -f ${DIR}
+byobu new-window ${COMANDO} -t ${LOCATION}${L0[0]}/${L0[0]} -t ${LOCATION}${L0[1]}/${L0[1]} -t ${LOCATION}${L0[2]}/${L0[2]} -t ${LOCATION}${L0[3]}/${L0[3]} -f ${DIR}${RESULT_WORKOAD}L0.txt
+byobu new-window ${COMANDO} -t ${LOCATION}${L1[0]}/${L1[0]} -t ${LOCATION}${L1[1]}/${L1[1]} -t ${LOCATION}${L1[2]}/${L1[2]} -t ${LOCATION}${L1[3]}/${L1[3]} -f ${DIR}${RESULT_WORKOAD}L1.txt
+byobu new-window ${COMANDO} -t ${LOCATION}${L2[0]}/${L2[0]} -t ${LOCATION}${L2[1]}/${L2[1]} -t ${LOCATION}${L2[2]}/${L2[2]} -t ${LOCATION}${L2[3]}/${L2[3]} -f ${DIR}${RESULT_WORKOAD}L2.txt
+byobu new-window ${COMANDO} -t ${LOCATION}${L3[0]}/${L3[0]} -t ${LOCATION}${L3[1]}/${L3[1]} -t ${LOCATION}${L3[2]}/${L3[2]} -t ${LOCATION}${L3[3]}/${L3[3]} -f ${DIR}${RESULT_WORKOAD}L3.txt
+byobu new-window ${COMANDO} -t ${LOCATION}${L4[0]}/${L4[0]} -t ${LOCATION}${L4[1]}/${L4[1]} -t ${LOCATION}${L4[2]}/${L4[2]} -t ${LOCATION}${L4[3]}/${L4[3]} -f ${DIR}${RESULT_WORKOAD}L4.txt

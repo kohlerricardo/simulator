@@ -63,6 +63,8 @@ class processor_t {
 	// ====================================================================
 	uint64_t llc_correct_bypass;
 	uint64_t llc_incorrect_bypass;
+	uint64_t llc_predict_correct;
+	uint64_t llc_predict_incorrect;
 	uint64_t mact_bits_mask;
     public:
 		
@@ -318,6 +320,8 @@ class processor_t {
 		// Cache Bypass
 		INSTANTIATE_GET_SET_ADD(uint64_t,llc_correct_bypass)
 		INSTANTIATE_GET_SET_ADD(uint64_t,llc_incorrect_bypass)
+		INSTANTIATE_GET_SET_ADD(uint64_t,llc_predict_correct)
+		INSTANTIATE_GET_SET_ADD(uint64_t,llc_predict_incorrect)
 		INSTANTIATE_GET_SET_ADD(uint64_t,mact_bits_mask)
 		void update_mact_entry(uint64_t pc,int32_t value);
 		int8_t *memory_access_counter_table;

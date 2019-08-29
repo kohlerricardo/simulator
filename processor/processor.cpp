@@ -1183,10 +1183,10 @@ void processor_t::execute()
 				if(this->memory_order_buffer_read[pos].core_generate_miss){
 					if(this->memory_order_buffer_read[pos].llc_bypass_prediction){
 						this->update_mact_entry(this->memory_order_buffer_read[pos].opcode_address,1);
-						this->add_llc_correct_bypass();
+						this->add_llc_correct_bypass(); 
 					}else{
 						this->update_mact_entry(this->memory_order_buffer_read[pos].opcode_address,1);
-						this->add_llc_incorrect_bypass();
+						this->add_llc_predict_incorrect();
 					}
 				}
 				else{
@@ -1196,7 +1196,7 @@ void processor_t::execute()
 							this->add_llc_incorrect_bypass();
 						}else{
 							this->update_mact_entry(this->memory_order_buffer_read[pos].opcode_address,-1);
-							this->add_llc_correct_bypass();
+							this->add_llc_predict_correct();
 						}
 					}
 				}				
@@ -2444,6 +2444,8 @@ void processor_t::statistics(){
 				fprintf(output, "\n======================== Cache Bypass INFOS ===========================\n");
 				fprintf(output, "cache_bypass_correct_prediction: %lu\n",this->get_llc_correct_bypass());
 				fprintf(output, "cache_bypass_incorrect_prediction: %lu\n",this->get_llc_incorrect_bypass());
+				fprintf(output, "cache_llc_correct_prediction: %lu\n",this->get_llc_predict_correct());
+				fprintf(output, "cache_llc_incorrect_prediction: %lu\n",this->get_llc_predict_incorrect());
 			#endif
 			}
 		if(close) fclose(output);

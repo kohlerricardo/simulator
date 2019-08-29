@@ -148,7 +148,7 @@ Arquivo definindo os parametros do modelo de processador
 #define LLC_SETS (LLC_SIZE/LINE_SIZE)/LLC_ASSOCIATIVITY
 // ==================== LLC     =====================
 // =====================CACHES=======================
-#define CACHE_LLC_BYPASS 0
+#define CACHE_LLC_BYPASS 1
 #define CACHE_LLC_BYPASS_ORACLE 0
 #define CACHE_BYPASS_EMC 0
 // =====================RAM=======================
